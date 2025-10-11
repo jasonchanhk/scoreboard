@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { Timer } from './Timer'
 
 interface Team {
   id: string
@@ -25,12 +26,17 @@ interface ScoreboardData {
   share_code: string | null
   current_quarter: number
   timer: string
+  timer_duration: number
+  timer_started_at: string | null
+  timer_state: 'stopped' | 'running' | 'paused'
+  timer_paused_duration: number
   created_at: string
   teams: Team[]
 }
 
 export const PublicView: React.FC = () => {
   const { shareCode } = useParams<{ shareCode: string }>()
+  const navigate = useNavigate()
   const [scoreboard, setScoreboard] = useState<ScoreboardData | null>(null)
   const [allQuarters, setAllQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
@@ -233,16 +239,25 @@ export const PublicView: React.FC = () => {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
       <div className="bg-gray-800 py-4 px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <h1 className="text-2xl font-bold">
-            {scoreboard.teams.length >= 2 
-              ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
-              : 'Loading teams...'
-            }
-          </h1>
-          <div className="text-sm text-gray-400 mt-1">
-            Live Scoreboard • Quarter {scoreboard.current_quarter}
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <button
+            onClick={() => navigate('/')}
+            className="text-gray-300 hover:text-white transition-colors flex items-center gap-2"
+          >
+            ← Back to Dashboard
+          </button>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">
+              {scoreboard.teams.length >= 2 
+                ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
+                : 'Loading teams...'
+              }
+            </h1>
+            <div className="text-sm text-gray-400 mt-1">
+              Live Scoreboard • Quarter {scoreboard.current_quarter}
+            </div>
           </div>
+          <div className="w-24"></div> {/* Spacer for centering */}
         </div>
       </div>
 
@@ -270,11 +285,26 @@ export const PublicView: React.FC = () => {
           </div>
         </div>
 
-        {/* Current Quarter Display */}
+        {/* Timer */}
         <div className="mt-12 text-center">
+          <Timer
+            duration={scoreboard.timer_duration}
+            startedAt={scoreboard.timer_started_at}
+            state={scoreboard.timer_state}
+            pausedDuration={scoreboard.timer_paused_duration}
+            isOwner={false} // Public view is always read-only
+            onStart={() => {}} // No-op functions for public view
+            onPause={() => {}}
+            onReset={() => {}}
+            className="max-w-md mx-auto"
+          />
+        </div>
+
+        {/* Current Quarter Display */}
+        <div className="mt-8 text-center">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-auto">
             <div className="text-2xl font-bold mb-2">Quarter {scoreboard.current_quarter}</div>
-            <div className="text-lg text-gray-400">{scoreboard.timer}</div>
+            <div className="text-lg text-gray-400">Live Scoreboard</div>
           </div>
         </div>
 

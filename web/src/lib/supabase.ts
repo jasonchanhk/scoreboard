@@ -11,33 +11,45 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export type Database = {
   public: {
-    Tables: {
-      scoreboards: {
-        Row: {
-          id: string
-          owner_id: string
-          share_code: string | null
-          current_quarter: number
-          timer: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          owner_id: string
-          share_code?: string | null
-          current_quarter?: number
-          timer?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          owner_id?: string
-          share_code?: string | null
-          current_quarter?: number
-          timer?: string
-          created_at?: string
-        }
-      }
+        Tables: {
+          scoreboards: {
+            Row: {
+              id: string
+              owner_id: string
+              share_code: string | null
+              current_quarter: number
+              timer: string
+              timer_duration: number
+              timer_started_at: string | null
+              timer_state: 'stopped' | 'running' | 'paused'
+              timer_paused_duration: number
+              created_at: string
+            }
+            Insert: {
+              id?: string
+              owner_id: string
+              share_code?: string | null
+              current_quarter?: number
+              timer?: string
+              timer_duration?: number
+              timer_started_at?: string | null
+              timer_state?: 'stopped' | 'running' | 'paused'
+              timer_paused_duration?: number
+              created_at?: string
+            }
+            Update: {
+              id?: string
+              owner_id?: string
+              share_code?: string | null
+              current_quarter?: number
+              timer?: string
+              timer_duration?: number
+              timer_started_at?: string | null
+              timer_state?: 'stopped' | 'running' | 'paused'
+              timer_paused_duration?: number
+              created_at?: string
+            }
+          }
       teams: {
         Row: {
           id: string

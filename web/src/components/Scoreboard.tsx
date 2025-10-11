@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { Timer } from './Timer'
 
 interface Team {
   id: string
@@ -26,6 +27,10 @@ interface ScoreboardData {
   share_code: string | null
   current_quarter: number
   timer: string
+  timer_duration: number
+  timer_started_at: string | null
+  timer_state: 'stopped' | 'running' | 'paused'
+  timer_paused_duration: number
   created_at: string
   teams: Team[]
 }
@@ -70,7 +75,7 @@ export const Scoreboard: React.FC = () => {
 
       // Fetch quarters for all teams
       if (data.teams && data.teams.length > 0) {
-        const teamIds = data.teams.map(team => team.id)
+        const teamIds = data.teams.map((team: Team) => team.id)
         
         // Fetch current quarter
         const { data: quartersData, error: quartersError } = await supabase
@@ -200,28 +205,6 @@ export const Scoreboard: React.FC = () => {
     })
   }
 
-  // Helper function to get total scores
-  const getTotalScores = () => {
-    if (!scoreboard || scoreboard.teams.length < 2) return { teamA: 0, teamB: 0 }
-    
-    const teamA = scoreboard.teams[0]
-    const teamB = scoreboard.teams[1]
-    
-    const teamATotal = allQuarters
-      .filter(q => q.team_id === teamA.id)
-      .reduce((sum, q) => sum + q.points, 0)
-    
-    const teamBTotal = allQuarters
-      .filter(q => q.team_id === teamB.id)
-      .reduce((sum, q) => sum + q.points, 0)
-    
-    return {
-      teamA: teamATotal,
-      teamB: teamBTotal,
-      teamAName: teamA.name,
-      teamBName: teamB.name,
-    }
-  }
 
   // Handle copy share code with feedback
   const handleCopyShareCode = () => {
@@ -233,6 +216,138 @@ export const Scoreboard: React.FC = () => {
     setTimeout(() => {
       setShowCopied(false)
     }, 3000)
+  }
+
+  // Timer control functions - With optimistic updates
+  const handleTimerStart = async () => {
+    if (!scoreboard || !isOwner) return
+
+    const now = new Date().toISOString()
+    let newPausedDuration = 0
+
+    if (scoreboard.timer_state === 'paused') {
+      // When resuming from pause, keep the current paused duration
+      newPausedDuration = scoreboard.timer_paused_duration
+      console.log('Resuming from pause with duration:', newPausedDuration)
+    } else {
+      // Starting fresh - reset paused duration
+      newPausedDuration = 0
+      console.log('Starting fresh timer')
+    }
+
+    // OPTIMISTIC UPDATE: Update local state immediately
+    setScoreboard(prev => prev ? {
+      ...prev,
+      timer_state: 'running',
+      timer_started_at: now,
+      timer_paused_duration: newPausedDuration,
+    } : null)
+
+    try {
+      const { error } = await supabase
+        .from('scoreboards')
+        .update({
+          timer_state: 'running',
+          timer_started_at: now,
+          timer_paused_duration: newPausedDuration,
+        })
+        .eq('id', id)
+
+      if (error) {
+        // Revert optimistic update on error
+        setScoreboard(prev => prev ? {
+          ...prev,
+          timer_state: scoreboard.timer_state,
+          timer_started_at: scoreboard.timer_started_at,
+          timer_paused_duration: scoreboard.timer_paused_duration,
+        } : null)
+        throw error
+      }
+      console.log('Timer started successfully')
+    } catch (error) {
+      console.error('Error starting timer:', error)
+    }
+  }
+
+  const handleTimerPause = async () => {
+    if (!scoreboard || !isOwner || scoreboard.timer_state !== 'running') return
+
+    if (!scoreboard.timer_started_at) return
+
+    // Calculate how much time has elapsed since the timer started
+    const now = new Date().getTime()
+    const startTime = new Date(scoreboard.timer_started_at).getTime()
+    const elapsedSinceStart = Math.floor((now - startTime) / 1000)
+    
+    // Total paused duration = previous paused time + current elapsed time
+    const newPausedDuration = scoreboard.timer_paused_duration + elapsedSinceStart
+
+    // OPTIMISTIC UPDATE: Update local state immediately
+    setScoreboard(prev => prev ? {
+      ...prev,
+      timer_state: 'paused',
+      timer_paused_duration: newPausedDuration,
+    } : null)
+
+    try {
+      const { error } = await supabase
+        .from('scoreboards')
+        .update({
+          timer_state: 'paused',
+          timer_paused_duration: newPausedDuration,
+        })
+        .eq('id', id)
+
+      if (error) {
+        // Revert optimistic update on error
+        setScoreboard(prev => prev ? {
+          ...prev,
+          timer_state: 'running',
+          timer_paused_duration: scoreboard.timer_paused_duration,
+        } : null)
+        throw error
+      }
+      console.log('Timer paused with total duration:', newPausedDuration)
+    } catch (error) {
+      console.error('Error pausing timer:', error)
+    }
+  }
+
+  const handleTimerReset = async () => {
+    if (!scoreboard || !isOwner) return
+
+    // OPTIMISTIC UPDATE: Update local state immediately
+    setScoreboard(prev => prev ? {
+      ...prev,
+      timer_state: 'stopped',
+      timer_started_at: null,
+      timer_paused_duration: 0,
+    } : null)
+
+    try {
+      const { error } = await supabase
+        .from('scoreboards')
+        .update({
+          timer_state: 'stopped',
+          timer_started_at: null,
+          timer_paused_duration: 0,
+        })
+        .eq('id', id)
+
+      if (error) {
+        // Revert optimistic update on error
+        setScoreboard(prev => prev ? {
+          ...prev,
+          timer_state: scoreboard.timer_state,
+          timer_started_at: scoreboard.timer_started_at,
+          timer_paused_duration: scoreboard.timer_paused_duration,
+        } : null)
+        throw error
+      }
+      console.log('Timer reset successfully')
+    } catch (error) {
+      console.error('Error resetting timer:', error)
+    }
   }
 
   const updateScore = async (teamIndex: number, delta: number) => {
@@ -451,9 +566,24 @@ export const Scoreboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Timer */}
+        <div className="mt-12 text-center">
+          <Timer
+            duration={scoreboard.timer_duration}
+            startedAt={scoreboard.timer_started_at}
+            state={scoreboard.timer_state}
+            pausedDuration={scoreboard.timer_paused_duration}
+            isOwner={isOwner}
+            onStart={handleTimerStart}
+            onPause={handleTimerPause}
+            onReset={handleTimerReset}
+            className="max-w-md mx-auto"
+          />
+        </div>
+
         {/* Quarter Controls */}
         {isOwner && (
-          <div className="mt-12 text-center">
+          <div className="mt-8 text-center">
             <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-auto">
               <h3 className="text-xl font-bold mb-4">Quarter Controls</h3>
               <div className="flex justify-center items-center space-x-4">

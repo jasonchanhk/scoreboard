@@ -27,6 +27,7 @@ export const Dashboard: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [teamAName, setTeamAName] = useState('')
   const [teamBName, setTeamBName] = useState('')
+  const [timerDuration, setTimerDuration] = useState(720) // Default 12 minutes
   const [creating, setCreating] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const { user, signOut } = useAuth()
@@ -115,6 +116,9 @@ export const Dashboard: React.FC = () => {
         .from('scoreboards')
         .insert({
           owner_id: user.id,
+          timer_duration: timerDuration,
+          timer_state: 'stopped',
+          timer_paused_duration: 0,
         })
         .select()
         .single()
@@ -154,6 +158,7 @@ export const Dashboard: React.FC = () => {
       await computeAndSetScores(updated)
       setTeamAName('')
       setTeamBName('')
+      setTimerDuration(720) // Reset to default
       setShowCreateForm(false)
     } catch (error) {
       console.error('Error creating scoreboard:', error)
@@ -178,6 +183,37 @@ export const Dashboard: React.FC = () => {
       ))
     } catch (error) {
       console.error('Error generating share code:', error)
+    }
+  }
+
+  const deleteScoreboard = async (scoreboardId: string) => {
+    if (!confirm('Are you sure you want to delete this scoreboard? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      // Delete scoreboard (this will cascade delete teams and quarters due to foreign key constraints)
+      const { error } = await supabase
+        .from('scoreboards')
+        .delete()
+        .eq('id', scoreboardId)
+        .eq('owner_id', user!.id) // Ensure user can only delete their own scoreboards
+
+      if (error) throw error
+
+      // Remove from local state
+      const updatedScoreboards = scoreboards.filter(sb => sb.id !== scoreboardId)
+      setScoreboards(updatedScoreboards)
+      
+      // Remove from scores state
+      const updatedScores = { ...scoresByScoreboard }
+      delete updatedScores[scoreboardId]
+      setScoresByScoreboard(updatedScores)
+
+      console.log('Scoreboard deleted successfully')
+    } catch (error) {
+      console.error('Error deleting scoreboard:', error)
+      alert('Failed to delete scoreboard. Please try again.')
     }
   }
 
@@ -288,6 +324,49 @@ export const Dashboard: React.FC = () => {
                     />
                   </div>
                 </div>
+                <div>
+                  <label htmlFor="timerDuration" className="block text-sm font-medium text-gray-700">
+                    Timer Duration (seconds)
+                  </label>
+                  <div className="mt-1 flex items-center space-x-4">
+                    <input
+                      type="number"
+                      id="timerDuration"
+                      value={timerDuration}
+                      onChange={(e) => setTimerDuration(parseInt(e.target.value) || 720)}
+                      className="block w-32 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      min="60"
+                      max="3600"
+                      required
+                    />
+                    <div className="text-sm text-gray-500">
+                      ({Math.floor(timerDuration / 60)}:{(timerDuration % 60).toString().padStart(2, '0')})
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setTimerDuration(720)} // 12 minutes
+                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                      >
+                        12:00
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTimerDuration(600)} // 10 minutes
+                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                      >
+                        10:00
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTimerDuration(300)} // 5 minutes
+                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                      >
+                        5:00
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex justify-end space-x-3">
                   <button
                     type="button"
@@ -339,25 +418,33 @@ export const Dashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex space-x-2">
-                    <Link
-                      to={`/scoreboard/${scoreboard.id}`}
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
-                    >
-                      Open
-                    </Link>
-                    {!scoreboard.share_code ? (
-                      <button
-                        onClick={() => generateShareCode(scoreboard.id)}
-                        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium"
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex space-x-2">
+                      <Link
+                        to={`/scoreboard/${scoreboard.id}`}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
                       >
-                        Share
-                      </button>
-                    ) : (
-                      <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
-                        {scoreboard.share_code}
-                      </div>
-                    )}
+                        Open
+                      </Link>
+                      {!scoreboard.share_code ? (
+                        <button
+                          onClick={() => generateShareCode(scoreboard.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium"
+                        >
+                          Share
+                        </button>
+                      ) : (
+                        <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
+                          {scoreboard.share_code}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => deleteScoreboard(scoreboard.id)}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm font-medium"
+                    >
+                      🗑️ Delete Scoreboard
+                    </button>
                   </div>
                 </div>
               ))}
