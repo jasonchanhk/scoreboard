@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext'
 interface LoginFormProps {
   onToggleMode: () => void
 }
-
-export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
+// export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
+export const LoginForm: React.FC<LoginFormProps> = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)

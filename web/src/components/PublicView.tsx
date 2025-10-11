@@ -94,7 +94,7 @@ export const PublicView: React.FC = () => {
 
       // Fetch all quarters for teams
       if (data.teams && data.teams.length > 0) {
-        const teamIds = data.teams.map(team => team.id)
+        const teamIds = data.teams.map((team: Team) => team.id)
         const { data: quartersData, error: quartersError } = await supabase
           .from('quarters')
           .select('*')
