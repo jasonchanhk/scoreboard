@@ -72,7 +72,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          {/* <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <button
               onClick={onToggleMode}
@@ -80,7 +80,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
             >
               sign in to your existing account
             </button>
-          </p>
+          </p> */}
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">

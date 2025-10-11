@@ -8,7 +8,7 @@ import { Scoreboard } from './components/Scoreboard'
 import { PublicView } from './components/PublicView'
 
 const AuthPage: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true)
+  // const [isLogin, setIsLogin] = useState(true)
   const { user, loading } = useAuth()
 
   // Redirect to dashboard if user is already authenticated
@@ -26,11 +26,12 @@ const AuthPage: React.FC = () => {
 
   return (
     <div>
-      {isLogin ? (
+      <LoginForm onToggleMode={() => {}} />
+      {/* {isLogin ? (
         <LoginForm onToggleMode={() => setIsLogin(false)} />
       ) : (
         <SignUpForm onToggleMode={() => setIsLogin(true)} />
-      )}
+      )} */}
     </div>
   )
 }
