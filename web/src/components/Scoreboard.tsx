@@ -81,6 +81,14 @@ export const Scoreboard: React.FC = () => {
           .single()
           .then(({ data }) => {
             if (data && JSON.stringify(data) !== JSON.stringify(scoreboard)) {
+              // Ensure teams are ordered consistently (home first, away second)
+              if (data.teams) {
+                data.teams.sort((a: Team, b: Team) => {
+                  if (a.position === 'home' && b.position === 'away') return -1
+                  if (a.position === 'away' && b.position === 'home') return 1
+                  return 0
+                })
+              }
               setScoreboard(data)
             }
           })
@@ -174,21 +182,44 @@ export const Scoreboard: React.FC = () => {
           table: 'scoreboards',
           filter: `id=eq.${id}`,
         },
-        async (payload) => {
-          const newData = payload.new as ScoreboardData
-          setScoreboard(newData)
-          scoreboardRef.current = newData
+        async () => {
+          // Fetch complete scoreboard data with teams
+          const { data: completeData, error } = await supabase
+            .from('scoreboards')
+            .select(`
+              *,
+              teams (*)
+            `)
+            .eq('id', id)
+            .single()
+
+          if (error) {
+            console.error('Error fetching complete scoreboard data:', error)
+            return
+          }
+
+          // Ensure teams are ordered consistently (home first, away second)
+          if (completeData.teams) {
+            completeData.teams.sort((a: Team, b: Team) => {
+              if (a.position === 'home' && b.position === 'away') return -1
+              if (a.position === 'away' && b.position === 'home') return 1
+              return 0
+            })
+          }
+          
+          setScoreboard(completeData)
+          scoreboardRef.current = completeData
           
           // Also refresh quarters data when scoreboard updates
-          if (newData.teams && newData.teams.length > 0) {
-            const teamIds = newData.teams.map(team => team.id)
+          if (completeData.teams && completeData.teams.length > 0) {
+            const teamIds = completeData.teams.map((team: Team) => team.id)
             
             // Refresh current quarter
             const { data: currentQuarters } = await supabase
               .from('quarters')
               .select('*')
               .in('team_id', teamIds)
-              .eq('quarter_number', newData.current_quarter)
+              .eq('quarter_number', completeData.current_quarter)
             setQuarters(currentQuarters || [])
 
             // Refresh all quarters for history
@@ -255,12 +286,13 @@ export const Scoreboard: React.FC = () => {
 
   // Helper function to get team by index
   const getTeam = (index: number) => {
-    return scoreboard?.teams[index] || null
+    if (!scoreboard?.teams || scoreboard.teams.length <= index) return null
+    return scoreboard.teams[index]
   }
 
   // Helper function to get quarter scores organized by quarter
   const getQuarterHistory = () => {
-    if (!scoreboard || scoreboard.teams.length < 2) return []
+    if (!scoreboard || !scoreboard.teams || scoreboard.teams.length < 2) return []
     
     const teamA = scoreboard.teams[0]
     const teamB = scoreboard.teams[1]
@@ -430,7 +462,7 @@ export const Scoreboard: React.FC = () => {
   }
 
   const updateScore = async (teamIndex: number, delta: number) => {
-    if (!scoreboard || !isOwner || !scoreboard.teams[teamIndex]) return
+    if (!scoreboard || !isOwner || !scoreboard.teams || !scoreboard.teams[teamIndex]) return
 
     const team = scoreboard.teams[teamIndex]
     const currentScore = getTeamScore(team.id)
@@ -516,7 +548,7 @@ export const Scoreboard: React.FC = () => {
       setScoreboard(prev => prev ? { ...prev, current_quarter: newQuarter } : null)
 
       // Refresh quarters for the new quarter
-      if (scoreboard.teams && scoreboard.teams.length > 0) {
+      if (scoreboard?.teams && scoreboard.teams.length > 0) {
         const teamIds = scoreboard.teams.map(team => team.id)
         
         // Fetch quarters for the new quarter
@@ -572,7 +604,7 @@ export const Scoreboard: React.FC = () => {
           </button>
           <div className="text-center">
             <h1 className="text-2xl font-bold">
-              {scoreboard.teams.length >= 2 
+              {scoreboard.teams && scoreboard.teams.length >= 2 
                 ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
                 : 'Loading teams...'
               }
@@ -719,7 +751,7 @@ export const Scoreboard: React.FC = () => {
           <div className="bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
             <h3 className="text-xl font-bold mb-6">Quarter History</h3>
             
-            {scoreboard.teams.length >= 2 && (
+            {scoreboard.teams && scoreboard.teams.length >= 2 && (
               <>
                 {/* Header */}
                 <div className="grid grid-cols-3 gap-4 mb-4 text-sm font-medium text-gray-300">

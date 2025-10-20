@@ -164,15 +164,39 @@ export const PublicView: React.FC = () => {
           table: 'scoreboards',
           filter: `share_code=eq.${shareCode}`,
         },
-        async (payload) => {
-          console.log('Scoreboard update received:', payload)
-          const newData = payload.new as ScoreboardData
-          setScoreboard(newData)
-          scoreboardRef.current = newData
+        async () => {
+          console.log('Scoreboard update received, fetching complete data...')
+          
+          // Fetch complete scoreboard data with teams
+          const { data: completeData, error } = await supabase
+            .from('scoreboards')
+            .select(`
+              *,
+              teams (*)
+            `)
+            .eq('share_code', shareCode)
+            .single()
+
+          if (error) {
+            console.error('Error fetching complete scoreboard data:', error)
+            return
+          }
+
+          // Ensure teams are ordered consistently (home first, away second)
+          if (completeData.teams) {
+            completeData.teams.sort((a: Team, b: Team) => {
+              if (a.position === 'home' && b.position === 'away') return -1
+              if (a.position === 'away' && b.position === 'home') return 1
+              return 0
+            })
+          }
+          
+          setScoreboard(completeData)
+          scoreboardRef.current = completeData
           
           // Also refresh quarters data when scoreboard updates
-          if (newData.teams && newData.teams.length > 0) {
-            const teamIds = newData.teams.map(team => team.id)
+          if (completeData.teams && completeData.teams.length > 0) {
+            const teamIds = completeData.teams.map((team: Team) => team.id)
             const { data: quartersData, error: quartersError } = await supabase
               .from('quarters')
               .select('*')
@@ -217,7 +241,8 @@ export const PublicView: React.FC = () => {
 
   // Helper function to get team by index
   const getTeam = (index: number) => {
-    return scoreboard?.teams[index] || null
+    if (!scoreboard?.teams || scoreboard.teams.length <= index) return null
+    return scoreboard.teams[index]
   }
 
   // Helper function to get cumulative team score across all quarters
@@ -229,7 +254,7 @@ export const PublicView: React.FC = () => {
 
   // Helper function to get quarter scores organized by quarter
   const getQuarterHistory = () => {
-    if (!scoreboard || scoreboard.teams.length < 2) return []
+    if (!scoreboard || !scoreboard.teams || scoreboard.teams.length < 2) return []
     
     const teamA = scoreboard.teams[0]
     const teamB = scoreboard.teams[1]
@@ -283,11 +308,11 @@ export const PublicView: React.FC = () => {
             onClick={() => navigate('/')}
             className="text-gray-300 hover:text-white transition-colors flex items-center gap-2"
           >
-            ← Back to Dashboard
+            ←
           </button>
           <div className="text-center">
             <h1 className="text-2xl font-bold">
-              {scoreboard.teams.length >= 2 
+              {scoreboard.teams && scoreboard.teams.length >= 2 
                 ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
                 : 'Loading teams...'
               }
@@ -352,7 +377,7 @@ export const PublicView: React.FC = () => {
           <div className="bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
             <h3 className="text-xl font-bold mb-6">Quarter History</h3>
             
-            {scoreboard.teams.length >= 2 && (
+            {scoreboard.teams && scoreboard.teams.length >= 2 && (
               <>
                 {/* Header */}
                 <div className="grid grid-cols-3 gap-4 mb-4 text-sm font-medium text-gray-300">
