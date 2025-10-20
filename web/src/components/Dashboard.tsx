@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { ScoreboardForm } from './ScoreboardForm'
 
 interface Team {
   id: string
   name: string
   scoreboard_id: string
+  position: 'home' | 'away'
   created_at: string
 }
 
@@ -16,6 +18,10 @@ interface Scoreboard {
   share_code: string | null
   current_quarter: number
   timer: string
+  venue: string | null
+  game_date: string | null
+  game_start_time: string | null
+  game_end_time: string | null
   created_at: string
   teams: Team[]
 }
@@ -25,13 +31,13 @@ export const Dashboard: React.FC = () => {
   const [scoresByScoreboard, setScoresByScoreboard] = useState<Record<string, { a: number; b: number }>>({})
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [teamAName, setTeamAName] = useState('')
-  const [teamBName, setTeamBName] = useState('')
-  const [timerDuration, setTimerDuration] = useState(720) // Default 12 minutes
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
   const [creating, setCreating] = useState(false)
   const [joinCode, setJoinCode] = useState('')
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const initials = (user?.email?.slice(0, 2) || 'US').toUpperCase()
 
   useEffect(() => {
     fetchScoreboards()
@@ -52,6 +58,18 @@ export const Dashboard: React.FC = () => {
 
       if (error) throw error
       const list = data || []
+      
+      // Ensure teams are ordered consistently (home first, away second)
+      list.forEach(scoreboard => {
+        if (scoreboard.teams) {
+          scoreboard.teams.sort((a: Team, b: Team) => {
+            if (a.position === 'home' && b.position === 'away') return -1
+            if (a.position === 'away' && b.position === 'home') return 1
+            return 0
+          })
+        }
+      })
+
       setScoreboards(list)
       await computeAndSetScores(list)
     } catch (error) {
@@ -105,9 +123,15 @@ export const Dashboard: React.FC = () => {
     setScoresByScoreboard(next)
   }
 
-  const createScoreboard = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user || !teamAName.trim() || !teamBName.trim()) return
+  const createScoreboard = async (formData: {
+    teamAName: string
+    teamBName: string
+    venue: string
+    gameDate: string
+    gameStartTime: string
+    gameEndTime: string
+  }) => {
+    if (!user) return
 
     setCreating(true)
     try {
@@ -116,9 +140,13 @@ export const Dashboard: React.FC = () => {
         .from('scoreboards')
         .insert({
           owner_id: user.id,
-          timer_duration: timerDuration,
+          timer_duration: 720, // Default 12 minutes
           timer_state: 'stopped',
           timer_paused_duration: 0,
+          venue: formData.venue || null,
+          game_date: formData.gameDate || null,
+          game_start_time: formData.gameStartTime || null,
+          game_end_time: formData.gameEndTime || null,
         })
         .select()
         .single()
@@ -131,11 +159,13 @@ export const Dashboard: React.FC = () => {
         .insert([
           {
             scoreboard_id: scoreboardData.id,
-            name: teamAName.trim(),
+            name: formData.teamAName,
+            position: 'home',
           },
           {
             scoreboard_id: scoreboardData.id,
-            name: teamBName.trim(),
+            name: formData.teamBName,
+            position: 'away',
           },
         ])
 
@@ -152,19 +182,91 @@ export const Dashboard: React.FC = () => {
         .single()
 
       if (fetchError) throw fetchError
+      
+      // Ensure teams are ordered consistently (home first, away second)
+      if (completeScoreboard.teams) {
+        completeScoreboard.teams.sort((a: Team, b: Team) => {
+          if (a.position === 'home' && b.position === 'away') return -1
+          if (a.position === 'away' && b.position === 'home') return 1
+          return 0
+        })
+      }
 
       const updated = [completeScoreboard, ...scoreboards]
       setScoreboards(updated)
       await computeAndSetScores(updated)
-      setTeamAName('')
-      setTeamBName('')
-      setTimerDuration(720) // Reset to default
       setShowCreateForm(false)
       
       // Redirect to the scoreboard owner view
       navigate(`/scoreboard/${scoreboardData.id}`)
     } catch (error) {
       console.error('Error creating scoreboard:', error)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const editScoreboard = async (scoreboardId: string) => {
+    const scoreboard = scoreboards.find(sb => sb.id === scoreboardId)
+    if (!scoreboard || scoreboard.teams.length < 2) return
+    
+    setEditingScoreboard(scoreboard)
+    setShowEditForm(true)
+  }
+
+  const updateScoreboard = async (formData: {
+    teamAName: string
+    teamBName: string
+    venue: string
+    gameDate: string
+    gameStartTime: string
+    gameEndTime: string
+  }) => {
+    if (!editingScoreboard) return
+
+    setCreating(true)
+    try {
+      // Update the scoreboard metadata
+      const { error: scoreboardError } = await supabase
+        .from('scoreboards')
+        .update({
+          venue: formData.venue || null,
+          game_date: formData.gameDate || null,
+          game_start_time: formData.gameStartTime || null,
+          game_end_time: formData.gameEndTime || null,
+        })
+        .eq('id', editingScoreboard.id)
+
+      if (scoreboardError) throw scoreboardError
+
+      // Update team names using position-based identification
+      const homeTeam = editingScoreboard.teams.find(team => team.position === 'home')
+      const awayTeam = editingScoreboard.teams.find(team => team.position === 'away')
+
+      if (!homeTeam || !awayTeam) {
+        throw new Error('Could not find home or away team')
+      }
+
+      const { error: teamAError } = await supabase
+        .from('teams')
+        .update({ name: formData.teamAName })
+        .eq('id', homeTeam.id)
+
+      if (teamAError) throw teamAError
+
+      const { error: teamBError } = await supabase
+        .from('teams')
+        .update({ name: formData.teamBName })
+        .eq('id', awayTeam.id)
+
+      if (teamBError) throw teamBError
+
+      // Refresh the scoreboards list
+      await fetchScoreboards()
+      setShowEditForm(false)
+      setEditingScoreboard(null)
+    } catch (error) {
+      console.error('Error updating scoreboard:', error)
     } finally {
       setCreating(false)
     }
@@ -262,16 +364,34 @@ export const Dashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Basketball Scoreboard</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Pretty Scoreboard</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">{user?.email}</span>
-              <button
-                onClick={signOut}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Sign Out
-              </button>
+            <div className="flex items-center space-x-3">
+              <div className="relative group">
+                <button
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                >
+                  <span className="sr-only">Open user menu</span>
+                  {initials}
+                </button>
+                <div className="absolute right-0 top-full z-50 hidden group-hover:block focus-within:block w-56 rounded-md shadow-lg bg-white">
+                  <div className="py-2">
+                    {user?.email && (
+                      <div className="px-4 pb-2 text-xs text-gray-500 cursor-default select-text">
+                        {user.email}
+                      </div>
+                    )}
+                    <button
+                      onClick={signOut}
+                      className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -322,100 +442,32 @@ export const Dashboard: React.FC = () => {
           </div>
 
           {showCreateForm && (
-            <div className="bg-white shadow rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Scoreboard</h3>
-              <form onSubmit={createScoreboard} className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="teamA" className="block text-sm font-medium text-gray-700">
-                      Home
-                    </label>
-                    <input
-                      type="text"
-                      id="teamA"
-                      value={teamAName}
-                      onChange={(e) => setTeamAName(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="Enter home team name"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="teamB" className="block text-sm font-medium text-gray-700">
-                      Away
-                    </label>
-                    <input
-                      type="text"
-                      id="teamB"
-                      value={teamBName}
-                      onChange={(e) => setTeamBName(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="Enter away team name"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="timerDuration" className="block text-sm font-medium text-gray-700">
-                    Timer Duration (minutes)
-                  </label>
-                  <div className="mt-1 flex items-center space-x-4">
-                    <input
-                      type="number"
-                      id="timerDuration"
-                      value={Math.floor(timerDuration / 60)}
-                      onChange={(e) => setTimerDuration((parseInt(e.target.value) || 12) * 60)}
-                      className="block w-32 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      min="1"
-                      max="60"
-                      required
-                    />
-                    <div className="text-sm text-gray-500">
-                      minutes
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => setTimerDuration(720)} // 12 minutes
-                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
-                      >
-                        12 min
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTimerDuration(600)} // 10 minutes
-                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
-                      >
-                        10 min
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTimerDuration(300)} // 5 minutes
-                        className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
-                      >
-                        5 min
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={creating}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
-                  >
-                    {creating ? 'Creating...' : 'Create Scoreboard'}
-                  </button>
-                </div>
-              </form>
-            </div>
+            <ScoreboardForm
+              mode="create"
+              onSubmit={createScoreboard}
+              onCancel={() => setShowCreateForm(false)}
+              loading={creating}
+            />
+          )}
+
+          {showEditForm && editingScoreboard && (
+            <ScoreboardForm
+              mode="edit"
+              initialData={{
+                teamAName: editingScoreboard.teams[0]?.name || '',
+                teamBName: editingScoreboard.teams[1]?.name || '',
+                venue: editingScoreboard.venue || '',
+                gameDate: editingScoreboard.game_date || '',
+                gameStartTime: editingScoreboard.game_start_time || '',
+                gameEndTime: editingScoreboard.game_end_time || '',
+              }}
+              onSubmit={updateScoreboard}
+              onCancel={() => {
+                setShowEditForm(false)
+                setEditingScoreboard(null)
+              }}
+              loading={creating}
+            />
           )}
 
           {scoreboards.length === 0 ? (
@@ -427,14 +479,61 @@ export const Dashboard: React.FC = () => {
               {scoreboards.map((scoreboard) => (
                 <div key={scoreboard.id} className="bg-white shadow rounded-lg p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">
-                      {scoreboard.teams.length >= 2 
-                        ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
-                        : 'Loading teams...'
-                      }
-                    </h3>
-                    <div className="text-sm text-gray-500">
-                      Q{scoreboard.current_quarter}
+                    <div className="flex-1">
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        {scoreboard.teams.length >= 2 
+                          ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
+                          : 'Loading teams...'
+                        }
+                      </h3>
+                      
+                      {/* Date and Time under team names */}
+                      {scoreboard.game_date && (
+                        <div className="text-sm text-gray-600 mb-1">
+                          <span className="font-medium">📅</span>
+                          <span className="ml-1">
+                            {new Date(scoreboard.game_date).toLocaleDateString()}
+                            {(scoreboard.game_start_time || scoreboard.game_end_time) && (
+                              <span className="ml-2 text-gray-500">
+                                {scoreboard.game_start_time && scoreboard.game_end_time 
+                                  ? `${scoreboard.game_start_time.substring(0, 5)} - ${scoreboard.game_end_time.substring(0, 5)}`
+                                  : scoreboard.game_start_time 
+                                    ? `from ${scoreboard.game_start_time.substring(0, 5)}`
+                                    : scoreboard.game_end_time 
+                                      ? `until ${scoreboard.game_end_time.substring(0, 5)}`
+                                      : ''
+                                }
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Location below date/time */}
+                      {scoreboard.venue && (
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">📍</span>
+                          <span className="ml-1">{scoreboard.venue}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Edit/Delete buttons in top-right corner */}
+                    <div className="flex flex-col space-y-1">
+                      <button
+                        onClick={() => editScoreboard(scoreboard.id)}
+                        className="text-gray-400 hover:text-gray-600 text-sm"
+                        title="Edit scoreboard"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => deleteScoreboard(scoreboard.id)}
+                        className="text-gray-400 hover:text-red-600 text-sm"
+                        title="Delete scoreboard"
+                      >
+                        🗑️
+                      </button>
                     </div>
                   </div>
                   
@@ -443,6 +542,9 @@ export const Dashboard: React.FC = () => {
                       {scoreboard.teams.length >= 2
                         ? `${(scoresByScoreboard[scoreboard.id]?.a ?? 0)} - ${(scoresByScoreboard[scoreboard.id]?.b ?? 0)}`
                         : 'Loading...'}
+                    </div>
+                    <div className="text-sm text-gray-500 mt-1">
+                      Q{scoreboard.current_quarter}
                     </div>
                   </div>
 
@@ -467,12 +569,6 @@ export const Dashboard: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={() => deleteScoreboard(scoreboard.id)}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md text-sm font-medium"
-                    >
-                      🗑️ Delete Scoreboard
-                    </button>
                   </div>
                 </div>
               ))}

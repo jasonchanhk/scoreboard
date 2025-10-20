@@ -8,6 +8,7 @@ interface Team {
   id: string
   name: string
   scoreboard_id: string
+  position: 'home' | 'away'
   created_at: string
 }
 
@@ -31,6 +32,10 @@ interface ScoreboardData {
   timer_started_at: string | null
   timer_state: 'stopped' | 'running' | 'paused'
   timer_paused_duration: number
+  venue: string | null
+  game_date: string | null
+  game_start_time: string | null
+  game_end_time: string | null
   created_at: string
   teams: Team[]
 }
@@ -109,6 +114,15 @@ export const Scoreboard: React.FC = () => {
       if (!data) {
         setError('Scoreboard not found')
         return
+      }
+
+      // Ensure teams are ordered consistently (home first, away second)
+      if (data.teams) {
+        data.teams.sort((a: Team, b: Team) => {
+          if (a.position === 'home' && b.position === 'away') return -1
+          if (a.position === 'away' && b.position === 'home') return 1
+          return 0
+        })
       }
 
       setScoreboard(data)
@@ -566,6 +580,36 @@ export const Scoreboard: React.FC = () => {
             <div className="text-sm text-gray-400 flex items-center justify-center gap-2">
               <span>{isOwner ? 'Owner View' : 'View Only'} • Quarter {scoreboard.current_quarter}</span>
             </div>
+            {(scoreboard.venue || scoreboard.game_date || scoreboard.game_start_time || scoreboard.game_end_time) && (
+              <div className="text-sm text-gray-400 mt-2 flex items-center justify-center gap-4">
+                {scoreboard.venue && (
+                  <div className="flex items-center">
+                    <span>📍</span>
+                    <span className="ml-1">{scoreboard.venue}</span>
+                  </div>
+                )}
+                {scoreboard.game_date && (
+                  <div className="flex items-center">
+                    <span>📅</span>
+                    <span className="ml-1">
+                      {new Date(scoreboard.game_date).toLocaleDateString()}
+                      {(scoreboard.game_start_time || scoreboard.game_end_time) && (
+                        <span className="ml-2 text-gray-300">
+                          {scoreboard.game_start_time && scoreboard.game_end_time 
+                            ? `${scoreboard.game_start_time.substring(0, 5)} - ${scoreboard.game_end_time.substring(0, 5)}`
+                            : scoreboard.game_start_time 
+                              ? `from ${scoreboard.game_start_time.substring(0, 5)}`
+                              : scoreboard.game_end_time 
+                                ? `until ${scoreboard.game_end_time.substring(0, 5)}`
+                                : ''
+                          }
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className="w-24"></div> {/* Spacer for centering */}
         </div>
@@ -574,7 +618,7 @@ export const Scoreboard: React.FC = () => {
       {/* Main Scoreboard */}
       <div className="max-w-6xl mx-auto py-8 px-6">
         <div className="grid grid-cols-2 gap-8">
-          {/* Team A */}
+          {/* Home Team */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-8">
               {getTeam(0)?.name || 'Loading...'}
@@ -602,7 +646,7 @@ export const Scoreboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Team B */}
+          {/* Away Team */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-8">
               {getTeam(1)?.name || 'Loading...'}
