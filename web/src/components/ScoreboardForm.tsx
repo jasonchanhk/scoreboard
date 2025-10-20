@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface ScoreboardFormProps {
   mode: 'create' | 'edit'
@@ -52,11 +52,44 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
     })
   }
 
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCancel()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [onCancel])
+
+  // Handle click outside to close modal
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onCancel()
+    }
+  }
+
   return (
-    <div className="bg-white shadow rounded-lg p-6 mb-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">
-        {mode === 'create' ? 'Create New Scoreboard' : 'Edit Scoreboard'}
-      </h3>
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50"
+      onClick={handleBackdropClick}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+    >
+      <div className="relative top-20 mx-auto p-5 w-11/12 md:w-2/3 lg:w-1/2 shadow-2xl rounded-lg bg-white">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-gray-900">
+            {mode === 'create' ? 'Create New Scoreboard' : 'Edit Scoreboard'}
+          </h3>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+            title="Close"
+          >
+            ×
+          </button>
+        </div>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -206,6 +239,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
           </button>
         </div>
       </form>
+      </div>
     </div>
   )
 }
