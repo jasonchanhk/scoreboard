@@ -34,18 +34,18 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          {/* App Logo and Name */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="flex items-center justify-center w-20 h-20 bg-orange-500 rounded-full mb-4 shadow-lg">
+              <span className="text-4xl">🏀</span>
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Pretty Scoreboard</h1>
+            <p className="text-gray-600 text-lg">Basketball Score Tracking</p>
+          </div>
+          
+          <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
             Sign in to your account
           </h2>
-              {/* <p className="mt-2 text-center text-sm text-gray-600">
-                Or{' '}
-                <button
-                  onClick={onToggleMode}
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  create a new account
-                </button>
-              </p> */}
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
