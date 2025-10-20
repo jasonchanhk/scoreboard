@@ -40,7 +40,6 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
               <span className="text-4xl">🏀</span>
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Pretty Scoreboard</h1>
-            <p className="text-gray-600 text-lg">Basketball Score Tracking</p>
           </div>
           
           <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
