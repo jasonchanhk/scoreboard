@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -46,12 +46,53 @@ export const Scoreboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const [showCopied, setShowCopied] = useState(false)
+  const subscriptionRef = useRef<any>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const scoreboardRef = useRef<ScoreboardData | null>(null)
 
   useEffect(() => {
     if (!id) return
+    
+    // Clean up existing subscription and polling
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+      pollIntervalRef.current = null
+    }
+    
     fetchScoreboard()
-    subscribeToUpdates()
-  }, [id])
+    subscriptionRef.current = subscribeToUpdates()
+    
+    // Add fallback polling every 10 seconds (much less frequent)
+    pollIntervalRef.current = setInterval(() => {
+      if (scoreboard?.id) {
+        supabase
+          .from('scoreboards')
+          .select(`*, teams (*)`)
+          .eq('id', scoreboard.id)
+          .single()
+          .then(({ data }) => {
+            if (data && JSON.stringify(data) !== JSON.stringify(scoreboard)) {
+              setScoreboard(data)
+            }
+          })
+      }
+    }, 10000) // 10 seconds instead of 3
+    
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
+        subscriptionRef.current = null
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [id]) // ONLY depend on id, NOT scoreboard!
 
   const fetchScoreboard = async () => {
     try {
@@ -71,6 +112,7 @@ export const Scoreboard: React.FC = () => {
       }
 
       setScoreboard(data)
+      scoreboardRef.current = data
       setIsOwner(user?.id === data.owner_id)
 
       // Fetch quarters for all teams
@@ -118,9 +160,31 @@ export const Scoreboard: React.FC = () => {
           table: 'scoreboards',
           filter: `id=eq.${id}`,
         },
-        (payload) => {
-          console.log('Scoreboard update received:', payload)
-          setScoreboard(payload.new as ScoreboardData)
+        async (payload) => {
+          const newData = payload.new as ScoreboardData
+          setScoreboard(newData)
+          scoreboardRef.current = newData
+          
+          // Also refresh quarters data when scoreboard updates
+          if (newData.teams && newData.teams.length > 0) {
+            const teamIds = newData.teams.map(team => team.id)
+            
+            // Refresh current quarter
+            const { data: currentQuarters } = await supabase
+              .from('quarters')
+              .select('*')
+              .in('team_id', teamIds)
+              .eq('quarter_number', newData.current_quarter)
+            setQuarters(currentQuarters || [])
+
+            // Refresh all quarters for history
+            const { data: allQuartersData } = await supabase
+              .from('quarters')
+              .select('*')
+              .in('team_id', teamIds)
+              .order('quarter_number', { ascending: true })
+            setAllQuarters(allQuartersData || [])
+          }
         }
       )
       .on(
@@ -130,35 +194,36 @@ export const Scoreboard: React.FC = () => {
           schema: 'public',
           table: 'quarters',
         },
-        () => {
-          console.log('Quarters update received')
-          // Refetch quarters when they change
-          if (scoreboard?.teams) {
-            const teamIds = scoreboard.teams.map(team => team.id)
+        async (payload) => {
+          // Only refresh if this quarter belongs to our scoreboard teams
+          const currentScoreboard = scoreboardRef.current
+          if (currentScoreboard?.teams && payload.new) {
+            const teamIds = currentScoreboard.teams.map(team => team.id)
+            const quarterTeamId = (payload.new as any).team_id
             
-            // Refresh current quarter
-            supabase
-              .from('quarters')
-              .select('*')
-              .in('team_id', teamIds)
-              .eq('quarter_number', scoreboard.current_quarter)
-              .then(({ data }) => setQuarters(data || []))
+            if (teamIds.includes(quarterTeamId)) {
+              // Refresh current quarter
+              const { data: currentQuarters } = await supabase
+                .from('quarters')
+                .select('*')
+                .in('team_id', teamIds)
+                .eq('quarter_number', currentScoreboard.current_quarter)
+              setQuarters(currentQuarters || [])
 
-            // Refresh all quarters for history
-            supabase
-              .from('quarters')
-              .select('*')
-              .in('team_id', teamIds)
-              .order('quarter_number', { ascending: true })
-              .then(({ data }) => setAllQuarters(data || []))
+              // Refresh all quarters for history
+              const { data: allQuartersData } = await supabase
+                .from('quarters')
+                .select('*')
+                .in('team_id', teamIds)
+                .order('quarter_number', { ascending: true })
+              setAllQuarters(allQuartersData || [])
+            }
           }
         }
       )
       .subscribe()
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return subscription
   }
 
   // Helper function to get team score for current quarter
@@ -649,6 +714,7 @@ export const Scoreboard: React.FC = () => {
             )}
           </div>
         </div>
+
 
         {/* Share Code Display */}
         {scoreboard.share_code && (

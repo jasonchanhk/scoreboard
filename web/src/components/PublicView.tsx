@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Timer } from './Timer'
@@ -41,37 +41,53 @@ export const PublicView: React.FC = () => {
   const [allQuarters, setAllQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const subscriptionRef = useRef<any>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const scoreboardRef = useRef<ScoreboardData | null>(null)
 
   useEffect(() => {
     if (!shareCode) return
-    fetchScoreboard()
-    subscribeToUpdates()
     
-    // Fallback polling every 2 seconds if subscriptions fail
-    const pollInterval = setInterval(() => {
+    // Clean up existing subscription and polling
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+      pollIntervalRef.current = null
+    }
+    
+    fetchScoreboard()
+    subscriptionRef.current = subscribeToUpdates()
+    
+    // Add fallback polling every 10 seconds (much less frequent)
+    pollIntervalRef.current = setInterval(() => {
       if (scoreboard?.id) {
-        // Refetch scoreboard data
         supabase
           .from('scoreboards')
-          .select(`
-            *,
-            teams (*)
-          `)
+          .select(`*, teams (*)`)
           .eq('id', scoreboard.id)
           .single()
           .then(({ data }) => {
             if (data && JSON.stringify(data) !== JSON.stringify(scoreboard)) {
-              console.log('Polling detected changes, updating...')
               setScoreboard(data)
             }
           })
       }
-    }, 2000)
+    }, 10000) // 10 seconds instead of 2
 
     return () => {
-      clearInterval(pollInterval)
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
+        subscriptionRef.current = null
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
     }
-  }, [shareCode, scoreboard])
+  }, [shareCode]) // ONLY depend on shareCode, NOT scoreboard!
 
   const fetchScoreboard = async () => {
     try {
@@ -91,6 +107,7 @@ export const PublicView: React.FC = () => {
       }
 
       setScoreboard(data)
+      scoreboardRef.current = data
 
       // Fetch all quarters for teams
       if (data.teams && data.teams.length > 0) {
@@ -127,10 +144,11 @@ export const PublicView: React.FC = () => {
         },
         async (payload) => {
           console.log('Scoreboard update received:', payload)
-          setScoreboard(payload.new as ScoreboardData)
+          const newData = payload.new as ScoreboardData
+          setScoreboard(newData)
+          scoreboardRef.current = newData
           
           // Also refresh quarters data when scoreboard updates
-          const newData = payload.new as ScoreboardData
           if (newData.teams && newData.teams.length > 0) {
             const teamIds = newData.teams.map(team => team.id)
             const { data: quartersData, error: quartersError } = await supabase
@@ -155,8 +173,9 @@ export const PublicView: React.FC = () => {
         async () => {
           console.log('Quarters update received')
           // Refresh all quarters when they change
-          if (scoreboard?.teams) {
-            const teamIds = scoreboard.teams.map(team => team.id)
+          const currentScoreboard = scoreboardRef.current
+          if (currentScoreboard?.teams) {
+            const teamIds = currentScoreboard.teams.map(team => team.id)
             const { data: quartersData, error: quartersError } = await supabase
               .from('quarters')
               .select('*')
@@ -171,9 +190,7 @@ export const PublicView: React.FC = () => {
       )
       .subscribe()
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return subscription
   }
 
   // Helper function to get team by index
