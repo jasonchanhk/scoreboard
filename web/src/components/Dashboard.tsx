@@ -160,6 +160,9 @@ export const Dashboard: React.FC = () => {
       setTeamBName('')
       setTimerDuration(720) // Reset to default
       setShowCreateForm(false)
+      
+      // Redirect to the scoreboard owner view
+      navigate(`/scoreboard/${scoreboardData.id}`)
     } catch (error) {
       console.error('Error creating scoreboard:', error)
     } finally {
@@ -297,7 +300,7 @@ export const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="teamA" className="block text-sm font-medium text-gray-700">
-                      Team A Name
+                      Home
                     </label>
                     <input
                       type="text"
@@ -305,13 +308,13 @@ export const Dashboard: React.FC = () => {
                       value={teamAName}
                       onChange={(e) => setTeamAName(e.target.value)}
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="Enter team A name"
+                      placeholder="Enter home team name"
                       required
                     />
                   </div>
                   <div>
                     <label htmlFor="teamB" className="block text-sm font-medium text-gray-700">
-                      Team B Name
+                      Away
                     </label>
                     <input
                       type="text"
@@ -319,28 +322,28 @@ export const Dashboard: React.FC = () => {
                       value={teamBName}
                       onChange={(e) => setTeamBName(e.target.value)}
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="Enter team B name"
+                      placeholder="Enter away team name"
                       required
                     />
                   </div>
                 </div>
                 <div>
                   <label htmlFor="timerDuration" className="block text-sm font-medium text-gray-700">
-                    Timer Duration (seconds)
+                    Timer Duration (minutes)
                   </label>
                   <div className="mt-1 flex items-center space-x-4">
                     <input
                       type="number"
                       id="timerDuration"
-                      value={timerDuration}
-                      onChange={(e) => setTimerDuration(parseInt(e.target.value) || 720)}
+                      value={Math.floor(timerDuration / 60)}
+                      onChange={(e) => setTimerDuration((parseInt(e.target.value) || 12) * 60)}
                       className="block w-32 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      min="60"
-                      max="3600"
+                      min="1"
+                      max="60"
                       required
                     />
                     <div className="text-sm text-gray-500">
-                      ({Math.floor(timerDuration / 60)}:{(timerDuration % 60).toString().padStart(2, '0')})
+                      minutes
                     </div>
                     <div className="flex space-x-2">
                       <button
@@ -348,21 +351,21 @@ export const Dashboard: React.FC = () => {
                         onClick={() => setTimerDuration(720)} // 12 minutes
                         className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
                       >
-                        12:00
+                        12 min
                       </button>
                       <button
                         type="button"
                         onClick={() => setTimerDuration(600)} // 10 minutes
                         className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
                       >
-                        10:00
+                        10 min
                       </button>
                       <button
                         type="button"
                         onClick={() => setTimerDuration(300)} // 5 minutes
                         className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
                       >
-                        5:00
+                        5 min
                       </button>
                     </div>
                   </div>
@@ -412,9 +415,6 @@ export const Dashboard: React.FC = () => {
                       {scoreboard.teams.length >= 2
                         ? `${(scoresByScoreboard[scoreboard.id]?.a ?? 0)} - ${(scoresByScoreboard[scoreboard.id]?.b ?? 0)}`
                         : 'Loading...'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {scoreboard.timer}
                     </div>
                   </div>
 
