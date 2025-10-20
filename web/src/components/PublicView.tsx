@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Timer } from './Timer'
@@ -7,6 +7,7 @@ interface Team {
   id: string
   name: string
   scoreboard_id: string
+  position: 'home' | 'away'
   created_at: string
 }
 
@@ -30,6 +31,10 @@ interface ScoreboardData {
   timer_started_at: string | null
   timer_state: 'stopped' | 'running' | 'paused'
   timer_paused_duration: number
+  venue: string | null
+  game_date: string | null
+  game_start_time: string | null
+  game_end_time: string | null
   created_at: string
   teams: Team[]
 }
@@ -41,37 +46,61 @@ export const PublicView: React.FC = () => {
   const [allQuarters, setAllQuarters] = useState<Quarter[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const subscriptionRef = useRef<any>(null)
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const scoreboardRef = useRef<ScoreboardData | null>(null)
 
   useEffect(() => {
     if (!shareCode) return
-    fetchScoreboard()
-    subscribeToUpdates()
     
-    // Fallback polling every 2 seconds if subscriptions fail
-    const pollInterval = setInterval(() => {
+    // Clean up existing subscription and polling
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe()
+      subscriptionRef.current = null
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+      pollIntervalRef.current = null
+    }
+    
+    fetchScoreboard()
+    subscriptionRef.current = subscribeToUpdates()
+    
+    // Add fallback polling every 10 seconds (much less frequent)
+    pollIntervalRef.current = setInterval(() => {
       if (scoreboard?.id) {
-        // Refetch scoreboard data
         supabase
           .from('scoreboards')
-          .select(`
-            *,
-            teams (*)
-          `)
+          .select(`*, teams (*)`)
           .eq('id', scoreboard.id)
           .single()
           .then(({ data }) => {
             if (data && JSON.stringify(data) !== JSON.stringify(scoreboard)) {
-              console.log('Polling detected changes, updating...')
+              // Ensure teams are ordered consistently (home first, away second)
+              if (data.teams) {
+                data.teams.sort((a: Team, b: Team) => {
+                  if (a.position === 'home' && b.position === 'away') return -1
+                  if (a.position === 'away' && b.position === 'home') return 1
+                  return 0
+                })
+              }
               setScoreboard(data)
             }
           })
       }
-    }, 2000)
+    }, 10000) // 10 seconds instead of 2
 
     return () => {
-      clearInterval(pollInterval)
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe()
+        subscriptionRef.current = null
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
     }
-  }, [shareCode, scoreboard])
+  }, [shareCode]) // ONLY depend on shareCode, NOT scoreboard!
 
   const fetchScoreboard = async () => {
     try {
@@ -90,7 +119,17 @@ export const PublicView: React.FC = () => {
         return
       }
 
+      // Ensure teams are ordered consistently (home first, away second)
+      if (data.teams) {
+        data.teams.sort((a: Team, b: Team) => {
+          if (a.position === 'home' && b.position === 'away') return -1
+          if (a.position === 'away' && b.position === 'home') return 1
+          return 0
+        })
+      }
+
       setScoreboard(data)
+      scoreboardRef.current = data
 
       // Fetch all quarters for teams
       if (data.teams && data.teams.length > 0) {
@@ -125,14 +164,39 @@ export const PublicView: React.FC = () => {
           table: 'scoreboards',
           filter: `share_code=eq.${shareCode}`,
         },
-        async (payload) => {
-          console.log('Scoreboard update received:', payload)
-          setScoreboard(payload.new as ScoreboardData)
+        async () => {
+          console.log('Scoreboard update received, fetching complete data...')
+          
+          // Fetch complete scoreboard data with teams
+          const { data: completeData, error } = await supabase
+            .from('scoreboards')
+            .select(`
+              *,
+              teams (*)
+            `)
+            .eq('share_code', shareCode)
+            .single()
+
+          if (error) {
+            console.error('Error fetching complete scoreboard data:', error)
+            return
+          }
+
+          // Ensure teams are ordered consistently (home first, away second)
+          if (completeData.teams) {
+            completeData.teams.sort((a: Team, b: Team) => {
+              if (a.position === 'home' && b.position === 'away') return -1
+              if (a.position === 'away' && b.position === 'home') return 1
+              return 0
+            })
+          }
+          
+          setScoreboard(completeData)
+          scoreboardRef.current = completeData
           
           // Also refresh quarters data when scoreboard updates
-          const newData = payload.new as ScoreboardData
-          if (newData.teams && newData.teams.length > 0) {
-            const teamIds = newData.teams.map(team => team.id)
+          if (completeData.teams && completeData.teams.length > 0) {
+            const teamIds = completeData.teams.map((team: Team) => team.id)
             const { data: quartersData, error: quartersError } = await supabase
               .from('quarters')
               .select('*')
@@ -155,8 +219,9 @@ export const PublicView: React.FC = () => {
         async () => {
           console.log('Quarters update received')
           // Refresh all quarters when they change
-          if (scoreboard?.teams) {
-            const teamIds = scoreboard.teams.map(team => team.id)
+          const currentScoreboard = scoreboardRef.current
+          if (currentScoreboard?.teams) {
+            const teamIds = currentScoreboard.teams.map(team => team.id)
             const { data: quartersData, error: quartersError } = await supabase
               .from('quarters')
               .select('*')
@@ -171,14 +236,13 @@ export const PublicView: React.FC = () => {
       )
       .subscribe()
 
-    return () => {
-      subscription.unsubscribe()
-    }
+    return subscription
   }
 
   // Helper function to get team by index
   const getTeam = (index: number) => {
-    return scoreboard?.teams[index] || null
+    if (!scoreboard?.teams || scoreboard.teams.length <= index) return null
+    return scoreboard.teams[index]
   }
 
   // Helper function to get cumulative team score across all quarters
@@ -190,7 +254,7 @@ export const PublicView: React.FC = () => {
 
   // Helper function to get quarter scores organized by quarter
   const getQuarterHistory = () => {
-    if (!scoreboard || scoreboard.teams.length < 2) return []
+    if (!scoreboard || !scoreboard.teams || scoreboard.teams.length < 2) return []
     
     const teamA = scoreboard.teams[0]
     const teamB = scoreboard.teams[1]
@@ -244,11 +308,11 @@ export const PublicView: React.FC = () => {
             onClick={() => navigate('/')}
             className="text-gray-300 hover:text-white transition-colors flex items-center gap-2"
           >
-            ← Back to Dashboard
+            ←
           </button>
           <div className="text-center">
             <h1 className="text-2xl font-bold">
-              {scoreboard.teams.length >= 2 
+              {scoreboard.teams && scoreboard.teams.length >= 2 
                 ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
                 : 'Loading teams...'
               }
@@ -264,7 +328,7 @@ export const PublicView: React.FC = () => {
       {/* Main Scoreboard */}
       <div className="max-w-6xl mx-auto py-8 px-6">
         <div className="grid grid-cols-2 gap-8">
-          {/* Team A */}
+          {/* Home Team */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-8">
               {getTeam(0)?.name || 'Loading...'}
@@ -274,7 +338,7 @@ export const PublicView: React.FC = () => {
             </div>
           </div>
 
-          {/* Team B */}
+          {/* Away Team */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-8">
               {getTeam(1)?.name || 'Loading...'}
@@ -313,7 +377,7 @@ export const PublicView: React.FC = () => {
           <div className="bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
             <h3 className="text-xl font-bold mb-6">Quarter History</h3>
             
-            {scoreboard.teams.length >= 2 && (
+            {scoreboard.teams && scoreboard.teams.length >= 2 && (
               <>
                 {/* Header */}
                 <div className="grid grid-cols-3 gap-4 mb-4 text-sm font-medium text-gray-300">
