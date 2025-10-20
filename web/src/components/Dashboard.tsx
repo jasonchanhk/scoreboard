@@ -171,22 +171,50 @@ export const Dashboard: React.FC = () => {
   }
 
   const generateShareCode = async (scoreboardId: string) => {
-    try {
-      const shareCode = Math.random().toString(36).substring(2, 8).toUpperCase()
-      const { error } = await supabase
-        .from('scoreboards')
-        .update({ share_code: shareCode })
-        .eq('id', scoreboardId)
-
-      if (error) throw error
-
-      // Update local state
-      setScoreboards(scoreboards.map(sb => 
-        sb.id === scoreboardId ? { ...sb, share_code: shareCode } : sb
-      ))
-    } catch (error) {
-      console.error('Error generating share code:', error)
+    // Secure 6-char code generator using a curated alphabet (A-Z, 0-9)
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    const generateCode = () => {
+      const bytes = new Uint8Array(6)
+      // crypto is available in modern browsers; fallback not provided intentionally
+      window.crypto.getRandomValues(bytes)
+      let out = ''
+      for (let i = 0; i < bytes.length; i++) {
+        out += alphabet[bytes[i] % alphabet.length]
+      }
+      return out
     }
+
+    const maxAttempts = 10
+    let lastError: unknown = null
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const shareCode = generateCode()
+        const { error } = await supabase
+          .from('scoreboards')
+          .update({ share_code: shareCode })
+          .eq('id', scoreboardId)
+
+        if (error) {
+          // If unique violation (23505), retry with a new code
+          // @ts-ignore - supabase error may include code
+          if (error.code === '23505') {
+            continue
+          }
+          throw error
+        }
+
+        // Success: update local state and exit
+        setScoreboards(scoreboards.map(sb => 
+          sb.id === scoreboardId ? { ...sb, share_code: shareCode } : sb
+        ))
+        return
+      } catch (err) {
+        lastError = err
+      }
+    }
+
+    console.error('Error generating share code after retries:', lastError)
   }
 
   const deleteScoreboard = async (scoreboardId: string) => {
