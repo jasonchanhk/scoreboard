@@ -1,319 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from './Timer'
-
-interface Team {
-  id: string
-  name: string
-  scoreboard_id: string
-  position: 'home' | 'away'
-  created_at: string
-}
-
-interface Quarter {
-  id: string
-  team_id: string
-  quarter_number: number
-  points: number
-  fouls: number
-  timeouts: number
-  created_at: string
-}
-
-interface ScoreboardData {
-  id: string
-  owner_id: string
-  share_code: string | null
-  current_quarter: number
-  timer: string
-  timer_duration: number
-  timer_started_at: string | null
-  timer_state: 'stopped' | 'running' | 'paused'
-  timer_paused_duration: number
-  venue: string | null
-  game_date: string | null
-  game_start_time: string | null
-  game_end_time: string | null
-  created_at: string
-  teams: Team[]
-}
+import { ScoreboardHeader } from './ScoreboardHeader'
+import { ScoreboardDisplay } from './ScoreboardDisplay'
+import { QuarterHistory } from './QuarterHistory'
+import { useScoreboardData } from '../hooks/useScoreboardData'
+import type { Quarter } from '../types/scoreboard'
 
 export const Scoreboard: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [scoreboard, setScoreboard] = useState<ScoreboardData | null>(null)
   const [quarters, setQuarters] = useState<Quarter[]>([])
-  const [allQuarters, setAllQuarters] = useState<Quarter[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isOwner, setIsOwner] = useState(false)
   const [showCopied, setShowCopied] = useState(false)
-  const subscriptionRef = useRef<any>(null)
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const scoreboardRef = useRef<ScoreboardData | null>(null)
+  
+  const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
+    scoreboardId: id,
+    userId: user?.id
+  })
 
+  // Fetch current quarter data when scoreboard or current quarter changes
   useEffect(() => {
-    if (!id) return
-    
-    // Clean up existing subscription and polling
-    if (subscriptionRef.current) {
-      subscriptionRef.current.unsubscribe()
-      subscriptionRef.current = null
-    }
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current)
-      pollIntervalRef.current = null
-    }
-    
-    fetchScoreboard()
-    subscriptionRef.current = subscribeToUpdates()
-    
-    // Add fallback polling every 10 seconds (much less frequent)
-    pollIntervalRef.current = setInterval(() => {
-      if (scoreboard?.id) {
-        supabase
-          .from('scoreboards')
-          .select(`*, teams (*)`)
-          .eq('id', scoreboard.id)
-          .single()
-          .then(({ data }) => {
-            if (data && JSON.stringify(data) !== JSON.stringify(scoreboard)) {
-              // Ensure teams are ordered consistently (home first, away second)
-              if (data.teams) {
-                data.teams.sort((a: Team, b: Team) => {
-                  if (a.position === 'home' && b.position === 'away') return -1
-                  if (a.position === 'away' && b.position === 'home') return 1
-                  return 0
-                })
-              }
-              setScoreboard(data)
-            }
-          })
-      }
-    }, 10000) // 10 seconds instead of 3
-    
-    return () => {
-      if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe()
-        subscriptionRef.current = null
-      }
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-        pollIntervalRef.current = null
-      }
-    }
-  }, [id]) // ONLY depend on id, NOT scoreboard!
+    if (!scoreboard?.teams || scoreboard.teams.length === 0) return
 
-  const fetchScoreboard = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('scoreboards')
-        .select(`
-          *,
-          teams (*)
-        `)
-        .eq('id', id)
-        .single()
+    const fetchCurrentQuarter = async () => {
+      const teamIds = scoreboard.teams.map(team => team.id)
+      const { data: quartersData, error: quartersError } = await supabase
+        .from('quarters')
+        .select('*')
+        .in('team_id', teamIds)
+        .eq('quarter_number', scoreboard.current_quarter)
 
-      if (error) throw error
-      if (!data) {
-        setError('Scoreboard not found')
+      if (quartersError) {
+        console.error('Error fetching current quarter:', quartersError)
         return
       }
-
-      // Ensure teams are ordered consistently (home first, away second)
-      if (data.teams) {
-        data.teams.sort((a: Team, b: Team) => {
-          if (a.position === 'home' && b.position === 'away') return -1
-          if (a.position === 'away' && b.position === 'home') return 1
-          return 0
-        })
-      }
-
-      setScoreboard(data)
-      scoreboardRef.current = data
-      setIsOwner(user?.id === data.owner_id)
-
-      // Fetch quarters for all teams
-      if (data.teams && data.teams.length > 0) {
-        const teamIds = data.teams.map((team: Team) => team.id)
-        
-        // Fetch current quarter
-        const { data: quartersData, error: quartersError } = await supabase
-          .from('quarters')
-          .select('*')
-          .in('team_id', teamIds)
-          .eq('quarter_number', data.current_quarter)
-
-        if (quartersError) throw quartersError
-        setQuarters(quartersData || [])
-
-        // Fetch all quarters for history
-        const { data: allQuartersData, error: allQuartersError } = await supabase
-          .from('quarters')
-          .select('*')
-          .in('team_id', teamIds)
-          .order('quarter_number', { ascending: true })
-
-        if (allQuartersError) throw allQuartersError
-        setAllQuarters(allQuartersData || [])
-      }
-    } catch (error) {
-      console.error('Error fetching scoreboard:', error)
-      setError('Failed to load scoreboard')
-    } finally {
-      setLoading(false)
+      setQuarters(quartersData || [])
     }
-  }
 
-  const subscribeToUpdates = () => {
-    if (!id) return
-
-    const subscription = supabase
-      .channel(`scoreboard-${id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'scoreboards',
-          filter: `id=eq.${id}`,
-        },
-        async () => {
-          // Fetch complete scoreboard data with teams
-          const { data: completeData, error } = await supabase
-            .from('scoreboards')
-            .select(`
-              *,
-              teams (*)
-            `)
-            .eq('id', id)
-            .single()
-
-          if (error) {
-            console.error('Error fetching complete scoreboard data:', error)
-            return
-          }
-
-          // Ensure teams are ordered consistently (home first, away second)
-          if (completeData.teams) {
-            completeData.teams.sort((a: Team, b: Team) => {
-              if (a.position === 'home' && b.position === 'away') return -1
-              if (a.position === 'away' && b.position === 'home') return 1
-              return 0
-            })
-          }
-          
-          setScoreboard(completeData)
-          scoreboardRef.current = completeData
-          
-          // Also refresh quarters data when scoreboard updates
-          if (completeData.teams && completeData.teams.length > 0) {
-            const teamIds = completeData.teams.map((team: Team) => team.id)
-            
-            // Refresh current quarter
-            const { data: currentQuarters } = await supabase
-              .from('quarters')
-              .select('*')
-              .in('team_id', teamIds)
-              .eq('quarter_number', completeData.current_quarter)
-            setQuarters(currentQuarters || [])
-
-            // Refresh all quarters for history
-            const { data: allQuartersData } = await supabase
-              .from('quarters')
-              .select('*')
-              .in('team_id', teamIds)
-              .order('quarter_number', { ascending: true })
-            setAllQuarters(allQuartersData || [])
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'quarters',
-        },
-        async (payload) => {
-          // Only refresh if this quarter belongs to our scoreboard teams
-          const currentScoreboard = scoreboardRef.current
-          if (currentScoreboard?.teams && payload.new) {
-            const teamIds = currentScoreboard.teams.map(team => team.id)
-            const quarterTeamId = (payload.new as any).team_id
-            
-            if (teamIds.includes(quarterTeamId)) {
-              // Refresh current quarter
-              const { data: currentQuarters } = await supabase
-                .from('quarters')
-                .select('*')
-                .in('team_id', teamIds)
-                .eq('quarter_number', currentScoreboard.current_quarter)
-              setQuarters(currentQuarters || [])
-
-              // Refresh all quarters for history
-              const { data: allQuartersData } = await supabase
-                .from('quarters')
-                .select('*')
-                .in('team_id', teamIds)
-                .order('quarter_number', { ascending: true })
-              setAllQuarters(allQuartersData || [])
-            }
-          }
-        }
-      )
-      .subscribe()
-
-    return subscription
-  }
+    fetchCurrentQuarter()
+  }, [scoreboard?.current_quarter, scoreboard?.teams])
 
   // Helper function to get team score for current quarter
   const getTeamScore = (teamId: string) => {
     const quarter = quarters.find(q => q.team_id === teamId)
     return quarter?.points || 0
-  }
-
-  // Helper function to get cumulative team score across all quarters
-  const getTeamTotalScore = (teamId: string) => {
-    return allQuarters
-      .filter(q => q.team_id === teamId)
-      .reduce((sum, q) => sum + q.points, 0)
-  }
-
-  // Helper function to get team by index
-  const getTeam = (index: number) => {
-    if (!scoreboard?.teams || scoreboard.teams.length <= index) return null
-    return scoreboard.teams[index]
-  }
-
-  // Helper function to get quarter scores organized by quarter
-  const getQuarterHistory = () => {
-    if (!scoreboard || !scoreboard.teams || scoreboard.teams.length < 2) return []
-    
-    const teamA = scoreboard.teams[0]
-    const teamB = scoreboard.teams[1]
-    const quarters = [1, 2, 3, 4]
-    
-    return quarters.map(q => {
-      const teamAQuarter = allQuarters.find(quarter => 
-        quarter.team_id === teamA.id && quarter.quarter_number === q
-      )
-      const teamBQuarter = allQuarters.find(quarter => 
-        quarter.team_id === teamB.id && quarter.quarter_number === q
-      )
-      
-      return {
-        quarter: q,
-        teamAScore: teamAQuarter?.points || 0,
-        teamBScore: teamBQuarter?.points || 0,
-        teamAName: teamA.name,
-        teamBName: teamB.name,
-      }
-    })
   }
 
 
@@ -327,6 +60,12 @@ export const Scoreboard: React.FC = () => {
     setTimeout(() => {
       setShowCopied(false)
     }, 3000)
+  }
+
+  // Navigate to public view
+  const handleViewPublic = () => {
+    if (!id) return
+    navigate(`/scoreboard/${id}/view`)
   }
 
   // Timer control functions - With optimistic updates
@@ -594,126 +333,32 @@ export const Scoreboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header */}
-      <div className="bg-gray-800 py-4 px-6">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <button
-            onClick={() => navigate('/')}
-            className="text-gray-300 hover:text-white"
-          >
-            ← Back to Dashboard
-          </button>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">
-              {scoreboard.teams && scoreboard.teams.length >= 2 
-                ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
-                : 'Loading teams...'
-              }
-            </h1>
-            <div className="text-sm text-gray-400 flex items-center justify-center gap-2">
-              <span>{isOwner ? 'Owner View' : 'View Only'} • Quarter {scoreboard.current_quarter}</span>
-            </div>
-            {(scoreboard.venue || scoreboard.game_date || scoreboard.game_start_time || scoreboard.game_end_time) && (
-              <div className="text-sm text-gray-400 mt-2 flex items-center justify-center gap-4">
-                {scoreboard.venue && (
-                  <div className="flex items-center">
-                    <span>📍</span>
-                    <span className="ml-1">{scoreboard.venue}</span>
-                  </div>
-                )}
-                {scoreboard.game_date && (
-                  <div className="flex items-center">
-                    <span>📅</span>
-                    <span className="ml-1">
-                      {new Date(scoreboard.game_date).toLocaleDateString()}
-                      {(scoreboard.game_start_time || scoreboard.game_end_time) && (
-                        <span className="ml-2 text-gray-300">
-                          {scoreboard.game_start_time && scoreboard.game_end_time 
-                            ? `${scoreboard.game_start_time.substring(0, 5)} - ${scoreboard.game_end_time.substring(0, 5)}`
-                            : scoreboard.game_start_time 
-                              ? `from ${scoreboard.game_start_time.substring(0, 5)}`
-                              : scoreboard.game_end_time 
-                                ? `until ${scoreboard.game_end_time.substring(0, 5)}`
-                                : ''
-                          }
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="w-24"></div> {/* Spacer for centering */}
-        </div>
-      </div>
+      <ScoreboardHeader
+        scoreboard={scoreboard!}
+        isOwner={isOwner}
+        onBackClick={() => navigate('/')}
+        onViewPublic={handleViewPublic}
+        onCopyShareCode={handleCopyShareCode}
+        showCopied={showCopied}
+      />
 
       {/* Main Scoreboard */}
       <div className="max-w-6xl mx-auto py-8 px-6">
-        <div className="grid grid-cols-2 gap-8">
-          {/* Home Team */}
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-8">
-              {getTeam(0)?.name || 'Loading...'}
-            </h2>
-            <div className="relative">
-              <div className="text-8xl font-bold mb-4">
-                {getTeam(0) ? getTeamTotalScore(getTeam(0)!.id) : 0}
-              </div>
-              {isOwner && getTeam(0) && (
-                <div className="space-y-4">
-                  <button
-                    onClick={() => updateScore(0, 1)}
-                    className="block w-full bg-green-600 hover:bg-green-700 text-white py-4 px-6 rounded-lg text-xl font-bold"
-                  >
-                    +1
-                  </button>
-                  <button
-                    onClick={() => updateScore(0, -1)}
-                    className="block w-full bg-red-600 hover:bg-red-700 text-white py-4 px-6 rounded-lg text-xl font-bold"
-                  >
-                    -1
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Away Team */}
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-8">
-              {getTeam(1)?.name || 'Loading...'}
-            </h2>
-            <div className="relative">
-              <div className="text-8xl font-bold mb-4">
-                {getTeam(1) ? getTeamTotalScore(getTeam(1)!.id) : 0}
-              </div>
-              {isOwner && getTeam(1) && (
-                <div className="space-y-4">
-                  <button
-                    onClick={() => updateScore(1, 1)}
-                    className="block w-full bg-green-600 hover:bg-green-700 text-white py-4 px-6 rounded-lg text-xl font-bold"
-                  >
-                    +1
-                  </button>
-                  <button
-                    onClick={() => updateScore(1, -1)}
-                    className="block w-full bg-red-600 hover:bg-red-700 text-white py-4 px-6 rounded-lg text-xl font-bold"
-                  >
-                    -1
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Scoreboard Display */}
+        <ScoreboardDisplay
+          teams={scoreboard?.teams || []}
+          allQuarters={allQuarters}
+          isOwner={isOwner}
+          onScoreUpdate={updateScore}
+        />
 
         {/* Timer */}
         <div className="mt-12 text-center">
           <Timer
-            duration={scoreboard.timer_duration}
-            startedAt={scoreboard.timer_started_at}
-            state={scoreboard.timer_state}
-            pausedDuration={scoreboard.timer_paused_duration}
+            duration={scoreboard?.timer_duration || 0}
+            startedAt={scoreboard?.timer_started_at || null}
+            state={scoreboard?.timer_state || 'stopped'}
+            pausedDuration={scoreboard?.timer_paused_duration || 0}
             isOwner={isOwner}
             onStart={handleTimerStart}
             onPause={handleTimerPause}
@@ -734,7 +379,7 @@ export const Scoreboard: React.FC = () => {
                 >
                   Previous
                 </button>
-                <span className="text-2xl font-bold">Q{scoreboard.current_quarter}</span>
+                <span className="text-2xl font-bold">Q{scoreboard?.current_quarter || 1}</span>
                 <button
                   onClick={() => updateQuarter(1)}
                   className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
@@ -748,68 +393,15 @@ export const Scoreboard: React.FC = () => {
 
         {/* Quarter History */}
         <div className="mt-8 text-center">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
-            <h3 className="text-xl font-bold mb-6">Quarter History</h3>
-            
-            {scoreboard.teams && scoreboard.teams.length >= 2 && (
-              <>
-                {/* Header */}
-                <div className="grid grid-cols-3 gap-4 mb-4 text-sm font-medium text-gray-300">
-                  <div>Quarter</div>
-                  <div className="text-center">{getTeam(0)?.name}</div>
-                  <div className="text-center">{getTeam(1)?.name}</div>
-                </div>
-
-                {/* Quarter rows */}
-                {getQuarterHistory().map((q) => (
-                  <div key={q.quarter} className={`grid grid-cols-3 gap-4 py-2 text-sm rounded ${
-                    q.quarter === scoreboard.current_quarter ? 'bg-gray-700' : ''
-                  }`}>
-                    <div className="font-medium">Q{q.quarter}</div>
-                    <div className="text-center">
-                      {q.quarter === scoreboard.current_quarter ? (
-                        <span className="text-green-400 font-bold">
-                          {getTeam(0) ? getTeamScore(getTeam(0)!.id) : 0}
-                        </span>
-                      ) : (
-                        q.teamAScore
-                      )}
-                    </div>
-                    <div className="text-center">
-                      {q.quarter === scoreboard.current_quarter ? (
-                        <span className="text-green-400 font-bold">
-                          {getTeam(1) ? getTeamScore(getTeam(1)!.id) : 0}
-                        </span>
-                      ) : (
-                        q.teamBScore
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
+          <QuarterHistory
+            teams={scoreboard?.teams || []}
+            allQuarters={allQuarters}
+            currentQuarter={scoreboard?.current_quarter || 1}
+            quarters={quarters}
+            showCurrentQuarterScores={true}
+          />
         </div>
 
-
-        {/* Share Code Display */}
-        {scoreboard.share_code && (
-          <div className="mt-8 text-center">
-            <div className="bg-gray-800 rounded-lg p-4 max-w-md mx-auto">
-              <h3 className="text-lg font-bold mb-2">Share Code</h3>
-              <div 
-                className="text-2xl font-mono bg-gray-700 px-4 py-2 rounded cursor-pointer hover:bg-gray-600 transition-colors"
-                onClick={handleCopyShareCode}
-                title="Click to copy share code"
-              >
-                {showCopied ? 'Copied!' : scoreboard.share_code}
-              </div>
-              <p className="text-sm text-gray-400 mt-2">
-                Click the code above to copy it
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

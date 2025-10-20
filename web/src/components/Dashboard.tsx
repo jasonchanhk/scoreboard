@@ -35,6 +35,7 @@ export const Dashboard: React.FC = () => {
   const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
   const [creating, setCreating] = useState(false)
   const [joinCode, setJoinCode] = useState('')
+  const [joining, setJoining] = useState(false)
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const initials = (user?.email?.slice(0, 2) || 'US').toUpperCase()
@@ -408,11 +409,31 @@ export const Dashboard: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-900">Your Scoreboards</h2>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault()
                   const code = joinCode.trim().toUpperCase()
                   if (/^[A-Z0-9]{6}$/.test(code)) {
-                    navigate(`/view/${code}`)
+                    setJoining(true)
+                    try {
+                      const { data, error } = await supabase
+                        .from('scoreboards')
+                        .select('id')
+                        .eq('share_code', code)
+                        .single()
+
+                      if (error) throw error
+                      if (!data) {
+                        alert('Scoreboard not found or not shared')
+                        return
+                      }
+
+                      navigate(`/scoreboard/${data.id}/view`)
+                    } catch (error) {
+                      console.error('Error joining scoreboard:', error)
+                      alert('Failed to join scoreboard')
+                    } finally {
+                      setJoining(false)
+                    }
                   }
                 }}
                 className="flex gap-2"
@@ -431,10 +452,10 @@ export const Dashboard: React.FC = () => {
                 />
                 <button
                   type="submit"
-                  disabled={!/^[A-Z0-9]{6}$/.test(joinCode)}
+                  disabled={!/^[A-Z0-9]{6}$/.test(joinCode) || joining}
                   className="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
                 >
-                  View
+                  {joining ? 'Joining...' : 'View'}
                 </button>
               </form>
               <button

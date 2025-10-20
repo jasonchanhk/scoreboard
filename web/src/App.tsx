@@ -84,7 +84,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/view/:shareCode" element={<PublicView />} />
+            <Route path="/scoreboard/:id/view" element={<PublicView />} />
             {/* Catch-all route for invalid URLs */}
             <Route path="*" element={<InvalidUrlRedirect />} />
           </Routes>
