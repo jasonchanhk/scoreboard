@@ -84,72 +84,85 @@ export const Timer: React.FC<TimerProps> = ({
 
   const isExpired = timeRemaining <= 0
   const displayTime = isExpired ? '00:00' : formatTime(timeRemaining)
+  
+  // Determine if reset should be disabled (at beginning or when running)
+  const isResetDisabled = state === 'running' || timeRemaining === duration
 
   return (
-    <div className={`bg-gray-800 rounded-lg p-6 text-center ${className}`}>
-      <h3 className="text-xl font-bold mb-4">Timer</h3>
+    <div className={`bg-transparent p-0 flex flex-col h-full justify-between ${className}`}>
+      <div className="text-center">
+        <h3 className="text-base font-bold mb-2">Timer</h3>
+      </div>
       
-      {/* Timer Display */}
-      <div className={`text-6xl font-mono font-bold mb-4 ${getTimerColor()}`}>
-        {displayTime}
-      </div>
-
-      {/* Timer State Indicator */}
-      <div className="text-sm text-gray-400 mb-4">
-        {state === 'running' && '⏱️ Running'}
-        {state === 'paused' && '⏸️ Paused'}
-        {state === 'stopped' && '⏹️ Stopped'}
-        {isExpired && '⏰ Time Expired'}
-      </div>
-
-      {/* Controls (Owner Only) */}
-      {isOwner && (
-        <div className="flex justify-center space-x-3">
-          {state === 'stopped' && (
-            <button
-              onClick={onStart}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
-            >
-              ▶️ Start
-            </button>
-          )}
-          
-          {state === 'running' && (
-            <button
-              onClick={onPause}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
-            >
-              ⏸️ Pause
-            </button>
-          )}
-          
-          {state === 'paused' && (
-            <>
-              <button
-                onClick={onStart}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
-              >
-                ▶️ Resume
-              </button>
-              <button
-                onClick={onReset}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
-              >
-                🔄 Reset
-              </button>
-            </>
-          )}
-          
-          {state === 'stopped' && timeRemaining < duration && (
+      {/* Timer Display with Controls */}
+      <div className="flex flex-col items-center gap-2 flex-1 justify-center">
+        {/* Timer Display and Controls Row */}
+        <div className="flex items-center justify-center gap-3">
+          {/* Reset Button (Left) - Always show when owner */}
+          {isOwner && (
             <button
               onClick={onReset}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+              disabled={isResetDisabled}
+              className={`text-xl font-bold rounded-full w-10 h-10 flex items-center justify-center transition-colors ${
+                isResetDisabled
+                  ? 'text-gray-500 bg-gray-800 cursor-not-allowed opacity-50'
+                  : 'text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 cursor-pointer'
+              }`}
+              aria-label="Reset Timer"
             >
-              🔄 Reset
+              ↻
             </button>
           )}
+
+          {/* Timer Display */}
+          <div className={`text-6xl font-mono font-bold ${getTimerColor()}`}>
+            {displayTime}
+          </div>
+
+          {/* Start/Stop Button (Right) - Only show when owner */}
+          {isOwner && (
+            <>
+              {state === 'stopped' && (
+                <button
+                  onClick={onStart}
+                  className="text-gray-300 hover:text-white transition-colors text-xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+                  aria-label="Start Timer"
+                >
+                  ▶
+                </button>
+              )}
+              
+              {state === 'running' && (
+                <button
+                  onClick={onPause}
+                  className="text-gray-300 hover:text-white transition-colors text-xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+                  aria-label="Pause Timer"
+                >
+                  ⏸
+                </button>
+              )}
+              
+              {state === 'paused' && (
+                <button
+                  onClick={onStart}
+                  className="text-gray-300 hover:text-white transition-colors text-xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+                  aria-label="Resume Timer"
+                >
+                  ▶
+                </button>
+              )}
+            </>
+          )}
         </div>
-      )}
+        
+        {/* Timer State Indicator */}
+        <div className="text-xs text-gray-400">
+          {state === 'running' && 'Running'}
+          {state === 'paused' && 'Paused'}
+          {state === 'stopped' && 'Stopped'}
+          {isExpired && '⏰ Time Expired'}
+        </div>
+      </div>
     </div>
   )
 }

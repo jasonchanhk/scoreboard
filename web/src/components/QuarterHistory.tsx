@@ -59,38 +59,36 @@ export const QuarterHistory: React.FC<QuarterHistoryProps> = ({
   }
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 max-w-2xl mx-auto">
-      <h3 className="text-xl font-bold mb-6">Quarter History</h3>
-      
+    <div className="w-full">
       {/* Header */}
-      <div className="grid grid-cols-3 gap-4 mb-4 text-sm font-medium text-gray-300">
-        <div>Quarter</div>
-        <div className="text-center">{getTeam(0)?.name}</div>
-        <div className="text-center">{getTeam(1)?.name}</div>
+      <div className="flex gap-2 mb-2 py-1.5 px-2 text-xs font-medium text-gray-300">
+        <div className="w-8 flex-shrink-0"></div>
+        <div className="flex-1 text-center truncate">{getTeam(0)?.name}</div>
+        <div className="flex-1 text-center truncate">{getTeam(1)?.name}</div>
       </div>
 
       {/* Quarter rows */}
       {getQuarterHistory().map((q) => (
-        <div key={q.quarter} className={`grid grid-cols-3 gap-4 py-2 text-sm rounded ${
+        <div key={q.quarter} className={`flex gap-2 py-1.5 px-2 text-xs rounded ${
           q.quarter === currentQuarter ? 'bg-gray-700' : ''
         }`}>
-          <div className="font-medium">Q{q.quarter}</div>
-          <div className="text-center">
+          <div className="w-8 flex-shrink-0 font-medium">Q{q.quarter}</div>
+          <div className="flex-1 text-center">
             {q.quarter === currentQuarter && showCurrentQuarterScores ? (
-              <span className="text-green-400 font-bold">
+              <span className="text-green-400 font-bold text-sm">
                 {getTeam(0) ? getTeamScore(getTeam(0)!.id) : 0}
               </span>
             ) : (
-              q.teamAScore
+              <span className="text-sm">{q.teamAScore}</span>
             )}
           </div>
-          <div className="text-center">
+          <div className="flex-1 text-center">
             {q.quarter === currentQuarter && showCurrentQuarterScores ? (
-              <span className="text-green-400 font-bold">
+              <span className="text-green-400 font-bold text-sm">
                 {getTeam(1) ? getTeamScore(getTeam(1)!.id) : 0}
               </span>
             ) : (
-              q.teamBScore
+              <span className="text-sm">{q.teamBScore}</span>
             )}
           </div>
         </div>

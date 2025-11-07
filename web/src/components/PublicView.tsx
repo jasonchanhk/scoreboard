@@ -115,7 +115,7 @@ export const PublicView: React.FC = () => {
       </button>
 
       {/* Main Scoreboard */}
-      <div className="flex-1 flex flex-col justify-center py-4 px-20">
+      <div className="flex-1 flex flex-col justify-center py-10 px-20">
         <div className="w-full h-[70vh]">
           {/* Top Section: Team Names and Scores */}
           <div className="grid grid-cols-2 gap-4 h-full">

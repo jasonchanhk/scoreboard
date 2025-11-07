@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from './Timer'
-import { ScoreboardHeader } from './ScoreboardHeader'
-import { ScoreboardDisplay } from './ScoreboardDisplay'
 import { QuarterHistory } from './QuarterHistory'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import type { Quarter } from '../types/scoreboard'
@@ -305,6 +304,14 @@ export const Scoreboard: React.FC = () => {
     }
   }
 
+  // Helper function to get cumulative team score across all quarters
+  const getTeamTotalScore = (teamId: string) => {
+    if (!allQuarters || !teamId) return 0
+    return allQuarters
+      .filter(q => q.team_id === teamId)
+      .reduce((sum, q) => sum + q.points, 0)
+  }
+
 
   if (loading) {
     return (
@@ -330,78 +337,203 @@ export const Scoreboard: React.FC = () => {
     )
   }
 
+  const team0 = scoreboard.teams?.[0]
+  const team1 = scoreboard.teams?.[1]
+  
+  // Generate public view URL for QR code
+  const publicViewUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Header */}
-      <ScoreboardHeader
-        scoreboard={scoreboard!}
-        isOwner={isOwner}
-        onBackClick={() => navigate('/')}
-        onViewPublic={handleViewPublic}
-        onCopyShareCode={handleCopyShareCode}
-        showCopied={showCopied}
-      />
+    <div className="h-screen bg-gray-900 text-white flex flex-col relative overflow-hidden">
+      {/* Back Button - Top Left Corner */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+        aria-label="Back to Dashboard"
+      >
+        ←
+      </button>
 
       {/* Main Scoreboard */}
-      <div className="max-w-6xl mx-auto py-8 px-6">
-        {/* Scoreboard Display */}
-        <ScoreboardDisplay
-          teams={scoreboard?.teams || []}
-          allQuarters={allQuarters}
-          isOwner={isOwner}
-          onScoreUpdate={updateScore}
-        />
-
-        {/* Timer */}
-        <div className="mt-12 text-center">
-          <Timer
-            duration={scoreboard?.timer_duration || 0}
-            startedAt={scoreboard?.timer_started_at || null}
-            state={scoreboard?.timer_state || 'stopped'}
-            pausedDuration={scoreboard?.timer_paused_duration || 0}
-            isOwner={isOwner}
-            onStart={handleTimerStart}
-            onPause={handleTimerPause}
-            onReset={handleTimerReset}
-            className="max-w-md mx-auto"
-          />
-        </div>
-
-        {/* Quarter Controls */}
-        {isOwner && (
-          <div className="mt-8 text-center">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-xl font-bold mb-4">Quarter Controls</h3>
-              <div className="flex justify-center items-center space-x-4">
+      <div className="flex-1 flex flex-col py-10 px-20 overflow-hidden">
+        {/* Top Section: Score Container */}
+        <div className="flex-1 min-h-0 mb-4 flex items-center justify-center">
+          <div className="flex items-center gap-4 h-full">
+            {/* Left Score Controls */}
+            {isOwner && (
+              <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => updateQuarter(-1)}
-                  className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
+                  onClick={() => updateScore(0, 1)}
+                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+                  aria-label="Add 1 point"
                 >
-                  Previous
+                  +
                 </button>
-                <span className="text-2xl font-bold">Q{scoreboard?.current_quarter || 1}</span>
                 <button
-                  onClick={() => updateQuarter(1)}
-                  className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg"
+                  onClick={() => updateScore(0, -1)}
+                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+                  aria-label="Subtract 1 point"
                 >
-                  Next
+                  −
                 </button>
               </div>
-            </div>
-          </div>
-        )}
+            )}
+            
+            {/* Team Containers */}
+            <div className="grid grid-cols-2 gap-4 h-full" style={{ width: '60vw' }}>
+              {/* Left Team */}
+              <div className="border-4 border-white rounded-2xl p-3 flex flex-col h-full">
+                <div className="text-2xl font-bold mb-2 pb-2 border-b-4 border-white text-center">
+                  {team0?.name || 'Team 1'}
+                </div>
+                <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
+                  <div className="font-bold leading-none" style={{ fontSize: 'min(30vh, 28vw)' }}>
+                    {team0 ? getTeamTotalScore(team0.id) : 0}
+                  </div>
+                </div>
+              </div>
 
-        {/* Quarter History */}
-        <div className="mt-8 text-center">
-          <QuarterHistory
-            teams={scoreboard?.teams || []}
-            allQuarters={allQuarters}
-            currentQuarter={scoreboard?.current_quarter || 1}
-            quarters={quarters}
-            showCurrentQuarterScores={true}
-          />
+              {/* Right Team */}
+              <div className="border-4 border-white rounded-2xl p-3 flex flex-col h-full">
+                <div className="text-2xl font-bold mb-2 pb-2 border-b-4 border-white text-center">
+                  {team1?.name || 'Team 2'}
+                </div>
+                <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
+                  <div className="font-bold leading-none" style={{ fontSize: 'min(30vh, 28vw)' }}>
+                    {team1 ? getTeamTotalScore(team1.id) : 0}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Score Controls */}
+            {isOwner && (
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => updateScore(1, 1)}
+                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+                  aria-label="Add 1 point"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => updateScore(1, -1)}
+                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+                  aria-label="Subtract 1 point"
+                >
+                  −
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Bottom Section: Three Equal Width Sections using Flex */}
+        <div className="flex gap-4 flex-shrink-0 min-h-0" style={{ maxHeight: '40vh' }}>
+          {/* Left: Quarter History */}
+          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0">
+            <h3 className="text-base font-bold mb-2 text-center">Quarter History</h3>
+            <div className="flex-1 overflow-auto min-h-0">
+              <QuarterHistory
+                teams={scoreboard?.teams || []}
+                allQuarters={allQuarters}
+                currentQuarter={scoreboard?.current_quarter || 1}
+                quarters={quarters}
+                showCurrentQuarterScores={true}
+              />
+            </div>
+          </div>
+
+          {/* Center: Timer and Quarter Control */}
+          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0">
+            {/* Timer */}
+            <div className="mb-3 flex-1 flex flex-col min-h-0">
+              <Timer
+                duration={scoreboard?.timer_duration || 0}
+                startedAt={scoreboard?.timer_started_at || null}
+                state={scoreboard?.timer_state || 'stopped'}
+                pausedDuration={scoreboard?.timer_paused_duration || 0}
+                isOwner={isOwner}
+                onStart={handleTimerStart}
+                onPause={handleTimerPause}
+                onReset={handleTimerReset}
+                className="w-full h-full"
+              />
+            </div>
+
+            {/* Quarter Controls */}
+            {isOwner && (
+              <div className="border-t-4 border-white pt-3 flex-shrink-0">
+                <div className="flex justify-center items-center space-x-3">
+                  <button
+                    onClick={() => updateQuarter(-1)}
+                    className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+                    aria-label="Previous Quarter"
+                  >
+                    ←
+                  </button>
+                  <span className="text-xl font-bold">Q{scoreboard?.current_quarter || 1}</span>
+                  <button
+                    onClick={() => updateQuarter(1)}
+                    className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+                    aria-label="Next Quarter"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Share Code and View Public */}
+          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0">
+            <h3 className="text-base font-bold mb-2 text-center">Share</h3>
+            <div className="flex gap-3 flex-1 items-start">
+              {/* Left Side: Share Code and View Public Button */}
+              <div className="flex-1 flex flex-col">
+                {/* Share Code */}
+                {scoreboard.share_code && (
+                  <div className="mb-3 flex-shrink-0">
+                    <div className="text-xs text-gray-300 mb-1 text-center">Share Code</div>
+                    <div 
+                      className="text-xl font-mono bg-gray-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors text-center"
+                      onClick={handleCopyShareCode}
+                      title="Click to copy share code"
+                    >
+                      {showCopied ? 'Copied!' : scoreboard.share_code}
+                    </div>
+                  </div>
+                )}
+                
+                {/* View Public Button */}
+                <div className="flex-shrink-0">
+                  <div className="text-xs text-gray-300 mb-1 text-center">Public View</div>
+                  <button
+                    onClick={handleViewPublic}
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-3 rounded-lg text-sm font-medium text-center cursor-pointer w-full"
+                  >
+                    Go to Public View
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Side: QR Code */}
+              {publicViewUrl && (
+                <div className="flex-shrink-0 flex flex-col items-center">
+                  <div className="text-xs text-gray-300 mb-1 text-center">Scan to View</div>
+                  <div className="bg-white p-2 rounded-lg">
+                    <QRCodeSVG
+                      value={publicViewUrl}
+                      size={120}
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
