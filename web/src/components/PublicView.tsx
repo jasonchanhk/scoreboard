@@ -5,10 +5,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 // import { ScoreboardDisplay } from './ScoreboardDisplay'
 // import { QuarterHistory } from './QuarterHistory'
 import { useScoreboardData } from '../hooks/useScoreboardData'
+import { useAuth } from '../contexts/AuthContext'
 
 export const PublicView: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   
   const { scoreboard, allQuarters, loading, error } = useScoreboardData({
     scoreboardId: id
@@ -107,7 +109,7 @@ export const PublicView: React.FC = () => {
     <div className="min-h-screen bg-gray-900 text-white flex flex-col relative">
       {/* Back Button - Top Left Corner */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate(user ? '/dashboard' : '/auth')}
         className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center"
         aria-label="Back to Dashboard"
       >

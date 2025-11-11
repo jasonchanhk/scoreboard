@@ -24,11 +24,7 @@ const AuthPage: React.FC = () => {
     )
   }
 
-  return (
-    <div>
-      <LoginForm onToggleMode={() => {}} />
-    </div>
-  )
+  return <LoginForm onToggleMode={() => {}} />
 }
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
