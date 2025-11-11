@@ -6,13 +6,14 @@ import { LoginForm } from './components/LoginForm'
 import { Dashboard } from './components/Dashboard'
 import { Scoreboard } from './components/Scoreboard'
 import { PublicView } from './components/PublicView'
+import { LandingPage } from './components/LandingPage'
 
 const AuthPage: React.FC = () => {
   const { user, loading } = useAuth()
 
   // Redirect to dashboard if user is already authenticated
   if (user) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/dashboard" replace />
   }
 
   if (loading) {
@@ -58,7 +59,7 @@ const InvalidUrlRedirect: React.FC = () => {
 
   // If user is authenticated, redirect to dashboard
   // If not authenticated, redirect to auth page
-  return <Navigate to={user ? "/" : "/auth"} replace />
+  return <Navigate to={user ? "/dashboard" : "/"} replace />
 }
 
 const App: React.FC = () => {
@@ -67,9 +68,10 @@ const App: React.FC = () => {
       <Router>
         <div className="App">
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />

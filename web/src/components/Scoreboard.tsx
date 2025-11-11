@@ -379,7 +379,7 @@ export const Scoreboard: React.FC = () => {
         <div className="text-center">
           <div className="text-white text-xl mb-4">{error || 'Scoreboard not found'}</div>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/dashboard')}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
           >
             Back to Dashboard
@@ -399,7 +399,7 @@ export const Scoreboard: React.FC = () => {
     <div className="h-screen bg-gray-900 text-white flex flex-col relative overflow-hidden">
       {/* Back Button - Top Left Corner */}
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/dashboard')}
         className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
         aria-label="Back to Dashboard"
       >
