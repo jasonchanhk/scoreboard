@@ -455,95 +455,90 @@ export const Dashboard: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {scoreboards.map((scoreboard) => (
-                <div key={scoreboard.id} className="bg-white shadow rounded-lg p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        {scoreboard.teams.length >= 2 
-                          ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
-                          : 'Loading teams...'
-                        }
-                      </h3>
-                      
-                      {/* Date and Time under team names */}
-                      {scoreboard.game_date && (
-                        <div className="text-sm text-gray-600 mb-1">
-                          <span className="font-medium">📅</span>
-                          <span className="ml-1">
-                            {new Date(scoreboard.game_date).toLocaleDateString()}
-                            {(scoreboard.game_start_time || scoreboard.game_end_time) && (
-                              <span className="ml-2 text-gray-500">
-                                {scoreboard.game_start_time && scoreboard.game_end_time 
-                                  ? `${scoreboard.game_start_time.substring(0, 5)} - ${scoreboard.game_end_time.substring(0, 5)}`
-                                  : scoreboard.game_start_time 
-                                    ? `from ${scoreboard.game_start_time.substring(0, 5)}`
-                                    : scoreboard.game_end_time 
-                                      ? `until ${scoreboard.game_end_time.substring(0, 5)}`
-                                      : ''
-                                }
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Location below date/time */}
-                      {scoreboard.venue && (
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">📍</span>
-                          <span className="ml-1">{scoreboard.venue}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Delete button in top-right corner */}
-                    <div className="flex flex-col space-y-1">
-                      <button
-                        onClick={() => deleteScoreboard(scoreboard.id)}
-                        className="text-gray-400 hover:text-red-600 text-2xl leading-none cursor-pointer"
-                        title="Delete scoreboard"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center mb-4">
-                    <div className="text-3xl font-bold text-gray-900">
-                      {scoreboard.teams.length >= 2
-                        ? `${(scoresByScoreboard[scoreboard.id]?.a ?? 0)} - ${(scoresByScoreboard[scoreboard.id]?.b ?? 0)}`
-                        : 'Loading...'}
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Q{scoreboard.current_quarter}
-                    </div>
-                  </div>
+              {scoreboards.map((scoreboard) => {
+                const startTime = scoreboard.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
+                const endTime = scoreboard.game_end_time ? scoreboard.game_end_time.substring(0, 5) : ''
+                const timeDisplay =
+                  startTime && endTime
+                    ? `${startTime} – ${endTime}`
+                    : startTime
+                      ? `Starts ${startTime}`
+                      : endTime
+                        ? `Ends ${endTime}`
+                        : '-'
+                const venueDisplay = scoreboard.venue?.trim() || '-'
+                const dateDisplay = scoreboard.game_date
+                  ? new Date(scoreboard.game_date).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })
+                  : '-'
 
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex space-x-2">
-                      <Link
-                        to={`/scoreboard/${scoreboard.id}`}
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
-                      >
-                        Open
-                      </Link>
-                      {!scoreboard.share_code ? (
-                        <button
-                          onClick={() => editScoreboard(scoreboard.id)}
-                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                      ) : (
-                        <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
-                          {scoreboard.share_code}
+                return (
+                  <div key={scoreboard.id} className="bg-white shadow rounded-lg p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                          {scoreboard.teams.length >= 2
+                            ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
+                            : 'Loading teams...'}
+                        </h3>
+
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-gray-700">
+                            {dateDisplay} · <span className="uppercase tracking-wide text-gray-500">{timeDisplay}</span>
+                          </div>
+                          <div className="text-sm font-normal text-gray-900">{venueDisplay}</div>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Delete button in top-right corner */}
+                      <div className="flex flex-col space-y-1">
+                        <button
+                          onClick={() => deleteScoreboard(scoreboard.id)}
+                          className="text-gray-400 hover:text-red-600 text-2xl leading-none cursor-pointer"
+                          title="Delete scoreboard"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="text-center mb-4">
+                      <div className="text-4xl font-extrabold text-gray-900">
+                        {scoreboard.teams.length >= 2
+                          ? `${(scoresByScoreboard[scoreboard.id]?.a ?? 0)} - ${(scoresByScoreboard[scoreboard.id]?.b ?? 0)}`
+                          : 'Loading...'}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">Q{scoreboard.current_quarter}</div>
+                    </div>
+
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex space-x-2">
+                        <Link
+                          to={`/scoreboard/${scoreboard.id}`}
+                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
+                        >
+                          Open
+                        </Link>
+                        {!scoreboard.share_code ? (
+                          <button
+                            onClick={() => editScoreboard(scoreboard.id)}
+                            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                        ) : (
+                          <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
+                            {scoreboard.share_code}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
