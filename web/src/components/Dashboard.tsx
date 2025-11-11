@@ -273,53 +273,6 @@ export const Dashboard: React.FC = () => {
     }
   }
 
-  const generateShareCode = async (scoreboardId: string) => {
-    // Secure 6-char code generator using a curated alphabet (A-Z, 0-9)
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    const generateCode = () => {
-      const bytes = new Uint8Array(6)
-      // crypto is available in modern browsers; fallback not provided intentionally
-      window.crypto.getRandomValues(bytes)
-      let out = ''
-      for (let i = 0; i < bytes.length; i++) {
-        out += alphabet[bytes[i] % alphabet.length]
-      }
-      return out
-    }
-
-    const maxAttempts = 10
-    let lastError: unknown = null
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const shareCode = generateCode()
-        const { error } = await supabase
-          .from('scoreboards')
-          .update({ share_code: shareCode })
-          .eq('id', scoreboardId)
-
-        if (error) {
-          // If unique violation (23505), retry with a new code
-          // @ts-ignore - supabase error may include code
-          if (error.code === '23505') {
-            continue
-          }
-          throw error
-        }
-
-        // Success: update local state and exit
-        setScoreboards(scoreboards.map(sb => 
-          sb.id === scoreboardId ? { ...sb, share_code: shareCode } : sb
-        ))
-        return
-      } catch (err) {
-        lastError = err
-      }
-    }
-
-    console.error('Error generating share code after retries:', lastError)
-  }
-
   const deleteScoreboard = async (scoreboardId: string) => {
     if (!confirm('Are you sure you want to delete this scoreboard? This action cannot be undone.')) {
       return
@@ -544,21 +497,14 @@ export const Dashboard: React.FC = () => {
                       )}
                     </div>
                     
-                    {/* Edit/Delete buttons in top-right corner */}
+                    {/* Delete button in top-right corner */}
                     <div className="flex flex-col space-y-1">
                       <button
-                        onClick={() => editScoreboard(scoreboard.id)}
-                        className="text-gray-400 hover:text-gray-600 text-sm"
-                        title="Edit scoreboard"
-                      >
-                        ✏️
-                      </button>
-                      <button
                         onClick={() => deleteScoreboard(scoreboard.id)}
-                        className="text-gray-400 hover:text-red-600 text-sm"
+                        className="text-gray-400 hover:text-red-600 text-2xl leading-none cursor-pointer"
                         title="Delete scoreboard"
                       >
-                        🗑️
+                        ×
                       </button>
                     </div>
                   </div>
@@ -584,10 +530,10 @@ export const Dashboard: React.FC = () => {
                       </Link>
                       {!scoreboard.share_code ? (
                         <button
-                          onClick={() => generateShareCode(scoreboard.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium"
+                          onClick={() => editScoreboard(scoreboard.id)}
+                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
                         >
-                          Share
+                          Edit
                         </button>
                       ) : (
                         <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">

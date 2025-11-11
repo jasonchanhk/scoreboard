@@ -147,7 +147,7 @@ export const PublicView: React.FC = () => {
 
         {/* Bottom Section: Quarter and Time Widget */}
         <div className="flex justify-center mt-8">
-          <div className="bg-gray-800 border-4 border-white rounded-lg px-4 py-3 flex items-center">
+          <div className="border-4 border-white rounded-lg px-4 py-3 flex items-center">
             {/* Quarter Display */}
             <div className="px-4">
               <div className="text-6xl font-bold">Q{currentQuarter}</div>

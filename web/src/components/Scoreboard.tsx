@@ -14,6 +14,7 @@ export const Scoreboard: React.FC = () => {
   const { user } = useAuth()
   const [quarters, setQuarters] = useState<Quarter[]>([])
   const [showCopied, setShowCopied] = useState(false)
+  const [isGeneratingShareCode, setIsGeneratingShareCode] = useState(false)
   
   const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
     scoreboardId: id,
@@ -59,6 +60,57 @@ export const Scoreboard: React.FC = () => {
     setTimeout(() => {
       setShowCopied(false)
     }, 3000)
+  }
+
+  const handleGenerateShareCode = async () => {
+    if (!scoreboard || !isOwner) return
+
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    const generateCode = () => {
+      const bytes = new Uint8Array(6)
+      window.crypto.getRandomValues(bytes)
+      let out = ''
+      for (let i = 0; i < bytes.length; i++) {
+        out += alphabet[bytes[i] % alphabet.length]
+      }
+      return out
+    }
+
+    const scoreboardId = scoreboard.id
+    const maxAttempts = 10
+    let lastError: unknown = null
+
+    setIsGeneratingShareCode(true)
+
+    try {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const shareCode = generateCode()
+          const { error } = await supabase
+            .from('scoreboards')
+            .update({ share_code: shareCode })
+            .eq('id', scoreboardId)
+
+          if (error) {
+            // @ts-ignore - supabase error may include code
+            if (error.code === '23505') {
+              continue
+            }
+            throw error
+          }
+
+          setScoreboard(prev => (prev ? { ...prev, share_code: shareCode } : prev))
+          return
+        } catch (err) {
+          lastError = err
+        }
+      }
+
+      console.error('Error generating share code after retries:', lastError)
+      alert('Could not generate a share code. Please try again later.')
+    } finally {
+      setIsGeneratingShareCode(false)
+    }
   }
 
   // Navigate to public view
@@ -492,9 +544,9 @@ export const Scoreboard: React.FC = () => {
               {/* Left Side: Share Code and View Public Button */}
               <div className="flex-1 flex flex-col">
                 {/* Share Code */}
-                {scoreboard.share_code && (
-                  <div className="mb-3 flex-shrink-0">
-                    <div className="text-xs text-gray-300 mb-1 text-center">Share Code</div>
+                <div className="mb-3 flex-shrink-0">
+                  <div className="text-xs text-gray-300 mb-1 text-center">Share Code</div>
+                  {scoreboard.share_code ? (
                     <div 
                       className="text-xl font-mono bg-gray-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors text-center"
                       onClick={handleCopyShareCode}
@@ -502,8 +554,18 @@ export const Scoreboard: React.FC = () => {
                     >
                       {showCopied ? 'Copied!' : scoreboard.share_code}
                     </div>
-                  </div>
-                )}
+                  ) : isOwner ? (
+                    <button
+                      onClick={handleGenerateShareCode}
+                      disabled={isGeneratingShareCode}
+                      className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-3 py-3 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      {isGeneratingShareCode ? 'Generating...' : 'Generate Share Code'}
+                    </button>
+                  ) : (
+                    <div className="text-sm text-gray-400 text-center">Not available</div>
+                  )}
+                </div>
                 
                 {/* View Public Button */}
                 <div className="flex-shrink-0">
