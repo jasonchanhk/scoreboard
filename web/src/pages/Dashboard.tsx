@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { ScoreboardForm } from './ScoreboardForm'
+import { ScoreboardForm } from '../components/ScoreboardForm'
+import { ScoreboardCard } from '../components/ScoreboardCard'
+import { CreateScoreboardCTA } from '../components/CreateScoreboardCTA'
+import { JoinScoreboardCTA } from '../components/JoinScoreboardCTA'
+import { DashboardNav } from '../components/DashboardNav'
 
 interface Team {
   id: string
@@ -34,11 +38,8 @@ export const Dashboard: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
   const [creating, setCreating] = useState(false)
-  const [joinCode, setJoinCode] = useState('')
-  const [joining, setJoining] = useState(false)
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const initials = (user?.email?.slice(0, 2) || 'US').toUpperCase()
 
   useEffect(() => {
     fetchScoreboards()
@@ -314,111 +315,16 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full">
-                  <span className="text-lg">🏀</span>
-                </div>
-                <h1 className="text-xl font-semibold text-gray-900">Pretty Scoreboard</h1>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="relative group">
-                <button
-                  className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                >
-                  <span className="sr-only">Open user menu</span>
-                  {initials}
-                </button>
-                <div className="absolute right-0 top-full z-50 hidden group-hover:block focus-within:block w-56 rounded-md shadow-lg bg-white">
-                  <div className="py-2">
-                    {user?.email && (
-                      <div className="px-4 pb-2 text-xs text-gray-500 cursor-default select-text">
-                        {user.email}
-                      </div>
-                    )}
-                    <button
-                      onClick={signOut}
-                      className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <DashboardNav />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Your Scoreboards</h2>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault()
-                  const code = joinCode.trim().toUpperCase()
-                  if (/^[A-Z0-9]{6}$/.test(code)) {
-                    setJoining(true)
-                    try {
-                      const { data, error } = await supabase
-                        .from('scoreboards')
-                        .select('id')
-                        .eq('share_code', code)
-                        .single()
-
-                      if (error) throw error
-                      if (!data) {
-                        alert('Scoreboard not found or not shared')
-                        return
-                      }
-
-                      navigate(`/scoreboard/${data.id}/view`)
-                    } catch (error) {
-                      console.error('Error joining scoreboard:', error)
-                      alert('Failed to join scoreboard')
-                    } finally {
-                      setJoining(false)
-                    }
-                  }
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="text"
-                  inputMode="text"
-                  maxLength={6}
-                  placeholder="Enter 6-char code"
-                  value={joinCode}
-                  onChange={(e) => {
-                    const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-                    setJoinCode(cleaned)
-                  }}
-                  className="w-full sm:w-56 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2"
-                />
-                <button
-                  type="submit"
-                  disabled={!/^[A-Z0-9]{6}$/.test(joinCode) || joining}
-                  className="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
-                >
-                  {joining ? 'Joining...' : 'View'}
-                </button>
-              </form>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Create New Scoreboard
-              </button>
-            </div>
+          <div className="grid gap-4 lg:grid-cols-2 mb-10">
+            <CreateScoreboardCTA onCreateClick={() => setShowCreateForm(true)} />
+            <JoinScoreboardCTA />
           </div>
+
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Scoreboards</h2>
 
           {showCreateForm && (
             <ScoreboardForm
@@ -455,90 +361,15 @@ export const Dashboard: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {scoreboards.map((scoreboard) => {
-                const startTime = scoreboard.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
-                const endTime = scoreboard.game_end_time ? scoreboard.game_end_time.substring(0, 5) : ''
-                const timeDisplay =
-                  startTime && endTime
-                    ? `${startTime} – ${endTime}`
-                    : startTime
-                      ? `Starts ${startTime}`
-                      : endTime
-                        ? `Ends ${endTime}`
-                        : '-'
-                const venueDisplay = scoreboard.venue?.trim() || '-'
-                const dateDisplay = scoreboard.game_date
-                  ? new Date(scoreboard.game_date).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })
-                  : '-'
-
-                return (
-                  <div key={scoreboard.id} className="bg-white shadow rounded-lg p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                          {scoreboard.teams.length >= 2
-                            ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
-                            : 'Loading teams...'}
-                        </h3>
-
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium text-gray-700">
-                            {dateDisplay} · <span className="uppercase tracking-wide text-gray-500">{timeDisplay}</span>
-                          </div>
-                          <div className="text-sm font-normal text-gray-900">{venueDisplay}</div>
-                        </div>
-                      </div>
-
-                      {/* Delete button in top-right corner */}
-                      <div className="flex flex-col space-y-1">
-                        <button
-                          onClick={() => deleteScoreboard(scoreboard.id)}
-                          className="text-gray-400 hover:text-red-600 text-2xl leading-none cursor-pointer"
-                          title="Delete scoreboard"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="text-center mb-4">
-                      <div className="text-4xl font-extrabold text-gray-900">
-                        {scoreboard.teams.length >= 2
-                          ? `${(scoresByScoreboard[scoreboard.id]?.a ?? 0)} - ${(scoresByScoreboard[scoreboard.id]?.b ?? 0)}`
-                          : 'Loading...'}
-                      </div>
-                      <div className="text-sm text-gray-500 mt-1">Q{scoreboard.current_quarter}</div>
-                    </div>
-
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex space-x-2">
-                        <Link
-                          to={`/scoreboard/${scoreboard.id}`}
-                          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
-                        >
-                          Open
-                        </Link>
-                        {!scoreboard.share_code ? (
-                          <button
-                            onClick={() => editScoreboard(scoreboard.id)}
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                        ) : (
-                          <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
-                            {scoreboard.share_code}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+              {scoreboards.map((scoreboard) => (
+                <ScoreboardCard
+                  key={scoreboard.id}
+                  scoreboard={scoreboard}
+                  score={scoresByScoreboard[scoreboard.id] || { a: 0, b: 0 }}
+                  onDelete={deleteScoreboard}
+                  onEdit={editScoreboard}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -546,3 +377,4 @@ export const Dashboard: React.FC = () => {
     </div>
   )
 }
+

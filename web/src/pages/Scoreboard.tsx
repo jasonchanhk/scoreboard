@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { Timer } from './Timer'
-import { QuarterHistory } from './QuarterHistory'
+import { Timer } from '../components/Timer'
+import { QuarterHistory } from '../components/QuarterHistory'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import type { Quarter } from '../types/scoreboard'
 
@@ -600,3 +600,4 @@ export const Scoreboard: React.FC = () => {
     </div>
   )
 }
+

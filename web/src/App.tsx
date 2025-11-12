@@ -1,31 +1,11 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { LoginForm } from './components/LoginForm'
-// import { SignUpForm } from './components/SignUpForm'
-import { Dashboard } from './components/Dashboard'
-import { Scoreboard } from './components/Scoreboard'
-import { PublicView } from './components/PublicView'
-import { LandingPage } from './components/LandingPage'
-
-const AuthPage: React.FC = () => {
-  const { user, loading } = useAuth()
-
-  // Redirect to dashboard if user is already authenticated
-  if (user) {
-    return <Navigate to="/dashboard" replace />
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
-  }
-
-  return <LoginForm onToggleMode={() => {}} />
-}
+import { Dashboard } from './pages/Dashboard'
+import { Scoreboard } from './pages/Scoreboard'
+import { PublicView } from './pages/PublicView'
+import { LandingPage } from './pages/LandingPage'
+import { AuthPage } from './pages/AuthPage'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()

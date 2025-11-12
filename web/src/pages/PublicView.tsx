@@ -1,9 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-// import { Timer } from './Timer'
-// import { ScoreboardHeader } from './ScoreboardHeader'
-// import { ScoreboardDisplay } from './ScoreboardDisplay'
-// import { QuarterHistory } from './QuarterHistory'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -165,19 +161,7 @@ export const PublicView: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Commented out sections */}
-      {/* 
-      <div className="max-w-6xl mx-auto py-8 px-6">
-        {/* Quarter History */}
-        {/* <div className="mt-8 text-center">
-          <QuarterHistory
-            teams={scoreboard?.teams || []}
-            allQuarters={allQuarters}
-            currentQuarter={scoreboard?.current_quarter || 1}
-          />
-        </div> */}
-      {/* </div> */}
     </div>
   )
 }
+
