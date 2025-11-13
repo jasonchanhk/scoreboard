@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
 import { QuarterHistory } from '../components/QuarterHistory'
+import { Alert } from '../components/Alert'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import type { Quarter } from '../types/scoreboard'
 
@@ -15,6 +16,12 @@ export const Scoreboard: React.FC = () => {
   const [quarters, setQuarters] = useState<Quarter[]>([])
   const [showCopied, setShowCopied] = useState(false)
   const [isGeneratingShareCode, setIsGeneratingShareCode] = useState(false)
+  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; variant?: 'error' | 'success' | 'warning' | 'info' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  })
   
   const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
     scoreboardId: id,
@@ -107,7 +114,12 @@ export const Scoreboard: React.FC = () => {
       }
 
       console.error('Error generating share code after retries:', lastError)
-      alert('Could not generate a share code. Please try again later.')
+      setAlert({
+        isOpen: true,
+        title: 'Error',
+        message: 'Could not generate a share code. Please try again later.',
+        variant: 'error',
+      })
     } finally {
       setIsGeneratingShareCode(false)
     }
@@ -397,6 +409,14 @@ export const Scoreboard: React.FC = () => {
 
   return (
     <div className="h-screen bg-gray-900 text-white flex flex-col relative overflow-hidden">
+      <Alert
+        isOpen={alert.isOpen}
+        title={alert.title}
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ ...alert, isOpen: false })}
+      />
+      
       {/* Back Button - Top Left Corner */}
       <button
         onClick={() => navigate('/dashboard')}

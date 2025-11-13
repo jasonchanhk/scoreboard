@@ -7,6 +7,8 @@ import { ScoreboardCard } from '../components/ScoreboardCard'
 import { CreateScoreboardCTA } from '../components/CreateScoreboardCTA'
 import { JoinScoreboardCTA } from '../components/JoinScoreboardCTA'
 import { DashboardNav } from '../components/DashboardNav'
+import { Alert } from '../components/Alert'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 
 interface Team {
   id: string
@@ -38,6 +40,18 @@ export const Dashboard: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
   const [creating, setCreating] = useState(false)
+  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; variant?: 'error' | 'success' | 'warning' | 'info' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  })
+  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; scoreboardId: string | null }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    scoreboardId: null,
+  })
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -274,11 +288,16 @@ export const Dashboard: React.FC = () => {
     }
   }
 
-  const deleteScoreboard = async (scoreboardId: string) => {
-    if (!confirm('Are you sure you want to delete this scoreboard? This action cannot be undone.')) {
-      return
-    }
+  const deleteScoreboard = (scoreboardId: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Scoreboard',
+      message: 'Are you sure you want to delete this scoreboard? This action cannot be undone.',
+      scoreboardId,
+    })
+  }
 
+  const performDelete = async (scoreboardId: string) => {
     try {
       // Delete scoreboard (this will cascade delete teams and quarters due to foreign key constraints)
       const { error } = await supabase
@@ -301,7 +320,12 @@ export const Dashboard: React.FC = () => {
       console.log('Scoreboard deleted successfully')
     } catch (error) {
       console.error('Error deleting scoreboard:', error)
-      alert('Failed to delete scoreboard. Please try again.')
+      setAlert({
+        isOpen: true,
+        title: 'Error',
+        message: 'Failed to delete scoreboard. Please try again.',
+        variant: 'error',
+      })
     }
   }
 
@@ -316,6 +340,30 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardNav />
+
+      <Alert
+        isOpen={alert.isOpen}
+        title={alert.title}
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ ...alert, isOpen: false })}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant="warning"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (confirmDialog.scoreboardId) {
+            setConfirmDialog({ ...confirmDialog, isOpen: false })
+            await performDelete(confirmDialog.scoreboardId)
+          }
+        }}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+      />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

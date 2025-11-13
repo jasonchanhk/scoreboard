@@ -1,10 +1,17 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { Alert } from './Alert'
 
 export const JoinScoreboardCTA: React.FC = () => {
   const [joinCode, setJoinCode] = useState('')
   const [joining, setJoining] = useState(false)
+  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; variant?: 'error' | 'success' | 'warning' | 'info' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  })
   const navigate = useNavigate()
 
   const handleJoinSubmit = async (e: React.FormEvent) => {
@@ -21,14 +28,24 @@ export const JoinScoreboardCTA: React.FC = () => {
 
         if (error) throw error
         if (!data) {
-          alert('Scoreboard not found or not shared')
+          setAlert({
+            isOpen: true,
+            title: 'Not Found',
+            message: 'Scoreboard not found or not shared',
+            variant: 'error',
+          })
           return
         }
 
         navigate(`/scoreboard/${data.id}/view`)
       } catch (error) {
         console.error('Error joining scoreboard:', error)
-        alert('Failed to join scoreboard')
+        setAlert({
+          isOpen: true,
+          title: 'Error',
+          message: 'Failed to join scoreboard',
+          variant: 'error',
+        })
       } finally {
         setJoining(false)
       }
@@ -36,7 +53,15 @@ export const JoinScoreboardCTA: React.FC = () => {
   }
 
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-8 shadow-sm">
+    <>
+      <Alert
+        isOpen={alert.isOpen}
+        title={alert.title}
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ ...alert, isOpen: false })}
+      />
+      <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-8 shadow-sm">
       <div className="space-y-4">
         <h3 className="text-2xl font-semibold text-indigo-900">Join with a code</h3>
         <p className="text-sm text-indigo-700">
@@ -70,6 +95,7 @@ export const JoinScoreboardCTA: React.FC = () => {
         </div>
       </form>
     </div>
+    </>
   )
 }
 
