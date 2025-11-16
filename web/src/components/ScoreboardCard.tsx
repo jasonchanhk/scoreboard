@@ -102,18 +102,12 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
           >
             Open
           </Link>
-          {!scoreboard.share_code ? (
-            <button
-              onClick={() => onEdit(scoreboard.id)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
-            >
-              Edit
-            </button>
-          ) : (
-            <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
-              {scoreboard.share_code}
-            </div>
-          )}
+          <button
+            onClick={() => onEdit(scoreboard.id)}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
+          >
+            Edit
+          </button>
         </div>
       </div>
     </div>
