@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
+import { FaBasketballBall } from 'react-icons/fa'
+import { IoAdd, IoRemove } from 'react-icons/io5'
+import { HiPencil, HiX } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
-import { QuarterHistory } from '../components/QuarterHistory'
 import { Alert } from '../components/Alert'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import type { Quarter } from '../types/scoreboard'
@@ -14,14 +16,15 @@ export const Scoreboard: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [quarters, setQuarters] = useState<Quarter[]>([])
-  const [showCopied, setShowCopied] = useState(false)
-  const [isGeneratingShareCode, setIsGeneratingShareCode] = useState(false)
   const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; variant?: 'error' | 'success' | 'warning' | 'info' }>({
     isOpen: false,
     title: '',
     message: '',
     variant: 'error',
   })
+  const [shareOpen, setShareOpen] = useState(false)
+  const [showCopied, setShowCopied] = useState(false)
+  const [isGeneratingShareCode, setIsGeneratingShareCode] = useState(false)
   
   const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
     scoreboardId: id,
@@ -57,19 +60,15 @@ export const Scoreboard: React.FC = () => {
   }
 
 
-  // Handle copy share code with feedback
-  const handleCopyShareCode = () => {
+  // Share handlers (modal)
+  const handleCopyShareCode = useCallback(() => {
     if (!scoreboard?.share_code) return
-    
     navigator.clipboard.writeText(scoreboard.share_code)
     setShowCopied(true)
-    
-    setTimeout(() => {
-      setShowCopied(false)
-    }, 3000)
-  }
+    setTimeout(() => setShowCopied(false), 2000)
+  }, [scoreboard?.share_code])
 
-  const handleGenerateShareCode = async () => {
+  const handleGenerateShareCode = useCallback(async () => {
     if (!scoreboard || !isOwner) return
 
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -86,9 +85,7 @@ export const Scoreboard: React.FC = () => {
     const scoreboardId = scoreboard.id
     const maxAttempts = 10
     let lastError: unknown = null
-
     setIsGeneratingShareCode(true)
-
     try {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -97,22 +94,17 @@ export const Scoreboard: React.FC = () => {
             .from('scoreboards')
             .update({ share_code: shareCode })
             .eq('id', scoreboardId)
-
           if (error) {
-            // @ts-ignore - supabase error may include code
-            if (error.code === '23505') {
-              continue
-            }
+            // @ts-ignore
+            if (error.code === '23505') continue
             throw error
           }
-
           setScoreboard(prev => (prev ? { ...prev, share_code: shareCode } : prev))
           return
         } catch (err) {
           lastError = err
         }
       }
-
       console.error('Error generating share code after retries:', lastError)
       setAlert({
         isOpen: true,
@@ -123,13 +115,12 @@ export const Scoreboard: React.FC = () => {
     } finally {
       setIsGeneratingShareCode(false)
     }
-  }
+  }, [scoreboard, isOwner, setScoreboard])
 
-  // Navigate to public view
-  const handleViewPublic = () => {
+  const handleViewPublic = useCallback(() => {
     if (!id) return
     navigate(`/scoreboard/${id}/view`)
-  }
+  }, [id, navigate])
 
   // Timer control functions - With optimistic updates
   const handleTimerStart = async () => {
@@ -404,171 +395,87 @@ export const Scoreboard: React.FC = () => {
   const team0 = scoreboard.teams?.[0]
   const team1 = scoreboard.teams?.[1]
   
-  // Generate public view URL for QR code
   const publicViewUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
 
+  // Format game date/time for navbar
+  const formattedDate = scoreboard.game_date
+    ? new Date(scoreboard.game_date).toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : null
+  const startTime = scoreboard.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
+  const endTime = scoreboard.game_end_time ? scoreboard.game_end_time.substring(0, 5) : ''
+  const timeDisplay =
+    startTime && endTime ? `${startTime} – ${endTime}` : startTime ? startTime : endTime ? endTime : null
+
   return (
-    <div className="h-screen bg-gray-900 text-white flex flex-col relative overflow-hidden">
-      <Alert
-        isOpen={alert.isOpen}
-        title={alert.title}
-        message={alert.message}
-        variant={alert.variant}
-        onClose={() => setAlert({ ...alert, isOpen: false })}
-      />
-      
-      {/* Back Button - Top Left Corner */}
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-        aria-label="Back to Dashboard"
-      >
-        ←
-      </button>
-
-      {/* Main Scoreboard */}
-      <div className="flex-1 flex flex-col py-10 px-20 overflow-hidden">
-        {/* Top Section: Score Container */}
-        <div className="flex-1 min-h-0 mb-4 flex items-center justify-center">
-          <div className="flex items-center gap-4 h-full">
-            {/* Left Score Controls */}
-            {isOwner && (
-              <div className="flex flex-col gap-3">
+    <div className="h-screen bg-white text-gray-900 flex flex-col relative overflow-hidden">
+      {/* Navbar */}
+      <nav className="bg-white shadow text-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center">
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={() => updateScore(0, 1)}
-                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-                  aria-label="Add 1 point"
+                  onClick={() => navigate('/dashboard')}
+                  className="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full hover:bg-orange-600 transition-colors cursor-pointer"
+                  aria-label="Back to Dashboard"
+                  title="Back to Dashboard"
                 >
-                  +
+                  <FaBasketballBall className="text-white text-sm" />
                 </button>
-                <button
-                  onClick={() => updateScore(0, -1)}
-                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-                  aria-label="Subtract 1 point"
-                >
-                  −
-                </button>
-              </div>
-            )}
-            
-            {/* Team Containers */}
-            <div className="grid grid-cols-2 gap-4 h-full" style={{ width: '60vw' }}>
-              {/* Left Team */}
-              <div className="border-4 border-white rounded-2xl p-3 flex flex-col h-full">
-                <div className="text-2xl font-bold mb-2 pb-2 border-b-4 border-white text-center">
-                  {team0?.name || 'Team 1'}
-                </div>
-                <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
-                  <div className="font-bold leading-none" style={{ fontSize: 'min(30vh, 28vw)' }}>
-                    {team0 ? getTeamTotalScore(team0.id) : 0}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Team */}
-              <div className="border-4 border-white rounded-2xl p-3 flex flex-col h-full">
-                <div className="text-2xl font-bold mb-2 pb-2 border-b-4 border-white text-center">
-                  {team1?.name || 'Team 2'}
-                </div>
-                <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
-                  <div className="font-bold leading-none" style={{ fontSize: 'min(30vh, 28vw)' }}>
-                    {team1 ? getTeamTotalScore(team1.id) : 0}
-                  </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold">
+                    {formattedDate || 'No date set'}
+                    {timeDisplay ? ` · ${timeDisplay}` : ''}
+                  </span>
+                  {scoreboard.venue && (
+                    <span className="text-xs text-gray-500">{scoreboard.venue}</span>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* Right Score Controls */}
-            {isOwner && (
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => updateScore(1, 1)}
-                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-                  aria-label="Add 1 point"
-                >
-                  +
-                </button>
-                <button
-                  onClick={() => updateScore(1, -1)}
-                  className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-                  aria-label="Subtract 1 point"
-                >
-                  −
-                </button>
-              </div>
-            )}
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShareOpen(true)}
+                className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              >
+                Share
+              </button>
+            </div>
           </div>
         </div>
+      </nav>
 
-        {/* Bottom Section: Three Equal Width Sections using Flex */}
-        <div className="flex gap-4 flex-shrink-0 min-h-0" style={{ maxHeight: '40vh' }}>
-          {/* Left: Quarter History */}
-          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0">
-            <h3 className="text-base font-bold mb-2 text-center">Quarter History</h3>
-            <div className="flex-1 overflow-auto min-h-0">
-              <QuarterHistory
-                teams={scoreboard?.teams || []}
-                allQuarters={allQuarters}
-                currentQuarter={scoreboard?.current_quarter || 1}
-                quarters={quarters}
-                showCurrentQuarterScores={true}
-              />
+      {/* Share Dialog */}
+      {shareOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShareOpen(false)
+          }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        >
+          <div className="relative top-20 mx-auto p-5 w-11/12 md:w-2/3 lg:w-1/2 shadow-2xl rounded-lg bg-white text-gray-900">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Share</h3>
+              <button
+                onClick={() => setShareOpen(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                aria-label="Close"
+              >
+                <HiX className="text-2xl" />
+              </button>
             </div>
-          </div>
-
-          {/* Center: Timer and Quarter Control */}
-          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0">
-            {/* Timer */}
-            <div className="mb-3 flex-1 flex flex-col min-h-0">
-              <Timer
-                duration={scoreboard?.timer_duration || 0}
-                startedAt={scoreboard?.timer_started_at || null}
-                state={scoreboard?.timer_state || 'stopped'}
-                pausedDuration={scoreboard?.timer_paused_duration || 0}
-                isOwner={isOwner}
-                onStart={handleTimerStart}
-                onPause={handleTimerPause}
-                onReset={handleTimerReset}
-                className="w-full h-full"
-              />
-            </div>
-
-            {/* Quarter Controls */}
-            {isOwner && (
-              <div className="border-t-4 border-white pt-3 flex-shrink-0">
-                <div className="flex justify-center items-center space-x-3">
-                  <button
-                    onClick={() => updateQuarter(-1)}
-                    className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-                    aria-label="Previous Quarter"
-                  >
-                    ←
-                  </button>
-                  <span className="text-xl font-bold">Q{scoreboard?.current_quarter || 1}</span>
-                  <button
-                    onClick={() => updateQuarter(1)}
-                    className="text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-                    aria-label="Next Quarter"
-                  >
-                    →
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right: Share Code and View Public */}
-          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0">
-            <h3 className="text-base font-bold mb-2 text-center">Share</h3>
-            <div className="flex gap-3 flex-1 items-start">
-              {/* Left Side: Share Code and View Public Button */}
+            <div className="flex gap-4 items-start">
               <div className="flex-1 flex flex-col">
-                {/* Share Code */}
-                <div className="mb-3 flex-shrink-0">
-                  <div className="text-xs text-gray-300 mb-1 text-center">Share Code</div>
+                <div className="mb-3">
+                  <div className="text-xs text-gray-600 mb-1">Share Code</div>
                   {scoreboard.share_code ? (
-                    <div 
-                      className="text-xl font-mono bg-gray-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-600 transition-colors text-center"
+                    <div
+                      className="text-xl font-mono bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors text-center"
                       onClick={handleCopyShareCode}
                       title="Click to copy share code"
                     >
@@ -586,35 +493,150 @@ export const Scoreboard: React.FC = () => {
                     <div className="text-sm text-gray-400 text-center">Not available</div>
                   )}
                 </div>
-                
-                {/* View Public Button */}
                 <div className="flex-shrink-0">
-                  <div className="text-xs text-gray-300 mb-1 text-center">Public View</div>
+                  <div className="text-xs text-gray-600 mb-1">Public View</div>
                   <button
                     onClick={handleViewPublic}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-3 rounded-lg text-sm font-medium text-center cursor-pointer w-full"
+                    className="bg-gray-800 hover:bg-gray-900 text-white px-3 py-3 rounded-lg text-sm font-medium text-center cursor-pointer w-full"
                   >
                     Go to Public View
                   </button>
                 </div>
               </div>
-
-              {/* Right Side: QR Code */}
               {publicViewUrl && (
                 <div className="flex-shrink-0 flex flex-col items-center">
-                  <div className="text-xs text-gray-300 mb-1 text-center">Scan to View</div>
-                  <div className="bg-white p-2 rounded-lg">
-                    <QRCodeSVG
-                      value={publicViewUrl}
-                      size={120}
-                      level="H"
-                      includeMargin={false}
-                    />
+                  <div className="text-xs text-gray-600 mb-1">Scan to View</div>
+                  <div className="bg-white p-2 rounded-lg border">
+                    <QRCodeSVG value={publicViewUrl} size={120} level="H" includeMargin={false} />
                   </div>
                 </div>
               )}
             </div>
           </div>
+        </div>
+      )}
+      <Alert
+        isOpen={alert.isOpen}
+        title={alert.title}
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ ...alert, isOpen: false })}
+      />
+      
+      {/* Back handled via navbar logo button */}
+
+      {/* Main Scoreboard */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Section: Score Container */}
+        <div className="flex-1 min-h-0 py-10 flex items-center justify-center">
+          <div className="flex items-center gap-6 h-full">
+            {/* Team Containers */}
+            <div className="grid grid-cols-2 gap-8 h-full" style={{ width: '70vw' }}>
+              {/* Left Team */}
+              <div className="rounded-3xl overflow-hidden flex flex-col h-full border-4 border-green-300">
+                <div className="bg-green-400 text-black text-3xl font-extrabold py-3 text-center">
+                  {team0?.name || 'Team 1'}
+                </div>
+                <div className="flex-1 flex items-center justify-center overflow-hidden px-2 bg-white">
+                  <div className="font-extrabold leading-none text-green-400" style={{ fontSize: 'min(30vh, 28vw)' }}>
+                    {team0 ? getTeamTotalScore(team0.id) : 0}
+                  </div>
+                </div>
+                {isOwner && (
+                  <div className="bg-white py-4 flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => updateScore(0, 1)}
+                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
+                      aria-label="Add 1 point"
+                    >
+                      <IoAdd className="text-gray-900 text-xl" />
+                    </button>
+                    <button
+                      onClick={() => updateScore(0, -1)}
+                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
+                      aria-label="Subtract 1 point"
+                    >
+                      <IoRemove className="text-gray-900 text-xl" />
+                    </button>
+                    <button
+                      onClick={() => {/* edit left team - logic to be added */}}
+                      className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center"
+                      aria-label="Edit team"
+                      title="Edit"
+                    >
+                      <HiPencil className="text-gray-500 text-xl" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Team */}
+              <div className="rounded-3xl overflow-hidden flex flex-col h-full border-4 border-orange-300">
+                <div className="bg-orange-500 text-black text-3xl font-extrabold py-3 text-center">
+                  {team1?.name || 'Team 2'}
+                </div>
+                <div className="flex-1 flex items-center justify-center overflow-hidden px-2 bg-white">
+                  <div className="font-extrabold leading-none text-orange-500" style={{ fontSize: 'min(30vh, 28vw)' }}>
+                    {team1 ? getTeamTotalScore(team1.id) : 0}
+                  </div>
+                </div>
+                {isOwner && (
+                  <div className="bg-white py-4 flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => updateScore(1, 1)}
+                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
+                      aria-label="Add 1 point"
+                    >
+                      <IoAdd className="text-gray-900 text-xl" />
+                    </button>
+                    <button
+                      onClick={() => updateScore(1, -1)}
+                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
+                      aria-label="Subtract 1 point"
+                    >
+                      <IoRemove className="text-gray-900 text-xl" />
+                    </button>
+                    <button
+                      onClick={() => {/* edit right team - logic to be added */}}
+                      className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center"
+                      aria-label="Edit team"
+                      title="Edit"
+                    >
+                      <HiPencil className="text-gray-500 text-xl" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section: Timer and Quarter Control Only */}
+        <div
+          className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900"
+          style={{ height: '20vh' }}
+        >
+          {/* Timer with integrated quarter controls */}
+          <div className="flex-1 rounded-2xl p-3 flex flex-row items-stretch gap-6 min-w-0">
+            <Timer
+              duration={scoreboard?.timer_duration || 0}
+              startedAt={scoreboard?.timer_started_at || null}
+              state={scoreboard?.timer_state || 'stopped'}
+              pausedDuration={scoreboard?.timer_paused_duration || 0}
+              isOwner={isOwner}
+              onStart={handleTimerStart}
+              onPause={handleTimerPause}
+              onReset={handleTimerReset}
+              currentQuarter={scoreboard?.current_quarter || 1}
+              onQuarterChange={updateQuarter}
+              className="w-full h-full"
+            />
+          </div>
+          {/* The original Quarter History and Share sections are commented out for now */}
+          {/*
+          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0"> ... </div>
+          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0"> ... </div>
+          */}
         </div>
       </div>
     </div>

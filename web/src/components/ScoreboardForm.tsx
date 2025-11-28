@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { HiX } from 'react-icons/hi'
 
 interface ScoreboardFormProps {
   mode: 'create' | 'edit'
@@ -114,7 +115,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
             className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
             title="Close"
           >
-            ×
+            <HiX className="text-2xl" />
           </button>
         </div>
       <form onSubmit={handleSubmit} className="space-y-6">

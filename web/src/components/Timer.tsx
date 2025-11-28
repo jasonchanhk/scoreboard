@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { HiChevronLeft, HiChevronRight, HiPlay, HiPause } from 'react-icons/hi'
+import { IoRefresh } from 'react-icons/io5'
 
 interface TimerProps {
   duration: number // Total duration in seconds
@@ -9,6 +11,8 @@ interface TimerProps {
   onStart: () => void
   onPause: () => void
   onReset: () => void
+  currentQuarter: number
+  onQuarterChange: (delta: number) => void
   className?: string
 }
 
@@ -21,6 +25,8 @@ export const Timer: React.FC<TimerProps> = ({
   onStart,
   onPause,
   onReset,
+  currentQuarter,
+  onQuarterChange,
   className = ''
 }) => {
   const [timeRemaining, setTimeRemaining] = useState(duration)
@@ -75,13 +81,6 @@ export const Timer: React.FC<TimerProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Get timer color based on remaining time
-  const getTimerColor = () => {
-    if (timeRemaining <= 60) return 'text-red-500' // Last minute - red
-    if (timeRemaining <= 300) return 'text-yellow-500' // Last 5 minutes - yellow
-    return 'text-white' // Normal - white
-  }
-
   const isExpired = timeRemaining <= 0
   const displayTime = isExpired ? '00:00' : formatTime(timeRemaining)
   
@@ -89,78 +88,101 @@ export const Timer: React.FC<TimerProps> = ({
   const isResetDisabled = state === 'running' || timeRemaining === duration
 
   return (
-    <div className={`bg-transparent p-0 flex flex-col h-full justify-between ${className}`}>
-      <div className="text-center">
-        <h3 className="text-base font-bold mb-2">Timer</h3>
-      </div>
-      
-      {/* Timer Display with Controls */}
-      <div className="flex flex-col items-center gap-2 flex-1 justify-center">
-        {/* Timer Display and Controls Row */}
-        <div className="flex items-center justify-center gap-3">
-          {/* Reset Button (Left) - Always show when owner */}
+    <div className={`bg-transparent p-0 flex flex-col h-full justify-center ${className}`}>
+      {/* Row: Quarter controls (left) - Time (center) - Status/Buttons (right) */}
+      <div className="flex items-center justify-center w-full text-gray-900 gap-10 py-2">
+        {/* Quarter controls */}
+        <div className="flex items-center gap-3">
           {isOwner && (
             <button
-              onClick={onReset}
-              disabled={isResetDisabled}
-              className={`text-xl font-bold rounded-full w-10 h-10 flex items-center justify-center transition-colors ${
-                isResetDisabled
-                  ? 'text-gray-500 bg-gray-800 cursor-not-allowed opacity-50'
-                  : 'text-gray-300 hover:text-white bg-gray-800 hover:bg-gray-700 cursor-pointer'
-              }`}
-              aria-label="Reset Timer"
+              onClick={() => onQuarterChange(-1)}
+              className="text-gray-900 bg-gray-300 hover:bg-gray-400 transition-colors text-2xl font-bold rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+              aria-label="Previous Quarter"
             >
-              ↻
+              <HiChevronLeft className="text-xl" />
             </button>
           )}
+          <span className="text-xl font-semibold">Q{currentQuarter}</span>
+          {isOwner && (
+            <button
+              onClick={() => onQuarterChange(1)}
+              className="text-gray-900 bg-gray-300 hover:bg-gray-400 transition-colors text-2xl font-bold rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+              aria-label="Next Quarter"
+            >
+              <HiChevronRight className="text-xl" />
+            </button>
+          )}
+        </div>
 
-          {/* Timer Display */}
-          <div className={`text-6xl font-mono font-bold ${getTimerColor()}`}>
-            {displayTime}
+        {/* Time display */}
+        <div className="text-8xl font-mono font-extrabold px-4 text-black">{displayTime}</div>
+
+        {/* Status and controls */}
+        <div className="flex items-center gap-4">
+          {/* Timer state */}
+          <div className="flex items-center gap-2">
+            <span
+              className={`w-3 h-3 rounded-full inline-block ${
+                state === 'running' ? 'bg-green-600' : state === 'paused' ? 'bg-yellow-500' : 'bg-gray-400'
+              }`}
+            />
+            <span className={`text-lg ${
+              state === 'running' ? 'text-green-600' : state === 'paused' ? 'text-yellow-600' : 'text-gray-600'
+            }`}>
+              {state === 'running' ? 'running' : state === 'paused' ? 'paused' : 'stopped'}
+            </span>
           </div>
 
-          {/* Start/Stop Button (Right) - Only show when owner */}
+          {/* Start/Pause button */}
           {isOwner && (
             <>
               {state === 'stopped' && (
                 <button
                   onClick={onStart}
-                  className="text-gray-300 hover:text-white transition-colors text-xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+                  className="w-12 h-12 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-100"
                   aria-label="Start Timer"
+                  title="Start"
                 >
-                  ▶
+                  <HiPlay className="text-green-600 text-2xl" />
                 </button>
               )}
-              
               {state === 'running' && (
                 <button
                   onClick={onPause}
-                  className="text-gray-300 hover:text-white transition-colors text-xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+                  className="w-12 h-12 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-100"
                   aria-label="Pause Timer"
+                  title="Pause"
                 >
-                  ⏸
+                  <HiPause className="text-green-600 text-2xl" />
                 </button>
               )}
-              
               {state === 'paused' && (
                 <button
                   onClick={onStart}
-                  className="text-gray-300 hover:text-white transition-colors text-xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+                  className="w-12 h-12 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-100"
                   aria-label="Resume Timer"
+                  title="Resume"
                 >
-                  ▶
+                  <HiPlay className="text-green-600 text-2xl" />
                 </button>
               )}
+
+              {/* Reset (orange) */}
+              <button
+                onClick={onReset}
+                disabled={isResetDisabled}
+                className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  isResetDisabled
+                    ? 'bg-orange-300 cursor-not-allowed opacity-60'
+                    : 'bg-orange-500 hover:bg-orange-600'
+                }`}
+                aria-label="Reset Timer"
+                title="Reset"
+              >
+                <IoRefresh className="text-white text-2xl" />
+              </button>
             </>
           )}
-        </div>
-        
-        {/* Timer State Indicator */}
-        <div className="text-xs text-gray-400">
-          {state === 'running' && 'Running'}
-          {state === 'paused' && 'Paused'}
-          {state === 'stopped' && 'Stopped'}
-          {isExpired && '⏰ Time Expired'}
         </div>
       </div>
     </div>

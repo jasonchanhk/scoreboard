@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { HiX } from 'react-icons/hi'
 
 interface Team {
   id: string
@@ -80,7 +81,7 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
             className="text-gray-400 hover:text-red-600 text-2xl leading-none cursor-pointer"
             title="Delete scoreboard"
           >
-            ×
+            <HiX className="text-2xl" />
           </button>
         </div>
       </div>

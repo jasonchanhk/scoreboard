@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { HiChevronLeft } from 'react-icons/hi'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -109,7 +110,7 @@ export const PublicView: React.FC = () => {
         className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center"
         aria-label="Back to Dashboard"
       >
-        ←
+        <HiChevronLeft className="text-2xl" />
       </button>
 
       {/* Main Scoreboard */}

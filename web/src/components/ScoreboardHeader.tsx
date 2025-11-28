@@ -1,4 +1,5 @@
 import React from 'react'
+import { HiChevronLeft, HiEye, HiLocationMarker, HiCalendar } from 'react-icons/hi'
 import type { ScoreboardData } from '../types/scoreboard'
 
 interface ScoreboardHeaderProps {
@@ -26,14 +27,14 @@ export const ScoreboardHeader: React.FC<ScoreboardHeaderProps> = ({
             onClick={onBackClick}
             className="text-gray-300 hover:text-white transition-colors flex items-center gap-2"
           >
-            ← Back to Dashboard
+            <HiChevronLeft className="inline text-xl" /> Back to Dashboard
           </button>
           {isOwner && onViewPublic && (
             <button
               onClick={onViewPublic}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
             >
-              👁️ View Public
+              <HiEye className="inline mr-1" /> View Public
             </button>
           )}
         </div>
@@ -54,13 +55,13 @@ export const ScoreboardHeader: React.FC<ScoreboardHeaderProps> = ({
             <div className="text-sm text-gray-400 mt-2 flex items-center justify-center gap-4">
               {scoreboard.venue && (
                 <div className="flex items-center">
-                  <span>📍</span>
+                  <HiLocationMarker className="inline" />
                   <span className="ml-1">{scoreboard.venue}</span>
                 </div>
               )}
               {scoreboard.game_date && (
                 <div className="flex items-center">
-                  <span>📅</span>
+                  <HiCalendar className="inline" />
                   <span className="ml-1">
                     {new Date(scoreboard.game_date).toLocaleDateString()}
                     {(scoreboard.game_start_time || scoreboard.game_end_time) && (

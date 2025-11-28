@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { HiExclamation, HiQuestionMarkCircle } from 'react-icons/hi'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -46,21 +47,21 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   const variantStyles = {
     error: {
-      icon: '⚠️',
+      Icon: HiExclamation,
       iconBg: 'bg-red-100',
       iconColor: 'text-red-600',
       titleColor: 'text-red-900',
       confirmButtonBg: 'bg-red-600 hover:bg-red-700',
     },
     warning: {
-      icon: '⚠',
+      Icon: HiExclamation,
       iconBg: 'bg-yellow-100',
       iconColor: 'text-yellow-600',
       titleColor: 'text-yellow-900',
       confirmButtonBg: 'bg-yellow-600 hover:bg-yellow-700',
     },
     info: {
-      icon: 'ℹ',
+      Icon: HiQuestionMarkCircle,
       iconBg: 'bg-blue-100',
       iconColor: 'text-blue-600',
       titleColor: 'text-blue-900',
@@ -69,6 +70,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   }
 
   const styles = variantStyles[variant]
+  const Icon = styles.Icon
 
   return (
     <div
@@ -79,7 +81,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       <div className="relative top-20 mx-auto p-6 w-11/12 md:w-2/3 lg:w-1/3 shadow-2xl rounded-lg bg-white">
         <div className="flex flex-col items-center text-center">
           <div className={`${styles.iconBg} rounded-full w-16 h-16 flex items-center justify-center mb-4`}>
-            <span className={`text-3xl ${styles.iconColor}`}>{styles.icon}</span>
+            <Icon className={`text-3xl ${styles.iconColor}`} />
           </div>
           <h3 className={`text-xl font-semibold ${styles.titleColor} mb-3`}>
             {title}

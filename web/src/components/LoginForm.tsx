@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { FaBasketballBall } from 'react-icons/fa'
+import { HiChevronLeft } from 'react-icons/hi'
 import { useAuth } from '../contexts/AuthContext'
 
 interface LoginFormProps {
@@ -38,14 +40,14 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
         className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
         aria-label="Back to Landing"
       >
-        ←
+        <HiChevronLeft className="text-2xl" />
       </Link>
       <div className="max-w-md w-full space-y-8">
         <div>
           {/* App Logo and Name */}
           <div className="flex flex-col items-center mb-8">
             <div className="flex items-center justify-center w-20 h-20 bg-orange-500 rounded-full mb-4 shadow-lg">
-              <span className="text-4xl">🏀</span>
+              <FaBasketballBall className="text-white text-4xl" />
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Pretty Scoreboard</h1>
           </div>
