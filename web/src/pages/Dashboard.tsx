@@ -9,6 +9,9 @@ import { JoinScoreboardCTA } from '../components/JoinScoreboardCTA'
 import { DashboardNav } from '../components/DashboardNav'
 import { Alert } from '../components/Alert'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { sortTeams } from '../utils/teamUtils'
+import { useAlert } from '../hooks/useAlert'
+import { useConfirmDialog } from '../hooks/useConfirmDialog'
 
 interface Team {
   id: string
@@ -40,20 +43,12 @@ export const Dashboard: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
   const [creating, setCreating] = useState(false)
-  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; variant?: 'error' | 'success' | 'warning' | 'info' }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    variant: 'error',
-  })
-  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; scoreboardId: string | null }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    scoreboardId: null,
-  })
   const { user } = useAuth()
   const navigate = useNavigate()
+  
+  // Custom hooks
+  const { alert, showError, hideAlert } = useAlert()
+  const { confirmDialog, showConfirmDialog, hideConfirmDialog } = useConfirmDialog()
 
   useEffect(() => {
     fetchScoreboards()
@@ -78,11 +73,7 @@ export const Dashboard: React.FC = () => {
       // Ensure teams are ordered consistently (home first, away second)
       list.forEach(scoreboard => {
         if (scoreboard.teams) {
-          scoreboard.teams.sort((a: Team, b: Team) => {
-            if (a.position === 'home' && b.position === 'away') return -1
-            if (a.position === 'away' && b.position === 'home') return 1
-            return 0
-          })
+          scoreboard.teams = sortTeams(scoreboard.teams)
         }
       })
 
@@ -202,11 +193,7 @@ export const Dashboard: React.FC = () => {
       
       // Ensure teams are ordered consistently (home first, away second)
       if (completeScoreboard.teams) {
-        completeScoreboard.teams.sort((a: Team, b: Team) => {
-          if (a.position === 'home' && b.position === 'away') return -1
-          if (a.position === 'away' && b.position === 'home') return 1
-          return 0
-        })
+        completeScoreboard.teams = sortTeams(completeScoreboard.teams)
       }
 
       const updated = [completeScoreboard, ...scoreboards]
@@ -290,12 +277,11 @@ export const Dashboard: React.FC = () => {
   }
 
   const deleteScoreboard = (scoreboardId: string) => {
-    setConfirmDialog({
-      isOpen: true,
-      title: 'Delete Scoreboard',
-      message: 'Are you sure you want to delete this scoreboard? This action cannot be undone.',
-      scoreboardId,
-    })
+    showConfirmDialog(
+      'Delete Scoreboard',
+      'Are you sure you want to delete this scoreboard? This action cannot be undone.',
+      scoreboardId
+    )
   }
 
   const performDelete = async (scoreboardId: string) => {
@@ -321,12 +307,7 @@ export const Dashboard: React.FC = () => {
       console.log('Scoreboard deleted successfully')
     } catch (error) {
       console.error('Error deleting scoreboard:', error)
-      setAlert({
-        isOpen: true,
-        title: 'Error',
-        message: 'Failed to delete scoreboard. Please try again.',
-        variant: 'error',
-      })
+      showError('Error', 'Failed to delete scoreboard. Please try again.')
     }
   }
 
@@ -347,7 +328,7 @@ export const Dashboard: React.FC = () => {
         title={alert.title}
         message={alert.message}
         variant={alert.variant}
-        onClose={() => setAlert({ ...alert, isOpen: false })}
+        onClose={hideAlert}
       />
 
       <ConfirmDialog
@@ -359,11 +340,11 @@ export const Dashboard: React.FC = () => {
         cancelText="Cancel"
         onConfirm={async () => {
           if (confirmDialog.scoreboardId) {
-            setConfirmDialog({ ...confirmDialog, isOpen: false })
+            hideConfirmDialog()
             await performDelete(confirmDialog.scoreboardId)
           }
         }}
-        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onCancel={hideConfirmDialog}
       />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">

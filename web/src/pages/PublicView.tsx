@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { HiChevronLeft } from 'react-icons/hi'
 import { useScoreboardData } from '../hooks/useScoreboardData'
+import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
+import { useTimerCalculation } from '../hooks/useTimerCalculation'
 import { useAuth } from '../contexts/AuthContext'
 
 export const PublicView: React.FC = () => {
@@ -13,68 +15,10 @@ export const PublicView: React.FC = () => {
     scoreboardId: id
   })
 
-  // Timer state for displaying time
-  const [timeRemaining, setTimeRemaining] = useState(scoreboard?.timer_duration || 0)
+  // Custom hooks
+  const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
+  const { formattedTime } = useTimerCalculation(scoreboard)
 
-  // Calculate remaining time based on current state
-  const calculateRemainingTime = useCallback(() => {
-    if (!scoreboard) return 0
-    
-    const { timer_state, timer_started_at, timer_duration, timer_paused_duration } = scoreboard
-    
-    if (timer_state === 'stopped' || !timer_started_at) {
-      return timer_duration || 0
-    }
-
-    if (timer_state === 'paused') {
-      const elapsed = timer_paused_duration || 0
-      return Math.max(0, (timer_duration || 0) - elapsed)
-    }
-
-    if (timer_state === 'running') {
-      const now = new Date().getTime()
-      const startTime = new Date(timer_started_at).getTime()
-      const elapsedSinceCurrentStart = Math.floor((now - startTime) / 1000)
-      const totalElapsed = (timer_paused_duration || 0) + elapsedSinceCurrentStart
-      return Math.max(0, (timer_duration || 0) - totalElapsed)
-    }
-
-    return timer_duration || 0
-  }, [scoreboard])
-
-  // Update timer display
-  useEffect(() => {
-    if (!scoreboard) return
-    
-    const updateTimer = () => {
-      const remaining = calculateRemainingTime()
-      setTimeRemaining(remaining)
-    }
-
-    // Initialize timer when scoreboard changes
-    const initialTime = calculateRemainingTime()
-    setTimeRemaining(initialTime)
-
-    if (scoreboard.timer_state === 'running') {
-      const interval = setInterval(updateTimer, 100)
-      return () => clearInterval(interval)
-    }
-  }, [scoreboard, calculateRemainingTime])
-
-  // Format time as MM:SS
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-
-  // Helper function to get cumulative team score across all quarters
-  const getTeamTotalScore = (teamId: string) => {
-    if (!allQuarters || !teamId) return 0
-    return allQuarters
-      .filter(q => q.team_id === teamId)
-      .reduce((sum, q) => sum + q.points, 0)
-  }
 
   if (loading) {
     return (
@@ -105,7 +49,6 @@ export const PublicView: React.FC = () => {
 
   const team0 = scoreboard.teams?.[0]
   const team1 = scoreboard.teams?.[1]
-  const displayTime = timeRemaining <= 0 ? '00:00' : formatTime(timeRemaining)
   const currentQuarter = scoreboard.current_quarter || 1
 
   return (
@@ -163,7 +106,7 @@ export const PublicView: React.FC = () => {
             
             {/* Time Display */}
             <div className="px-4">
-              <div className="text-6xl font-mono font-bold">{displayTime}</div>
+              <div className="text-6xl font-mono font-bold">{formattedTime}</div>
             </div>
           </div>
         </div>

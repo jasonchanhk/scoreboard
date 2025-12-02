@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { HiX } from 'react-icons/hi'
+import { useGameDateTime } from '../hooks/useGameDateTime'
 
 interface Team {
   id: string
@@ -37,24 +38,10 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
   onDelete,
   onEdit,
 }) => {
-  const startTime = scoreboard.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
-  const endTime = scoreboard.game_end_time ? scoreboard.game_end_time.substring(0, 5) : ''
-  const timeDisplay =
-    startTime && endTime
-      ? `${startTime} – ${endTime}`
-      : startTime
-        ? `Starts ${startTime}`
-        : endTime
-          ? `Ends ${endTime}`
-          : '-'
+  // Custom hooks
+  const { timeDisplayForCard, dateDisplayForCard } = useGameDateTime(scoreboard)
+  
   const venueDisplay = scoreboard.venue?.trim() || '-'
-  const dateDisplay = scoreboard.game_date
-    ? new Date(scoreboard.game_date).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
-    : '-'
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
@@ -68,7 +55,7 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
 
           <div className="space-y-1">
             <div className="text-sm font-medium text-gray-700">
-              {dateDisplay} · <span className="uppercase tracking-wide text-gray-500">{timeDisplay}</span>
+              {dateDisplayForCard} · <span className="uppercase tracking-wide text-gray-500">{timeDisplayForCard}</span>
             </div>
             <div className="text-sm font-normal text-gray-900">{venueDisplay}</div>
           </div>

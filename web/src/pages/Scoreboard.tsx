@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { FaBasketballBall } from 'react-icons/fa'
@@ -9,320 +9,67 @@ import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
 import { Alert } from '../components/Alert'
 import { useScoreboardData } from '../hooks/useScoreboardData'
-import type { Quarter } from '../types/scoreboard'
+import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
+import { useGameDateTime } from '../hooks/useGameDateTime'
+import { useAlert } from '../hooks/useAlert'
+import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
+import { useShareCode } from '../hooks/useShareCode'
+import { useTimerControls } from '../hooks/useTimerControls'
+import { useScoreUpdate } from '../hooks/useScoreUpdate'
 
 export const Scoreboard: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [quarters, setQuarters] = useState<Quarter[]>([])
-  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; variant?: 'error' | 'success' | 'warning' | 'info' }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    variant: 'error',
-  })
   const [shareOpen, setShareOpen] = useState(false)
-  const [showCopied, setShowCopied] = useState(false)
-  const [isGeneratingShareCode, setIsGeneratingShareCode] = useState(false)
   
   const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
     scoreboardId: id,
     userId: user?.id
   })
 
-  // Fetch current quarter data when scoreboard or current quarter changes
-  useEffect(() => {
-    if (!scoreboard?.teams || scoreboard.teams.length === 0) return
+  // Custom hooks
+  const { alert, showError, hideAlert } = useAlert()
+  const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
+  const { formattedDate, timeDisplay } = useGameDateTime(scoreboard)
+  const { quarters, setQuarters, getTeamScore } = useCurrentQuarterData(
+    scoreboard,
+    scoreboard?.current_quarter || 1
+  )
+  const { showCopied, isGeneratingShareCode, handleCopyShareCode, handleGenerateShareCode } = useShareCode(
+    scoreboard,
+    isOwner,
+    setScoreboard
+  )
+  const { handleTimerStart, handleTimerPause, handleTimerReset } = useTimerControls(
+    scoreboard,
+    isOwner,
+    id,
+    setScoreboard
+  )
+  const { updateScore } = useScoreUpdate(
+    scoreboard,
+    isOwner,
+    quarters,
+    setQuarters,
+    setAllQuarters,
+    getTeamScore
+  )
 
-    const fetchCurrentQuarter = async () => {
-      const teamIds = scoreboard.teams.map(team => team.id)
-      const { data: quartersData, error: quartersError } = await supabase
-        .from('quarters')
-        .select('*')
-        .in('team_id', teamIds)
-        .eq('quarter_number', scoreboard.current_quarter)
-
-      if (quartersError) {
-        console.error('Error fetching current quarter:', quartersError)
-        return
-      }
-      setQuarters(quartersData || [])
-    }
-
-    fetchCurrentQuarter()
-  }, [scoreboard?.current_quarter, scoreboard?.teams])
-
-  // Helper function to get team score for current quarter
-  const getTeamScore = (teamId: string) => {
-    const quarter = quarters.find(q => q.team_id === teamId)
-    return quarter?.points || 0
-  }
-
-
-  // Share handlers (modal)
-  const handleCopyShareCode = useCallback(() => {
-    if (!scoreboard?.share_code) return
-    navigator.clipboard.writeText(scoreboard.share_code)
-    setShowCopied(true)
-    setTimeout(() => setShowCopied(false), 2000)
-  }, [scoreboard?.share_code])
-
-  const handleGenerateShareCode = useCallback(async () => {
-    if (!scoreboard || !isOwner) return
-
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    const generateCode = () => {
-      const bytes = new Uint8Array(6)
-      window.crypto.getRandomValues(bytes)
-      let out = ''
-      for (let i = 0; i < bytes.length; i++) {
-        out += alphabet[bytes[i] % alphabet.length]
-      }
-      return out
-    }
-
-    const scoreboardId = scoreboard.id
-    const maxAttempts = 10
-    let lastError: unknown = null
-    setIsGeneratingShareCode(true)
-    try {
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          const shareCode = generateCode()
-          const { error } = await supabase
-            .from('scoreboards')
-            .update({ share_code: shareCode })
-            .eq('id', scoreboardId)
-          if (error) {
-            // @ts-ignore
-            if (error.code === '23505') continue
-            throw error
-          }
-          setScoreboard(prev => (prev ? { ...prev, share_code: shareCode } : prev))
-          return
-        } catch (err) {
-          lastError = err
-        }
-      }
-      console.error('Error generating share code after retries:', lastError)
-      setAlert({
-        isOpen: true,
-        title: 'Error',
-        message: 'Could not generate a share code. Please try again later.',
-        variant: 'error',
-      })
-    } finally {
-      setIsGeneratingShareCode(false)
-    }
-  }, [scoreboard, isOwner, setScoreboard])
 
   const handleViewPublic = useCallback(() => {
     if (!id) return
     navigate(`/scoreboard/${id}/view`)
   }, [id, navigate])
 
-  // Timer control functions - With optimistic updates
-  const handleTimerStart = async () => {
-    if (!scoreboard || !isOwner) return
-
-    const now = new Date().toISOString()
-    let newPausedDuration = 0
-
-    if (scoreboard.timer_state === 'paused') {
-      // When resuming from pause, keep the current paused duration
-      newPausedDuration = scoreboard.timer_paused_duration
-      console.log('Resuming from pause with duration:', newPausedDuration)
-    } else {
-      // Starting fresh - reset paused duration
-      newPausedDuration = 0
-      console.log('Starting fresh timer')
-    }
-
-    // OPTIMISTIC UPDATE: Update local state immediately
-    setScoreboard(prev => prev ? {
-      ...prev,
-      timer_state: 'running',
-      timer_started_at: now,
-      timer_paused_duration: newPausedDuration,
-    } : null)
-
+  // Wrapper for handleGenerateShareCode to handle errors
+  const handleGenerateShareCodeWithError = useCallback(async () => {
     try {
-      const { error } = await supabase
-        .from('scoreboards')
-        .update({
-          timer_state: 'running',
-          timer_started_at: now,
-          timer_paused_duration: newPausedDuration,
-        })
-        .eq('id', id)
-
-      if (error) {
-        // Revert optimistic update on error
-        setScoreboard(prev => prev ? {
-          ...prev,
-          timer_state: scoreboard.timer_state,
-          timer_started_at: scoreboard.timer_started_at,
-          timer_paused_duration: scoreboard.timer_paused_duration,
-        } : null)
-        throw error
-      }
-      console.log('Timer started successfully')
+      await handleGenerateShareCode()
     } catch (error) {
-      console.error('Error starting timer:', error)
+      showError('Error', 'Could not generate a share code. Please try again later.')
     }
-  }
-
-  const handleTimerPause = async () => {
-    if (!scoreboard || !isOwner || scoreboard.timer_state !== 'running') return
-
-    if (!scoreboard.timer_started_at) return
-
-    // Calculate how much time has elapsed since the timer started
-    const now = new Date().getTime()
-    const startTime = new Date(scoreboard.timer_started_at).getTime()
-    const elapsedSinceStart = Math.floor((now - startTime) / 1000)
-    
-    // Total paused duration = previous paused time + current elapsed time
-    const newPausedDuration = scoreboard.timer_paused_duration + elapsedSinceStart
-
-    // OPTIMISTIC UPDATE: Update local state immediately
-    setScoreboard(prev => prev ? {
-      ...prev,
-      timer_state: 'paused',
-      timer_paused_duration: newPausedDuration,
-    } : null)
-
-    try {
-      const { error } = await supabase
-        .from('scoreboards')
-        .update({
-          timer_state: 'paused',
-          timer_paused_duration: newPausedDuration,
-        })
-        .eq('id', id)
-
-      if (error) {
-        // Revert optimistic update on error
-        setScoreboard(prev => prev ? {
-          ...prev,
-          timer_state: 'running',
-          timer_paused_duration: scoreboard.timer_paused_duration,
-        } : null)
-        throw error
-      }
-      console.log('Timer paused with total duration:', newPausedDuration)
-    } catch (error) {
-      console.error('Error pausing timer:', error)
-    }
-  }
-
-  const handleTimerReset = async () => {
-    if (!scoreboard || !isOwner) return
-
-    // OPTIMISTIC UPDATE: Update local state immediately
-    setScoreboard(prev => prev ? {
-      ...prev,
-      timer_state: 'stopped',
-      timer_started_at: null,
-      timer_paused_duration: 0,
-    } : null)
-
-    try {
-      const { error } = await supabase
-        .from('scoreboards')
-        .update({
-          timer_state: 'stopped',
-          timer_started_at: null,
-          timer_paused_duration: 0,
-        })
-        .eq('id', id)
-
-      if (error) {
-        // Revert optimistic update on error
-        setScoreboard(prev => prev ? {
-          ...prev,
-          timer_state: scoreboard.timer_state,
-          timer_started_at: scoreboard.timer_started_at,
-          timer_paused_duration: scoreboard.timer_paused_duration,
-        } : null)
-        throw error
-      }
-      console.log('Timer reset successfully')
-    } catch (error) {
-      console.error('Error resetting timer:', error)
-    }
-  }
-
-  const updateScore = async (teamIndex: number, delta: number) => {
-    if (!scoreboard || !isOwner || !scoreboard.teams || !scoreboard.teams[teamIndex]) return
-
-    const team = scoreboard.teams[teamIndex]
-    const currentScore = getTeamScore(team.id)
-    const newScore = Math.max(0, Math.min(200, currentScore + delta))
-
-    try {
-      // Atomic upsert to avoid unique constraint violations
-      const { error } = await supabase
-        .from('quarters')
-        .upsert(
-          [
-            {
-              team_id: team.id,
-              quarter_number: scoreboard.current_quarter,
-              points: newScore,
-              fouls: 0,
-              timeouts: 0,
-            },
-          ],
-          { onConflict: 'team_id,quarter_number' }
-        )
-
-      if (error) throw error
-
-      // Optimistically update local state for snappy UI
-      setQuarters(prev => {
-        const existing = prev.find(q => q.team_id === team.id && q.quarter_number === scoreboard.current_quarter)
-        if (existing) {
-          return prev.map(q => (q.id === existing.id ? { ...q, points: newScore } : q))
-        }
-        return [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            team_id: team.id,
-            quarter_number: scoreboard.current_quarter,
-            points: newScore,
-            fouls: 0,
-            timeouts: 0,
-            created_at: new Date().toISOString(),
-          },
-        ]
-      })
-
-      // Also update allQuarters state for history
-      setAllQuarters(prev => {
-        const existing = prev.find(q => q.team_id === team.id && q.quarter_number === scoreboard.current_quarter)
-        if (existing) {
-          return prev.map(q => (q.id === existing.id ? { ...q, points: newScore } : q))
-        }
-        return [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            team_id: team.id,
-            quarter_number: scoreboard.current_quarter,
-            points: newScore,
-            fouls: 0,
-            timeouts: 0,
-            created_at: new Date().toISOString(),
-          },
-        ]
-      })
-    } catch (error) {
-      console.error('Error updating score:', error)
-    }
-  }
+  }, [handleGenerateShareCode, showError])
 
   const updateQuarter = async (delta: number) => {
     if (!scoreboard || !isOwner) return
@@ -359,13 +106,6 @@ export const Scoreboard: React.FC = () => {
     }
   }
 
-  // Helper function to get cumulative team score across all quarters
-  const getTeamTotalScore = (teamId: string) => {
-    if (!allQuarters || !teamId) return 0
-    return allQuarters
-      .filter(q => q.team_id === teamId)
-      .reduce((sum, q) => sum + q.points, 0)
-  }
 
 
   if (loading) {
@@ -402,19 +142,6 @@ export const Scoreboard: React.FC = () => {
   const team1 = scoreboard.teams?.[1]
   
   const publicViewUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
-
-  // Format game date/time for navbar
-  const formattedDate = scoreboard.game_date
-    ? new Date(scoreboard.game_date).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : null
-  const startTime = scoreboard.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
-  const endTime = scoreboard.game_end_time ? scoreboard.game_end_time.substring(0, 5) : ''
-  const timeDisplay =
-    startTime && endTime ? `${startTime} – ${endTime}` : startTime ? startTime : endTime ? endTime : null
 
   return (
     <div className="h-screen bg-white text-gray-900 flex flex-col relative overflow-hidden">
@@ -489,7 +216,7 @@ export const Scoreboard: React.FC = () => {
                     </div>
                   ) : isOwner ? (
                     <button
-                      onClick={handleGenerateShareCode}
+                      onClick={handleGenerateShareCodeWithError}
                       disabled={isGeneratingShareCode}
                       className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-3 py-3 rounded-lg text-sm font-medium transition-colors"
                     >
@@ -526,7 +253,7 @@ export const Scoreboard: React.FC = () => {
         title={alert.title}
         message={alert.message}
         variant={alert.variant}
-        onClose={() => setAlert({ ...alert, isOpen: false })}
+        onClose={hideAlert}
       />
       
       {/* Back handled via navbar logo button */}

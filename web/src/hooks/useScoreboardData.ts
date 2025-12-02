@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { sortTeams } from '../utils/teamUtils'
 import type { ScoreboardData, Team, Quarter } from '../types/scoreboard'
 
 interface UseScoreboardDataProps {
@@ -17,15 +18,6 @@ export const useScoreboardData = ({ scoreboardId, shareCode, userId }: UseScoreb
   const subscriptionRef = useRef<any>(null)
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const scoreboardRef = useRef<ScoreboardData | null>(null)
-
-  // Helper function to sort teams consistently
-  const sortTeams = (teams: Team[]) => {
-    return teams.sort((a: Team, b: Team) => {
-      if (a.position === 'home' && b.position === 'away') return -1
-      if (a.position === 'away' && b.position === 'home') return 1
-      return 0
-    })
-  }
 
   // Helper function to fetch quarters for teams
   const fetchQuarters = async (teamIds: string[]) => {
