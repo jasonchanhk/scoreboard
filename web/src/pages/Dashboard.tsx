@@ -146,6 +146,7 @@ export const Dashboard: React.FC = () => {
     gameDate: string
     gameStartTime: string
     gameEndTime: string
+    timerDuration?: number
   }) => {
     if (!user) return
 
@@ -156,7 +157,7 @@ export const Dashboard: React.FC = () => {
         .from('scoreboards')
         .insert({
           owner_id: user.id,
-          timer_duration: 720, // Default 12 minutes
+          timer_duration: formData.timerDuration || 720, // Use form value or default to 12 minutes
           timer_state: 'stopped',
           timer_paused_duration: 0,
           venue: formData.venue || null,

@@ -18,6 +18,7 @@ interface ScoreboardFormProps {
     gameDate: string
     gameStartTime: string
     gameEndTime: string
+    timerDuration?: number
   }) => Promise<void>
   onCancel: () => void
   loading: boolean
@@ -73,7 +74,8 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
       venue: venue.trim(),
       gameDate,
       gameStartTime,
-      gameEndTime
+      gameEndTime,
+      ...(mode === 'create' && { timerDuration })
     })
   }
 
