@@ -68,24 +68,58 @@ export const PublicView: React.FC = () => {
           {/* Top Section: Team Names and Scores */}
           <div className="grid grid-cols-2 gap-4 h-full">
             {/* Left Team */}
-            <div className="border-4 border-white rounded-2xl p-4 flex flex-col h-full">
-              <div className="text-3xl font-bold mb-4 pb-4 border-b-4 border-white text-center">
+            <div 
+              className="border-4 rounded-2xl p-4 flex flex-col h-full"
+              style={{ 
+                borderColor: team0?.color || '#fca5a5',
+              }}
+            >
+              <div 
+                className="text-3xl font-bold mb-4 pb-4 border-b-4 text-center text-black"
+                style={{ 
+                  backgroundColor: team0?.color || '#ef4444',
+                  borderColor: team0?.color || '#ef4444',
+                }}
+              >
                 {team0?.name || 'Team 1'}
               </div>
               <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
-                <div className="font-bold leading-none" style={{ fontSize: 'min(50vh, 45vw)' }}>
+                <div 
+                  className="font-bold leading-none" 
+                  style={{ 
+                    fontSize: 'min(50vh, 45vw)',
+                    color: team0?.color || '#ef4444',
+                  }}
+                >
                   {team0 ? getTeamTotalScore(team0.id) : 0}
                 </div>
               </div>
             </div>
 
             {/* Right Team */}
-            <div className="border-4 border-white rounded-2xl p-4 flex flex-col h-full">
-              <div className="text-3xl font-bold mb-4 pb-4 border-b-4 border-white text-center">
+            <div 
+              className="border-4 rounded-2xl p-4 flex flex-col h-full"
+              style={{ 
+                borderColor: team1?.color || '#93c5fd',
+              }}
+            >
+              <div 
+                className="text-3xl font-bold mb-4 pb-4 border-b-4 text-center text-black"
+                style={{ 
+                  backgroundColor: team1?.color || '#3b82f6',
+                  borderColor: team1?.color || '#3b82f6',
+                }}
+              >
                 {team1?.name || 'Team 2'}
               </div>
               <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
-                <div className="font-bold leading-none" style={{ fontSize: 'min(50vh, 45vw)' }}>
+                <div 
+                  className="font-bold leading-none" 
+                  style={{ 
+                    fontSize: 'min(50vh, 45vw)',
+                    color: team1?.color || '#3b82f6',
+                  }}
+                >
                   {team1 ? getTeamTotalScore(team1.id) : 0}
                 </div>
               </div>

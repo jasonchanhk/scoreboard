@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { ScoreboardForm } from '../components/ScoreboardForm'
@@ -18,6 +17,7 @@ interface Team {
   name: string
   scoreboard_id: string
   position: 'home' | 'away'
+  color: string | null
   created_at: string
 }
 
@@ -42,9 +42,7 @@ export const Dashboard: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
-  const [creating, setCreating] = useState(false)
   const { user } = useAuth()
-  const navigate = useNavigate()
   
   // Custom hooks
   const { alert, showError, hideAlert } = useAlert()
@@ -130,84 +128,21 @@ export const Dashboard: React.FC = () => {
     setScoresByScoreboard(next)
   }
 
-  const createScoreboard = async (formData: {
-    teamAName: string
-    teamBName: string
-    venue: string
-    gameDate: string
-    gameStartTime: string
-    gameEndTime: string
-    timerDuration?: number
-  }) => {
-    if (!user) return
+  const handleCreateSuccess = async () => {
+    // Refresh the scoreboards list after creation
+    await fetchScoreboards()
+    setShowCreateForm(false)
+  }
 
-    setCreating(true)
-    try {
-      // First create the scoreboard
-      const { data: scoreboardData, error: scoreboardError } = await supabase
-        .from('scoreboards')
-        .insert({
-          owner_id: user.id,
-          timer_duration: formData.timerDuration || 720, // Use form value or default to 12 minutes
-          timer_state: 'stopped',
-          timer_paused_duration: 0,
-          venue: formData.venue || null,
-          game_date: formData.gameDate || null,
-          game_start_time: formData.gameStartTime || null,
-          game_end_time: formData.gameEndTime || null,
-        })
-        .select()
-        .single()
+  const handleUpdateSuccess = async () => {
+    // Refresh the scoreboards list after update
+    await fetchScoreboards()
+    setShowEditForm(false)
+    setEditingScoreboard(null)
+  }
 
-      if (scoreboardError) throw scoreboardError
-
-      // Then create the two teams
-      const { error: teamsError } = await supabase
-        .from('teams')
-        .insert([
-          {
-            scoreboard_id: scoreboardData.id,
-            name: formData.teamAName,
-            position: 'home',
-          },
-          {
-            scoreboard_id: scoreboardData.id,
-            name: formData.teamBName,
-            position: 'away',
-          },
-        ])
-
-      if (teamsError) throw teamsError
-
-      // Fetch the complete scoreboard with teams
-      const { data: completeScoreboard, error: fetchError } = await supabase
-        .from('scoreboards')
-        .select(`
-          *,
-          teams (*)
-        `)
-        .eq('id', scoreboardData.id)
-        .single()
-
-      if (fetchError) throw fetchError
-      
-      // Ensure teams are ordered consistently (home first, away second)
-      if (completeScoreboard.teams) {
-        completeScoreboard.teams = sortTeams(completeScoreboard.teams)
-      }
-
-      const updated = [completeScoreboard, ...scoreboards]
-      setScoreboards(updated)
-      await computeAndSetScores(updated)
-      setShowCreateForm(false)
-      
-      // Redirect to the scoreboard owner view
-      navigate(`/scoreboard/${scoreboardData.id}`)
-    } catch (error) {
-      console.error('Error creating scoreboard:', error)
-    } finally {
-      setCreating(false)
-    }
+  const handleFormError = (error: string) => {
+    showError('Error', error)
   }
 
   const editScoreboard = async (scoreboardId: string) => {
@@ -216,64 +151,6 @@ export const Dashboard: React.FC = () => {
     
     setEditingScoreboard(scoreboard)
     setShowEditForm(true)
-  }
-
-  const updateScoreboard = async (formData: {
-    teamAName: string
-    teamBName: string
-    venue: string
-    gameDate: string
-    gameStartTime: string
-    gameEndTime: string
-  }) => {
-    if (!editingScoreboard) return
-
-    setCreating(true)
-    try {
-      // Update the scoreboard metadata
-      const { error: scoreboardError } = await supabase
-        .from('scoreboards')
-        .update({
-          venue: formData.venue || null,
-          game_date: formData.gameDate || null,
-          game_start_time: formData.gameStartTime || null,
-          game_end_time: formData.gameEndTime || null,
-        })
-        .eq('id', editingScoreboard.id)
-
-      if (scoreboardError) throw scoreboardError
-
-      // Update team names using position-based identification
-      const homeTeam = editingScoreboard.teams.find(team => team.position === 'home')
-      const awayTeam = editingScoreboard.teams.find(team => team.position === 'away')
-
-      if (!homeTeam || !awayTeam) {
-        throw new Error('Could not find home or away team')
-      }
-
-      const { error: teamAError } = await supabase
-        .from('teams')
-        .update({ name: formData.teamAName })
-        .eq('id', homeTeam.id)
-
-      if (teamAError) throw teamAError
-
-      const { error: teamBError } = await supabase
-        .from('teams')
-        .update({ name: formData.teamBName })
-        .eq('id', awayTeam.id)
-
-      if (teamBError) throw teamBError
-
-      // Refresh the scoreboards list
-      await fetchScoreboards()
-      setShowEditForm(false)
-      setEditingScoreboard(null)
-    } catch (error) {
-      console.error('Error updating scoreboard:', error)
-    } finally {
-      setCreating(false)
-    }
   }
 
   const deleteScoreboard = (scoreboardId: string) => {
@@ -359,29 +236,32 @@ export const Dashboard: React.FC = () => {
           {showCreateForm && (
             <ScoreboardForm
               mode="create"
-              onSubmit={createScoreboard}
+              onSuccess={handleCreateSuccess}
               onCancel={() => setShowCreateForm(false)}
-              loading={creating}
+              onError={handleFormError}
             />
           )}
 
           {showEditForm && editingScoreboard && (
             <ScoreboardForm
               mode="edit"
+              scoreboardId={editingScoreboard.id}
               initialData={{
                 teamAName: editingScoreboard.teams[0]?.name || '',
                 teamBName: editingScoreboard.teams[1]?.name || '',
+                teamAColor: editingScoreboard.teams[0]?.color || '#ef4444',
+                teamBColor: editingScoreboard.teams[1]?.color || '#3b82f6',
                 venue: editingScoreboard.venue || '',
                 gameDate: editingScoreboard.game_date || '',
                 gameStartTime: editingScoreboard.game_start_time || '',
                 gameEndTime: editingScoreboard.game_end_time || '',
               }}
-              onSubmit={updateScoreboard}
+              onSuccess={handleUpdateSuccess}
               onCancel={() => {
                 setShowEditForm(false)
                 setEditingScoreboard(null)
               }}
-              loading={creating}
+              onError={handleFormError}
             />
           )}
 

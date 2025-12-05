@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { FaBasketballBall } from 'react-icons/fa'
 import { IoAdd, IoRemove } from 'react-icons/io5'
-import { HiPencil, HiX } from 'react-icons/hi'
+import { HiX, HiPencil } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
 import { Alert } from '../components/Alert'
+import { ScoreboardForm } from '../components/ScoreboardForm'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
 import { useGameDateTime } from '../hooks/useGameDateTime'
@@ -16,12 +17,14 @@ import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
 import { useShareCode } from '../hooks/useShareCode'
 import { useTimerControls } from '../hooks/useTimerControls'
 import { useScoreUpdate } from '../hooks/useScoreUpdate'
+import { sortTeams } from '../utils/teamUtils'
 
 export const Scoreboard: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
   
   const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
     scoreboardId: id,
@@ -70,6 +73,32 @@ export const Scoreboard: React.FC = () => {
       showError('Error', 'Could not generate a share code. Please try again later.')
     }
   }, [handleGenerateShareCode, showError])
+
+  const handleUpdateSuccess = async () => {
+    // Refresh the scoreboard data after update
+    if (id) {
+      const { data: updatedScoreboard, error: fetchError } = await supabase
+        .from('scoreboards')
+        .select(`
+          *,
+          teams (*)
+        `)
+        .eq('id', id)
+        .single()
+
+      if (!fetchError && updatedScoreboard) {
+        if (updatedScoreboard.teams) {
+          updatedScoreboard.teams = sortTeams(updatedScoreboard.teams)
+        }
+        setScoreboard(updatedScoreboard)
+      }
+    }
+    setShowEditForm(false)
+  }
+
+  const handleFormError = (error: string) => {
+    showError('Error', error)
+  }
 
   const updateQuarter = async (delta: number) => {
     if (!scoreboard || !isOwner) return
@@ -171,6 +200,15 @@ export const Scoreboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-3">
+              {isOwner && (
+                <button
+                  onClick={() => setShowEditForm(true)}
+                  className="inline-flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  <HiPencil className="mr-2" />
+                  Edit
+                </button>
+              )}
               <button
                 onClick={() => setShareOpen(true)}
                 className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
@@ -255,6 +293,27 @@ export const Scoreboard: React.FC = () => {
         variant={alert.variant}
         onClose={hideAlert}
       />
+
+      {/* Edit Form */}
+      {showEditForm && scoreboard && (
+        <ScoreboardForm
+          mode="edit"
+          scoreboardId={scoreboard.id}
+          initialData={{
+            teamAName: scoreboard.teams[0]?.name || '',
+            teamBName: scoreboard.teams[1]?.name || '',
+            teamAColor: scoreboard.teams[0]?.color || '#ef4444',
+            teamBColor: scoreboard.teams[1]?.color || '#3b82f6',
+            venue: scoreboard.venue || '',
+            gameDate: scoreboard.game_date || '',
+            gameStartTime: scoreboard.game_start_time || '',
+            gameEndTime: scoreboard.game_end_time || '',
+          }}
+          onSuccess={handleUpdateSuccess}
+          onCancel={() => setShowEditForm(false)}
+          onError={handleFormError}
+        />
+      )}
       
       {/* Back handled via navbar logo button */}
 
@@ -266,12 +325,28 @@ export const Scoreboard: React.FC = () => {
             {/* Team Containers */}
             <div className="grid grid-cols-2 gap-8 h-full" style={{ width: '70vw' }}>
               {/* Left Team */}
-              <div className="rounded-3xl overflow-hidden flex flex-col h-full border-4 border-green-300">
-                <div className="bg-green-400 text-black text-3xl font-extrabold py-3 text-center">
+              <div 
+                className="rounded-3xl overflow-hidden flex flex-col h-full border-4"
+                style={{ 
+                  borderColor: team0?.color || '#fca5a5',
+                }}
+              >
+                <div 
+                  className="text-black text-3xl font-extrabold py-3 text-center"
+                  style={{ 
+                    backgroundColor: team0?.color || '#ef4444',
+                  }}
+                >
                   {team0?.name || 'Team 1'}
                 </div>
                 <div className="flex-1 flex items-center justify-center overflow-hidden px-2 bg-white">
-                  <div className="font-extrabold leading-none text-green-400" style={{ fontSize: 'min(30vh, 28vw)' }}>
+                  <div 
+                    className="font-extrabold leading-none" 
+                    style={{ 
+                      fontSize: 'min(30vh, 28vw)',
+                      color: team0?.color || '#ef4444',
+                    }}
+                  >
                     {team0 ? getTeamTotalScore(team0.id) : 0}
                   </div>
                 </div>
@@ -291,25 +366,33 @@ export const Scoreboard: React.FC = () => {
                     >
                       <IoRemove className="text-gray-900 text-xl" />
                     </button>
-                    <button
-                      onClick={() => {/* edit left team - logic to be added */}}
-                      className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center"
-                      aria-label="Edit team"
-                      title="Edit"
-                    >
-                      <HiPencil className="text-gray-500 text-xl" />
-                    </button>
                   </div>
                 )}
               </div>
 
               {/* Right Team */}
-              <div className="rounded-3xl overflow-hidden flex flex-col h-full border-4 border-orange-300">
-                <div className="bg-orange-500 text-black text-3xl font-extrabold py-3 text-center">
+              <div 
+                className="rounded-3xl overflow-hidden flex flex-col h-full border-4"
+                style={{ 
+                  borderColor: team1?.color || '#93c5fd',
+                }}
+              >
+                <div 
+                  className="text-black text-3xl font-extrabold py-3 text-center"
+                  style={{ 
+                    backgroundColor: team1?.color || '#3b82f6',
+                  }}
+                >
                   {team1?.name || 'Team 2'}
                 </div>
                 <div className="flex-1 flex items-center justify-center overflow-hidden px-2 bg-white">
-                  <div className="font-extrabold leading-none text-orange-500" style={{ fontSize: 'min(30vh, 28vw)' }}>
+                  <div 
+                    className="font-extrabold leading-none" 
+                    style={{ 
+                      fontSize: 'min(30vh, 28vw)',
+                      color: team1?.color || '#3b82f6',
+                    }}
+                  >
                     {team1 ? getTeamTotalScore(team1.id) : 0}
                   </div>
                 </div>
@@ -328,14 +411,6 @@ export const Scoreboard: React.FC = () => {
                       aria-label="Subtract 1 point"
                     >
                       <IoRemove className="text-gray-900 text-xl" />
-                    </button>
-                    <button
-                      onClick={() => {/* edit right team - logic to be added */}}
-                      className="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center"
-                      aria-label="Edit team"
-                      title="Edit"
-                    >
-                      <HiPencil className="text-gray-500 text-xl" />
                     </button>
                   </div>
                 )}
