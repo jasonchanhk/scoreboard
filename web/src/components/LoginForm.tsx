@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 interface LoginFormProps {
@@ -31,21 +32,27 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Link
+        to="/"
+        className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
+        aria-label="Back to Landing"
+      >
+        ←
+      </Link>
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          {/* App Logo and Name */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="flex items-center justify-center w-20 h-20 bg-orange-500 rounded-full mb-4 shadow-lg">
+              <span className="text-4xl">🏀</span>
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Pretty Scoreboard</h1>
+          </div>
+          
+          <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
             Sign in to your account
           </h2>
-              {/* <p className="mt-2 text-center text-sm text-gray-600">
-                Or{' '}
-                <button
-                  onClick={onToggleMode}
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
-                >
-                  create a new account
-                </button>
-              </p> */}
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">

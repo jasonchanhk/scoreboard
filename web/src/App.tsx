@@ -1,40 +1,11 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { LoginForm } from './components/LoginForm'
-// import { SignUpForm } from './components/SignUpForm'
-import { Dashboard } from './components/Dashboard'
-import { Scoreboard } from './components/Scoreboard'
-import { PublicView } from './components/PublicView'
-
-const AuthPage: React.FC = () => {
-  // const [isLogin, setIsLogin] = useState(true)
-  const { user, loading } = useAuth()
-
-  // Redirect to dashboard if user is already authenticated
-  if (user) {
-    return <Navigate to="/" replace />
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      <LoginForm onToggleMode={() => {}} />
-      {/* {isLogin ? (
-        <LoginForm onToggleMode={() => setIsLogin(false)} />
-      ) : (
-        <SignUpForm onToggleMode={() => setIsLogin(true)} />
-      )} */}
-    </div>
-  )
-}
+import { Dashboard } from './pages/Dashboard'
+import { Scoreboard } from './pages/Scoreboard'
+import { PublicView } from './pages/PublicView'
+import { LandingPage } from './pages/LandingPage'
+import { AuthPage } from './pages/AuthPage'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
@@ -50,15 +21,33 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return user ? <>{children}</> : <Navigate to="/auth" replace />
 }
 
+// Component to handle invalid URLs and redirect based on authentication status
+const InvalidUrlRedirect: React.FC = () => {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    )
+  }
+
+  // If user is authenticated, redirect to dashboard
+  // If not authenticated, redirect to auth page
+  return <Navigate to={user ? "/dashboard" : "/"} replace />
+}
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
         <div className="App">
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
@@ -73,8 +62,9 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/view/:shareCode" element={<PublicView />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/scoreboard/:id/view" element={<PublicView />} />
+            {/* Catch-all route for invalid URLs */}
+            <Route path="*" element={<InvalidUrlRedirect />} />
           </Routes>
         </div>
       </Router>

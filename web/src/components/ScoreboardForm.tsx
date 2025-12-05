@@ -18,10 +18,14 @@ interface ScoreboardFormProps {
     gameDate: string
     gameStartTime: string
     gameEndTime: string
+    timerDuration?: number
   }) => Promise<void>
   onCancel: () => void
   loading: boolean
 }
+
+const HOURS = Array.from({ length: 24 }, (_, index) => index.toString().padStart(2, '0'))
+const MINUTES = ['00', '15', '30', '45']
 
 export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
   mode,
@@ -37,6 +41,28 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
   const [gameDate, setGameDate] = useState(initialData?.gameDate || '')
   const [gameStartTime, setGameStartTime] = useState(initialData?.gameStartTime || '')
   const [gameEndTime, setGameEndTime] = useState(initialData?.gameEndTime || '')
+  const [startHour, setStartHour] = useState(() => initialData?.gameStartTime?.split(':')[0] || '')
+  const [startMinute, setStartMinute] = useState(() => initialData?.gameStartTime?.split(':')[1] || '')
+  const [endHour, setEndHour] = useState(() => initialData?.gameEndTime?.split(':')[0] || '')
+  const [endMinute, setEndMinute] = useState(() => initialData?.gameEndTime?.split(':')[1] || '')
+  const updateStartTime = (hour: string, minute: string) => {
+    if (hour && minute) {
+      const time = `${hour}:${minute}`
+      setGameStartTime(time)
+    } else {
+      setGameStartTime('')
+    }
+  }
+
+  const updateEndTime = (hour: string, minute: string) => {
+    if (hour && minute) {
+      const time = `${hour}:${minute}`
+      setGameEndTime(time)
+    } else {
+      setGameEndTime('')
+    }
+  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +74,8 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
       venue: venue.trim(),
       gameDate,
       gameStartTime,
-      gameEndTime
+      gameEndTime,
+      ...(mode === 'create' && { timerDuration })
     })
   }
 
@@ -78,7 +105,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
     >
       <div className="relative top-20 mx-auto p-5 w-11/12 md:w-2/3 lg:w-1/2 shadow-2xl rounded-lg bg-white">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-medium text-gray-900">
             {mode === 'create' ? 'Create New Scoreboard' : 'Edit Scoreboard'}
           </h3>
@@ -90,8 +117,8 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
             ×
           </button>
         </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <label htmlFor="teamA" className="block text-sm font-medium text-gray-700">
               Home
@@ -101,7 +128,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
               id="teamA"
               value={teamAName}
               onChange={(e) => setTeamAName(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Enter home team name"
               required
             />
@@ -115,7 +142,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
               id="teamB"
               value={teamBName}
               onChange={(e) => setTeamBName(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Enter away team name"
               required
             />
@@ -124,43 +151,41 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
         
         {/* Only show timer duration for create mode */}
         {mode === 'create' && (
-          <div>
+          <div className="space-y-3">
             <label htmlFor="timerDuration" className="block text-sm font-medium text-gray-700">
               Timer Duration (minutes)
             </label>
-            <div className="mt-1 flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-4">
               <input
                 type="number"
                 id="timerDuration"
                 value={Math.floor(timerDuration / 60)}
                 onChange={(e) => setTimerDuration((parseInt(e.target.value) || 12) * 60)}
-                className="block w-32 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-32 rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 min="1"
                 max="60"
                 required
               />
-              <div className="text-sm text-gray-500">
-                minutes
-              </div>
-              <div className="flex space-x-2">
+              <div className="text-sm text-gray-500">minutes</div>
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setTimerDuration(720)} // 12 minutes
-                  className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                  className="rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
                 >
                   12 min
                 </button>
                 <button
                   type="button"
                   onClick={() => setTimerDuration(600)} // 10 minutes
-                  className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                  className="rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
                 >
                   10 min
                 </button>
                 <button
                   type="button"
                   onClick={() => setTimerDuration(300)} // 5 minutes
-                  className="text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
+                  className="rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
                 >
                   5 min
                 </button>
@@ -169,7 +194,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
           </div>
         )}
         
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <label htmlFor="venue" className="block text-sm font-medium text-gray-700">
               Venue (Optional)
@@ -179,7 +204,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
               id="venue"
               value={venue}
               onChange={(e) => setVenue(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Enter venue name"
             />
           </div>
@@ -192,34 +217,98 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
               id="gameDate"
               value={gameDate}
               onChange={(e) => setGameDate(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <label htmlFor="gameStartTime" className="block text-sm font-medium text-gray-700">
               Start Time (Optional)
             </label>
-            <input
-              type="time"
-              id="gameStartTime"
-              value={gameStartTime}
-              onChange={(e) => setGameStartTime(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
+            <div className="mt-2 flex items-center gap-3">
+              <select
+                id="gameStartHour"
+                value={startHour}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setStartHour(value)
+                  updateStartTime(value, startMinute)
+                }}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">HH</option>
+                {!HOURS.includes(startHour) && startHour && <option value={startHour}>{startHour}</option>}
+                {HOURS.map(hour => (
+                  <option key={hour} value={hour}>
+                    {hour}
+                  </option>
+                ))}
+              </select>
+              <span className="text-lg text-gray-500">:</span>
+              <select
+                id="gameStartMinute"
+                value={startMinute}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setStartMinute(value)
+                  updateStartTime(startHour, value)
+                }}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">MM</option>
+                {!MINUTES.includes(startMinute) && startMinute && <option value={startMinute}>{startMinute}</option>}
+                {MINUTES.map(minute => (
+                  <option key={minute} value={minute}>
+                    {minute}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <label htmlFor="gameEndTime" className="block text-sm font-medium text-gray-700">
               End Time (Optional)
             </label>
-            <input
-              type="time"
-              id="gameEndTime"
-              value={gameEndTime}
-              onChange={(e) => setGameEndTime(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
+            <div className="mt-2 flex items-center gap-3">
+              <select
+                id="gameEndHour"
+                value={endHour}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setEndHour(value)
+                  updateEndTime(value, endMinute)
+                }}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">HH</option>
+                {!HOURS.includes(endHour) && endHour && <option value={endHour}>{endHour}</option>}
+                {HOURS.map(hour => (
+                  <option key={hour} value={hour}>
+                    {hour}
+                  </option>
+                ))}
+              </select>
+              <span className="text-lg text-gray-500">:</span>
+              <select
+                id="gameEndMinute"
+                value={endMinute}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setEndMinute(value)
+                  updateEndTime(endHour, value)
+                }}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">MM</option>
+                {!MINUTES.includes(endMinute) && endMinute && <option value={endMinute}>{endMinute}</option>}
+                {MINUTES.map(minute => (
+                  <option key={minute} value={minute}>
+                    {minute}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
         <div className="flex justify-end space-x-3">

@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { ScoreboardForm } from './ScoreboardForm'
+import { ScoreboardForm } from '../components/ScoreboardForm'
+import { ScoreboardCard } from '../components/ScoreboardCard'
+import { CreateScoreboardCTA } from '../components/CreateScoreboardCTA'
+import { JoinScoreboardCTA } from '../components/JoinScoreboardCTA'
+import { DashboardNav } from '../components/DashboardNav'
+import { Alert } from '../components/Alert'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 
 interface Team {
   id: string
@@ -34,10 +40,20 @@ export const Dashboard: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
   const [creating, setCreating] = useState(false)
-  const [joinCode, setJoinCode] = useState('')
-  const { user, signOut } = useAuth()
+  const [alert, setAlert] = useState<{ isOpen: boolean; title: string; message: string; variant?: 'error' | 'success' | 'warning' | 'info' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'error',
+  })
+  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; title: string; message: string; scoreboardId: string | null }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    scoreboardId: null,
+  })
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const initials = (user?.email?.slice(0, 2) || 'US').toUpperCase()
 
   useEffect(() => {
     fetchScoreboards()
@@ -130,6 +146,7 @@ export const Dashboard: React.FC = () => {
     gameDate: string
     gameStartTime: string
     gameEndTime: string
+    timerDuration?: number
   }) => {
     if (!user) return
 
@@ -140,7 +157,7 @@ export const Dashboard: React.FC = () => {
         .from('scoreboards')
         .insert({
           owner_id: user.id,
-          timer_duration: 720, // Default 12 minutes
+          timer_duration: formData.timerDuration || 720, // Use form value or default to 12 minutes
           timer_state: 'stopped',
           timer_paused_duration: 0,
           venue: formData.venue || null,
@@ -272,58 +289,16 @@ export const Dashboard: React.FC = () => {
     }
   }
 
-  const generateShareCode = async (scoreboardId: string) => {
-    // Secure 6-char code generator using a curated alphabet (A-Z, 0-9)
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    const generateCode = () => {
-      const bytes = new Uint8Array(6)
-      // crypto is available in modern browsers; fallback not provided intentionally
-      window.crypto.getRandomValues(bytes)
-      let out = ''
-      for (let i = 0; i < bytes.length; i++) {
-        out += alphabet[bytes[i] % alphabet.length]
-      }
-      return out
-    }
-
-    const maxAttempts = 10
-    let lastError: unknown = null
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const shareCode = generateCode()
-        const { error } = await supabase
-          .from('scoreboards')
-          .update({ share_code: shareCode })
-          .eq('id', scoreboardId)
-
-        if (error) {
-          // If unique violation (23505), retry with a new code
-          // @ts-ignore - supabase error may include code
-          if (error.code === '23505') {
-            continue
-          }
-          throw error
-        }
-
-        // Success: update local state and exit
-        setScoreboards(scoreboards.map(sb => 
-          sb.id === scoreboardId ? { ...sb, share_code: shareCode } : sb
-        ))
-        return
-      } catch (err) {
-        lastError = err
-      }
-    }
-
-    console.error('Error generating share code after retries:', lastError)
+  const deleteScoreboard = (scoreboardId: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Scoreboard',
+      message: 'Are you sure you want to delete this scoreboard? This action cannot be undone.',
+      scoreboardId,
+    })
   }
 
-  const deleteScoreboard = async (scoreboardId: string) => {
-    if (!confirm('Are you sure you want to delete this scoreboard? This action cannot be undone.')) {
-      return
-    }
-
+  const performDelete = async (scoreboardId: string) => {
     try {
       // Delete scoreboard (this will cascade delete teams and quarters due to foreign key constraints)
       const { error } = await supabase
@@ -346,7 +321,12 @@ export const Dashboard: React.FC = () => {
       console.log('Scoreboard deleted successfully')
     } catch (error) {
       console.error('Error deleting scoreboard:', error)
-      alert('Failed to delete scoreboard. Please try again.')
+      setAlert({
+        isOpen: true,
+        title: 'Error',
+        message: 'Failed to delete scoreboard. Please try again.',
+        variant: 'error',
+      })
     }
   }
 
@@ -360,86 +340,40 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">Pretty Scoreboard</h1>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="relative group">
-                <button
-                  className="flex items-center justify-center w-9 h-9 rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  aria-haspopup="true"
-                  aria-expanded="false"
-                >
-                  <span className="sr-only">Open user menu</span>
-                  {initials}
-                </button>
-                <div className="absolute right-0 top-full z-50 hidden group-hover:block focus-within:block w-56 rounded-md shadow-lg bg-white">
-                  <div className="py-2">
-                    {user?.email && (
-                      <div className="px-4 pb-2 text-xs text-gray-500 cursor-default select-text">
-                        {user.email}
-                      </div>
-                    )}
-                    <button
-                      onClick={signOut}
-                      className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <DashboardNav />
+
+      <Alert
+        isOpen={alert.isOpen}
+        title={alert.title}
+        message={alert.message}
+        variant={alert.variant}
+        onClose={() => setAlert({ ...alert, isOpen: false })}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant="warning"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (confirmDialog.scoreboardId) {
+            setConfirmDialog({ ...confirmDialog, isOpen: false })
+            await performDelete(confirmDialog.scoreboardId)
+          }
+        }}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+      />
 
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Your Scoreboards</h2>
-            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  const code = joinCode.trim().toUpperCase()
-                  if (/^[A-Z0-9]{6}$/.test(code)) {
-                    navigate(`/view/${code}`)
-                  }
-                }}
-                className="flex gap-2"
-              >
-                <input
-                  type="text"
-                  inputMode="text"
-                  maxLength={6}
-                  placeholder="Enter 6-char code"
-                  value={joinCode}
-                  onChange={(e) => {
-                    const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-                    setJoinCode(cleaned)
-                  }}
-                  className="w-full sm:w-56 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm px-3 py-2"
-                />
-                <button
-                  type="submit"
-                  disabled={!/^[A-Z0-9]{6}$/.test(joinCode)}
-                  className="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
-                >
-                  View
-                </button>
-              </form>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Create New Scoreboard
-              </button>
-            </div>
+          <div className="grid gap-4 lg:grid-cols-2 mb-10">
+            <CreateScoreboardCTA onCreateClick={() => setShowCreateForm(true)} />
+            <JoinScoreboardCTA />
           </div>
+
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Scoreboards</h2>
 
           {showCreateForm && (
             <ScoreboardForm
@@ -477,100 +411,13 @@ export const Dashboard: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {scoreboards.map((scoreboard) => (
-                <div key={scoreboard.id} className="bg-white shadow rounded-lg p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        {scoreboard.teams.length >= 2 
-                          ? `${scoreboard.teams[0].name} vs ${scoreboard.teams[1].name}`
-                          : 'Loading teams...'
-                        }
-                      </h3>
-                      
-                      {/* Date and Time under team names */}
-                      {scoreboard.game_date && (
-                        <div className="text-sm text-gray-600 mb-1">
-                          <span className="font-medium">📅</span>
-                          <span className="ml-1">
-                            {new Date(scoreboard.game_date).toLocaleDateString()}
-                            {(scoreboard.game_start_time || scoreboard.game_end_time) && (
-                              <span className="ml-2 text-gray-500">
-                                {scoreboard.game_start_time && scoreboard.game_end_time 
-                                  ? `${scoreboard.game_start_time.substring(0, 5)} - ${scoreboard.game_end_time.substring(0, 5)}`
-                                  : scoreboard.game_start_time 
-                                    ? `from ${scoreboard.game_start_time.substring(0, 5)}`
-                                    : scoreboard.game_end_time 
-                                      ? `until ${scoreboard.game_end_time.substring(0, 5)}`
-                                      : ''
-                                }
-                              </span>
-                            )}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Location below date/time */}
-                      {scoreboard.venue && (
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">📍</span>
-                          <span className="ml-1">{scoreboard.venue}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Edit/Delete buttons in top-right corner */}
-                    <div className="flex flex-col space-y-1">
-                      <button
-                        onClick={() => editScoreboard(scoreboard.id)}
-                        className="text-gray-400 hover:text-gray-600 text-sm"
-                        title="Edit scoreboard"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => deleteScoreboard(scoreboard.id)}
-                        className="text-gray-400 hover:text-red-600 text-sm"
-                        title="Delete scoreboard"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center mb-4">
-                    <div className="text-3xl font-bold text-gray-900">
-                      {scoreboard.teams.length >= 2
-                        ? `${(scoresByScoreboard[scoreboard.id]?.a ?? 0)} - ${(scoresByScoreboard[scoreboard.id]?.b ?? 0)}`
-                        : 'Loading...'}
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      Q{scoreboard.current_quarter}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex space-x-2">
-                      <Link
-                        to={`/scoreboard/${scoreboard.id}`}
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
-                      >
-                        Open
-                      </Link>
-                      {!scoreboard.share_code ? (
-                        <button
-                          onClick={() => generateShareCode(scoreboard.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md text-sm font-medium"
-                        >
-                          Share
-                        </button>
-                      ) : (
-                        <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
-                          {scoreboard.share_code}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <ScoreboardCard
+                  key={scoreboard.id}
+                  scoreboard={scoreboard}
+                  score={scoresByScoreboard[scoreboard.id] || { a: 0, b: 0 }}
+                  onDelete={deleteScoreboard}
+                  onEdit={editScoreboard}
+                />
               ))}
             </div>
           )}
@@ -579,3 +426,4 @@ export const Dashboard: React.FC = () => {
     </div>
   )
 }
+
