@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { FaBasketballBall } from 'react-icons/fa'
-import { IoAdd, IoRemove } from 'react-icons/io5'
+import { TeamScore } from '../components/TeamScore'
 import { HiX, HiPencil } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -325,96 +325,22 @@ export const Scoreboard: React.FC = () => {
             {/* Team Containers */}
             <div className="grid grid-cols-2 gap-8 h-full" style={{ width: '70vw' }}>
               {/* Left Team */}
-              <div 
-                className="rounded-3xl overflow-hidden flex flex-col h-full border-4"
-                style={{ 
-                  borderColor: team0?.color || '#fca5a5',
-                }}
-              >
-                <div 
-                  className="text-black text-3xl font-extrabold py-3 text-center"
-                  style={{ 
-                    backgroundColor: team0?.color || '#ef4444',
-                  }}
-                >
-                  {team0?.name || 'Team 1'}
-                </div>
-                <div className="flex-1 flex items-center justify-center overflow-hidden px-2 bg-white">
-                  <div 
-                    className="font-extrabold leading-none" 
-                    style={{ 
-                      fontSize: 'min(30vh, 28vw)',
-                      color: team0?.color || '#ef4444',
-                    }}
-                  >
-                    {team0 ? getTeamTotalScore(team0.id) : 0}
-                  </div>
-                </div>
-                {isOwner && (
-                  <div className="bg-white py-4 flex items-center justify-center gap-4">
-                    <button
-                      onClick={() => updateScore(0, 1)}
-                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
-                      aria-label="Add 1 point"
-                    >
-                      <IoAdd className="text-gray-900 text-xl" />
-                    </button>
-                    <button
-                      onClick={() => updateScore(0, -1)}
-                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
-                      aria-label="Subtract 1 point"
-                    >
-                      <IoRemove className="text-gray-900 text-xl" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <TeamScore
+                teamName={team0?.name || 'Team 1'}
+                score={team0 ? getTeamTotalScore(team0.id) : 0}
+                color={team0?.color || null}
+                isOwner={isOwner}
+                onScoreUpdate={(delta) => updateScore(0, delta)}
+              />
 
               {/* Right Team */}
-              <div 
-                className="rounded-3xl overflow-hidden flex flex-col h-full border-4"
-                style={{ 
-                  borderColor: team1?.color || '#93c5fd',
-                }}
-              >
-                <div 
-                  className="text-black text-3xl font-extrabold py-3 text-center"
-                  style={{ 
-                    backgroundColor: team1?.color || '#3b82f6',
-                  }}
-                >
-                  {team1?.name || 'Team 2'}
-                </div>
-                <div className="flex-1 flex items-center justify-center overflow-hidden px-2 bg-white">
-                  <div 
-                    className="font-extrabold leading-none" 
-                    style={{ 
-                      fontSize: 'min(30vh, 28vw)',
-                      color: team1?.color || '#3b82f6',
-                    }}
-                  >
-                    {team1 ? getTeamTotalScore(team1.id) : 0}
-                  </div>
-                </div>
-                {isOwner && (
-                  <div className="bg-white py-4 flex items-center justify-center gap-4">
-                    <button
-                      onClick={() => updateScore(1, 1)}
-                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
-                      aria-label="Add 1 point"
-                    >
-                      <IoAdd className="text-gray-900 text-xl" />
-                    </button>
-                    <button
-                      onClick={() => updateScore(1, -1)}
-                      className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
-                      aria-label="Subtract 1 point"
-                    >
-                      <IoRemove className="text-gray-900 text-xl" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              <TeamScore
+                teamName={team1?.name || 'Team 2'}
+                score={team1 ? getTeamTotalScore(team1.id) : 0}
+                color={team1?.color || null}
+                isOwner={isOwner}
+                onScoreUpdate={(delta) => updateScore(1, delta)}
+              />
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
 import { useTimerCalculation } from '../hooks/useTimerCalculation'
 import { useAuth } from '../contexts/AuthContext'
+import { TeamScore } from '../components/TeamScore'
 
 export const PublicView: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -36,10 +37,10 @@ export const PublicView: React.FC = () => {
 
   if (error || !scoreboard) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <div className="text-white text-xl mb-4">{error || 'Scoreboard not found'}</div>
-          <div className="text-gray-400 text-sm">
+          <div className="text-gray-900 text-xl mb-4">{error || 'Scoreboard not found'}</div>
+          <div className="text-gray-500 text-sm">
             This scoreboard may not be shared or the share code is invalid.
           </div>
         </div>
@@ -52,11 +53,11 @@ export const PublicView: React.FC = () => {
   const currentQuarter = scoreboard.current_quarter || 1
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col relative">
+    <div className="min-h-screen bg-white text-gray-900 flex flex-col relative">
       {/* Back Button - Top Left Corner */}
       <button
         onClick={() => navigate(user ? '/dashboard' : '/auth')}
-        className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center"
+        className="absolute top-6 left-6 z-10 text-gray-600 hover:text-gray-900 transition-colors text-2xl font-bold bg-gray-100 hover:bg-gray-200 rounded-full w-12 h-12 flex items-center justify-center"
         aria-label="Back to Dashboard"
       >
         <HiChevronLeft className="text-2xl" />
@@ -66,81 +67,37 @@ export const PublicView: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center py-10 px-20">
         <div className="w-full h-[70vh]">
           {/* Top Section: Team Names and Scores */}
-          <div className="grid grid-cols-2 gap-4 h-full">
+          <div className="grid grid-cols-2 gap-8 h-full">
             {/* Left Team */}
-            <div 
-              className="border-4 rounded-2xl p-4 flex flex-col h-full"
-              style={{ 
-                borderColor: team0?.color || '#fca5a5',
-              }}
-            >
-              <div 
-                className="text-3xl font-bold mb-4 pb-4 border-b-4 text-center text-black"
-                style={{ 
-                  backgroundColor: team0?.color || '#ef4444',
-                  borderColor: team0?.color || '#ef4444',
-                }}
-              >
-                {team0?.name || 'Team 1'}
-              </div>
-              <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
-                <div 
-                  className="font-bold leading-none" 
-                  style={{ 
-                    fontSize: 'min(50vh, 45vw)',
-                    color: team0?.color || '#ef4444',
-                  }}
-                >
-                  {team0 ? getTeamTotalScore(team0.id) : 0}
-                </div>
-              </div>
-            </div>
+            <TeamScore
+              teamName={team0?.name || 'Team 1'}
+              score={team0 ? getTeamTotalScore(team0.id) : 0}
+              color={team0?.color || null}
+            />
 
             {/* Right Team */}
-            <div 
-              className="border-4 rounded-2xl p-4 flex flex-col h-full"
-              style={{ 
-                borderColor: team1?.color || '#93c5fd',
-              }}
-            >
-              <div 
-                className="text-3xl font-bold mb-4 pb-4 border-b-4 text-center text-black"
-                style={{ 
-                  backgroundColor: team1?.color || '#3b82f6',
-                  borderColor: team1?.color || '#3b82f6',
-                }}
-              >
-                {team1?.name || 'Team 2'}
-              </div>
-              <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
-                <div 
-                  className="font-bold leading-none" 
-                  style={{ 
-                    fontSize: 'min(50vh, 45vw)',
-                    color: team1?.color || '#3b82f6',
-                  }}
-                >
-                  {team1 ? getTeamTotalScore(team1.id) : 0}
-                </div>
-              </div>
-            </div>
+            <TeamScore
+              teamName={team1?.name || 'Team 2'}
+              score={team1 ? getTeamTotalScore(team1.id) : 0}
+              color={team1?.color || null}
+            />
           </div>
         </div>
 
         {/* Bottom Section: Quarter and Time Widget */}
         <div className="flex justify-center mt-8">
-          <div className="border-4 border-white rounded-lg px-4 py-3 flex items-center">
+          <div className="border-4 border-gray-300 rounded-lg px-4 py-3 flex items-center bg-gray-50">
             {/* Quarter Display */}
             <div className="px-4">
-              <div className="text-6xl font-bold">Q{currentQuarter}</div>
+              <div className="text-6xl font-bold text-gray-900">Q{currentQuarter}</div>
             </div>
             
             {/* Divider Line */}
-            <div className="h-16 border-l-4 border-white mx-4"></div>
+            <div className="h-16 border-l-4 border-gray-300 mx-4"></div>
             
             {/* Time Display */}
             <div className="px-4">
-              <div className="text-6xl font-mono font-bold">{formattedTime}</div>
+              <div className="text-6xl font-mono font-bold text-gray-900">{formattedTime}</div>
             </div>
           </div>
         </div>
