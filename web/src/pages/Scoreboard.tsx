@@ -8,11 +8,11 @@ import { HiX, HiPencil } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
-import { Alert } from '../components/Alert'
-import { ScoreboardForm } from '../components/ScoreboardForm'
+import { AlertDialog } from '../components/dialog'
+import { ScoreboardFormDialog } from '../components/dialog'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
-import { useAlert } from '../hooks/useAlert'
+import { useAlertDialog } from '../hooks/dialog'
 import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
 import { useShareCode } from '../hooks/useShareCode'
 import { useTimerControls } from '../hooks/useTimerControls'
@@ -32,7 +32,7 @@ export const Scoreboard: React.FC = () => {
   })
 
   // Custom hooks
-  const { alert, showError, hideAlert } = useAlert()
+  const { alert, showError, hideAlert } = useAlertDialog()
   const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
   const { quarters, setQuarters, getTeamScore } = useCurrentQuarterData(
     scoreboard,
@@ -176,7 +176,7 @@ export const Scoreboard: React.FC = () => {
       {/* Navbar */}
       <AppNav
         rightContent={
-            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3">
               {isOwner && (
                 <Button
                   onClick={() => setShowEditForm(true)}
@@ -186,7 +186,7 @@ export const Scoreboard: React.FC = () => {
                   <HiPencil className="mr-2" />
                   Edit
                 </Button>
-              )}
+                  )}
               <Button
                 onClick={() => setShareOpen(true)}
                 variant="primary"
@@ -264,7 +264,7 @@ export const Scoreboard: React.FC = () => {
           </div>
         </div>
       )}
-      <Alert
+      <AlertDialog
         isOpen={alert.isOpen}
         title={alert.title}
         message={alert.message}
@@ -274,7 +274,7 @@ export const Scoreboard: React.FC = () => {
 
       {/* Edit Form */}
       {showEditForm && scoreboard && (
-        <ScoreboardForm
+        <ScoreboardFormDialog
           mode="edit"
           scoreboardId={scoreboard.id}
           initialData={{

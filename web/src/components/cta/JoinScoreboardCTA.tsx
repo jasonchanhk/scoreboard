@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
-import { Alert } from './Alert'
-import { Button } from './Button'
+import { supabase } from '../../lib/supabase'
+import { AlertDialog } from '../dialog'
+import { Button } from '../Button'
 
 export const JoinScoreboardCTA: React.FC = () => {
   const [joinCode, setJoinCode] = useState('')
@@ -55,7 +55,7 @@ export const JoinScoreboardCTA: React.FC = () => {
 
   return (
     <>
-      <Alert
+      <AlertDialog
         isOpen={alert.isOpen}
         title={alert.title}
         message={alert.message}

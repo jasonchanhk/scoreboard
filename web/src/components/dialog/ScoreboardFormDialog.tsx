@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { HiX } from 'react-icons/hi'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
-import { Button } from './Button'
-import { ColorPicker, DateInput, DurationInput, TextInput, TimeInput } from './input'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
+import { BaseDialog } from './BaseDialog'
+import { ColorPicker, DateInput, DurationInput, TextInput, TimeInput } from '../input'
 
-interface ScoreboardFormProps {
+interface ScoreboardFormDialogProps {
   mode: 'create' | 'edit'
   scoreboardId?: string // Required for edit mode
   initialData?: {
@@ -26,19 +26,19 @@ interface ScoreboardFormProps {
 }
 
 interface FormData {
-  teamAName: string
-  teamBName: string
+    teamAName: string
+    teamBName: string
   teamAColor: string
   teamBColor: string
   timerDurationMinutes: number
-  venue: string
-  gameDate: string
-  gameStartTime: string
-  gameEndTime: string
+    venue: string
+    gameDate: string
+    gameStartTime: string
+    gameEndTime: string
 }
 
 
-export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
+export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
   mode,
   scoreboardId,
   initialData,
@@ -49,6 +49,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
   const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
   
   const [formData, setFormData] = useState<FormData>({
     teamAName: initialData?.teamAName || '',
@@ -195,45 +196,39 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
     onSuccess?.()
   }
 
-  // Handle escape key to close modal
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCancel()
-      }
-    }
-
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [onCancel])
-
-  // Handle click outside to close modal
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onCancel()
+  const handleFormSubmit = () => {
+    if (formRef.current) {
+      formRef.current.requestSubmit()
     }
   }
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50"
-      onClick={handleBackdropClick}
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+    <BaseDialog
+      onCancel={onCancel}
+      cancelText="Cancel"
+      actionButton={{
+        text: loading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Scoreboard' : 'Update Scoreboard'),
+        onClick: handleFormSubmit,
+        variant: 'primary',
+        disabled: loading,
+      }}
+      contentClassName="w-11/12 md:w-4/5 lg:w-3/4 xl:w-2/3"
+      buttonAlignment="right"
     >
-      <div className="relative top-20 mx-auto p-5 w-11/12 md:w-2/3 lg:w-1/2 shadow-2xl rounded-lg bg-white">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-medium text-gray-900">
-            {mode === 'create' ? 'Create New Scoreboard' : 'Edit Scoreboard'}
-          </h3>
-          <button
-            onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-            title="Close"
-          >
-            <HiX className="text-2xl" />
-          </button>
-        </div>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-lg font-medium text-gray-900">
+          {mode === 'create' ? 'Create Scoreboard' : 'Edit Scoreboard'}
+        </h3>
+        <button
+          onClick={onCancel}
+          className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+          title="Close"
+          type="button"
+        >
+          <HiX className="text-2xl" />
+        </button>
+      </div>
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <TextInput
@@ -271,10 +266,10 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
             label="Timer Duration (minutes)"
             value={formData.timerDurationMinutes}
             onChange={(value) => updateField('timerDurationMinutes', value)}
-            id="timerDuration"
+                id="timerDuration"
             min={1}
             max={60}
-            required
+                required
             quickOptions={[12, 10, 5]}
           />
         )}
@@ -284,17 +279,17 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
             label="Venue (Optional)"
             value={formData.venue}
             onChange={(value) => updateField('venue', value)}
-            id="venue"
-            placeholder="Enter venue name"
-          />
+              id="venue"
+              placeholder="Enter venue name"
+            />
           <DateInput
             label="Game Date (Optional)"
             value={formData.gameDate}
             onChange={(value) => updateField('gameDate', value)}
-            id="gameDate"
-          />
+              id="gameDate"
+            />
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-6">
           <TimeInput
             label="Start Time (Optional)"
             value={formData.gameStartTime}
@@ -308,26 +303,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
             id="gameEndTime"
           />
         </div>
-        <div className="flex justify-end space-x-3">
-          <Button
-            type="button"
-            onClick={onCancel}
-            variant="secondary"
-            size="sm"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={loading}
-            variant="primary"
-            size="md"
-          >
-            {loading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Scoreboard' : 'Update Scoreboard')}
-          </Button>
-        </div>
       </form>
-      </div>
-    </div>
+    </BaseDialog>
   )
 }

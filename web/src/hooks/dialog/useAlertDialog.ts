@@ -2,15 +2,15 @@ import { useState, useCallback } from 'react'
 
 export type AlertVariant = 'error' | 'success' | 'warning' | 'info'
 
-export interface AlertState {
+export interface AlertDialogState {
   isOpen: boolean
   title: string
   message: string
   variant?: AlertVariant
 }
 
-export const useAlert = () => {
-  const [alert, setAlert] = useState<AlertState>({
+export const useAlertDialog = () => {
+  const [alert, setAlert] = useState<AlertDialogState>({
     isOpen: false,
     title: '',
     message: '',

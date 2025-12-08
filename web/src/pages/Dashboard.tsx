@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { ScoreboardForm } from '../components/ScoreboardForm'
 import { ScoreboardCard } from '../components/ScoreboardCard'
-import { CreateScoreboardCTA } from '../components/CreateScoreboardCTA'
-import { JoinScoreboardCTA } from '../components/JoinScoreboardCTA'
+import { CreateScoreboardCTA, JoinScoreboardCTA } from '../components/cta/'
 import { AppNav } from '../components/AppNav'
 import { UserMenu } from '../components/UserMenu'
-import { Alert } from '../components/Alert'
-import { ConfirmDialog } from '../components/ConfirmDialog'
+import { AlertDialog, ScoreboardFormDialog, ConfirmDialog } from '../components/dialog'
 import { sortTeams } from '../utils/teamUtils'
-import { useAlert } from '../hooks/useAlert'
-import { useConfirmDialog } from '../hooks/useConfirmDialog'
+import { useAlertDialog, useConfirmDialog } from '../hooks/dialog'
 
 interface Team {
   id: string
@@ -46,7 +42,7 @@ export const Dashboard: React.FC = () => {
   const { user } = useAuth()
   
   // Custom hooks
-  const { alert, showError, hideAlert } = useAlert()
+  const { alert, showError, hideAlert } = useAlertDialog()
   const { confirmDialog, showConfirmDialog, hideConfirmDialog } = useConfirmDialog()
 
   useEffect(() => {
@@ -201,7 +197,7 @@ export const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <AppNav rightContent={<UserMenu />} />
 
-      <Alert
+      <AlertDialog
         isOpen={alert.isOpen}
         title={alert.title}
         message={alert.message}
@@ -235,7 +231,7 @@ export const Dashboard: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Scoreboards</h2>
 
           {showCreateForm && (
-            <ScoreboardForm
+            <ScoreboardFormDialog
               mode="create"
               onSuccess={handleCreateSuccess}
               onCancel={() => setShowCreateForm(false)}
@@ -244,7 +240,7 @@ export const Dashboard: React.FC = () => {
           )}
 
           {showEditForm && editingScoreboard && (
-            <ScoreboardForm
+            <ScoreboardFormDialog
               mode="edit"
               scoreboardId={editingScoreboard.id}
               initialData={{
