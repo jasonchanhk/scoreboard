@@ -1,8 +1,8 @@
 import React, { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
-import { FaBasketballBall } from 'react-icons/fa'
 import { TeamScore } from '../components/TeamScore'
+import { AppNav } from '../components/AppNav'
 import { HiX, HiPencil } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -175,30 +175,8 @@ export const Scoreboard: React.FC = () => {
   return (
     <div className="h-screen bg-white text-gray-900 flex flex-col relative overflow-hidden">
       {/* Navbar */}
-      <nav className="bg-white shadow text-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center">
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full hover:bg-orange-600 transition-colors cursor-pointer"
-                  aria-label="Back to Dashboard"
-                  title="Back to Dashboard"
-                >
-                  <FaBasketballBall className="text-white text-sm" />
-                </button>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold">
-                    {formattedDate || 'No date set'}
-                    {timeDisplay ? ` · ${timeDisplay}` : ''}
-                  </span>
-                  {scoreboard.venue && (
-                    <span className="text-xs text-gray-500">{scoreboard.venue}</span>
-                  )}
-                </div>
-              </div>
-            </div>
+      <AppNav
+        rightContent={
             <div className="flex items-center space-x-3">
               {isOwner && (
                 <button
@@ -216,9 +194,8 @@ export const Scoreboard: React.FC = () => {
                 Share
               </button>
             </div>
-          </div>
-        </div>
-      </nav>
+        }
+      />
 
       {/* Share Dialog */}
       {shareOpen && (

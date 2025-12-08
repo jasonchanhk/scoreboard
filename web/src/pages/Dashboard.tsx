@@ -5,7 +5,8 @@ import { ScoreboardForm } from '../components/ScoreboardForm'
 import { ScoreboardCard } from '../components/ScoreboardCard'
 import { CreateScoreboardCTA } from '../components/CreateScoreboardCTA'
 import { JoinScoreboardCTA } from '../components/JoinScoreboardCTA'
-import { DashboardNav } from '../components/DashboardNav'
+import { AppNav } from '../components/AppNav'
+import { UserMenu } from '../components/UserMenu'
 import { Alert } from '../components/Alert'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { sortTeams } from '../utils/teamUtils'
@@ -198,7 +199,7 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardNav />
+      <AppNav rightContent={<UserMenu />} />
 
       <Alert
         isOpen={alert.isOpen}
