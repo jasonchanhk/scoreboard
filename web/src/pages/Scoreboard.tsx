@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
+import { Button } from '../components/Button'
 import { HiX, HiPencil } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -11,7 +12,6 @@ import { Alert } from '../components/Alert'
 import { ScoreboardForm } from '../components/ScoreboardForm'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
-import { useGameDateTime } from '../hooks/useGameDateTime'
 import { useAlert } from '../hooks/useAlert'
 import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
 import { useShareCode } from '../hooks/useShareCode'
@@ -34,7 +34,6 @@ export const Scoreboard: React.FC = () => {
   // Custom hooks
   const { alert, showError, hideAlert } = useAlert()
   const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
-  const { formattedDate, timeDisplay } = useGameDateTime(scoreboard)
   const { quarters, setQuarters, getTeamScore } = useCurrentQuarterData(
     scoreboard,
     scoreboard?.current_quarter || 1
@@ -179,20 +178,22 @@ export const Scoreboard: React.FC = () => {
         rightContent={
             <div className="flex items-center space-x-3">
               {isOwner && (
-                <button
+                <Button
                   onClick={() => setShowEditForm(true)}
-                  className="inline-flex items-center justify-center rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  variant="secondary"
+                  size="sm"
                 >
                   <HiPencil className="mr-2" />
                   Edit
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 onClick={() => setShareOpen(true)}
-                className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                variant="primary"
+                size="sm"
               >
                 Share
-              </button>
+              </Button>
             </div>
         }
       />

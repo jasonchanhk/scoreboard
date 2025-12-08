@@ -4,6 +4,7 @@ import { HiX } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { ColorPicker } from './ColorPicker'
+import { Button } from './Button'
 
 interface ScoreboardFormProps {
   mode: 'create' | 'edit'
@@ -438,20 +439,22 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
           </div>
         </div>
         <div className="flex justify-end space-x-3">
-          <button
+          <Button
             type="button"
             onClick={onCancel}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md text-sm font-medium"
+            variant="secondary"
+            size="sm"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
+            variant="primary"
+            size="sm"
           >
             {loading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Scoreboard' : 'Update Scoreboard')}
-          </button>
+          </Button>
         </div>
       </form>
       </div>

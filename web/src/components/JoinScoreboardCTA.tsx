@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Alert } from './Alert'
+import { Button } from './Button'
 
 export const JoinScoreboardCTA: React.FC = () => {
   const [joinCode, setJoinCode] = useState('')
@@ -85,13 +86,14 @@ export const JoinScoreboardCTA: React.FC = () => {
             }}
             className="flex-1 rounded-lg border border-indigo-200 bg-white px-4 py-3 text-base tracking-[0.3em] text-indigo-900 shadow-sm focus:border-indigo-400 focus:ring-indigo-400"
           />
-          <button
+          <Button
             type="submit"
             disabled={!/^[A-Z0-9]{6}$/.test(joinCode) || joining}
-            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            variant="primary"
+            size="md"
           >
             {joining ? 'Joining...' : 'Join scoreboard'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>
