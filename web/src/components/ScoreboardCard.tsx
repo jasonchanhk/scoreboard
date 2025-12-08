@@ -1,7 +1,7 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 import { HiX } from 'react-icons/hi'
 import { useGameDateTime } from '../hooks/useGameDateTime'
+import { Button } from './Button'
 
 interface Team {
   id: string
@@ -85,18 +85,21 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
 
       <div className="flex flex-col space-y-2">
         <div className="flex space-x-2">
-          <Link
+          <Button
             to={`/scoreboard/${scoreboard.id}`}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
+            variant="primary"
+            size="sm"
+            className="flex-1"
           >
             Open
-          </Link>
-          <button
+          </Button>
+          <Button
             onClick={() => onEdit(scoreboard.id)}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
+            variant="secondary"
+            size="sm"
           >
             Edit
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@ export const AppNav: React.FC<AppNavProps> = ({ rightContent }) => {
               className={`flex items-center space-x-3 ${!isDashboard ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
               onClick={handleClick}
             >
-              <div className="flex items-center justify-center w-8 h-8 bg-orange-500 rounded-full">
+              <div className="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-full">
                 <FaBasketballBall className="text-white text-sm" />
               </div>
               <h1 className="text-xl font-semibold text-gray-900">Pretty Scoreboard</h1>

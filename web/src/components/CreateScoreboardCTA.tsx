@@ -1,4 +1,5 @@
 import React from 'react'
+import { Button } from './Button'
 
 interface CreateScoreboardCTAProps {
   onCreateClick: () => void
@@ -19,12 +20,9 @@ export const CreateScoreboardCTA: React.FC<CreateScoreboardCTAProps> = ({ onCrea
         </ul>
       </div>
       <div className="mt-10">
-        <button
-          onClick={onCreateClick}
-          className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
+        <Button onClick={onCreateClick} variant="primary" size="md">
           Create new scoreboard
-        </button>
+        </Button>
       </div>
     </div>
   )

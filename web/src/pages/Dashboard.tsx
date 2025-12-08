@@ -140,7 +140,7 @@ export const Dashboard: React.FC = () => {
     await fetchScoreboards()
     setShowEditForm(false)
     setEditingScoreboard(null)
-  }
+      }
 
   const handleFormError = (error: string) => {
     showError('Error', error)
