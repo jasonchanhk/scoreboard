@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { HiX } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { ColorPicker } from './ColorPicker'
 import { Button } from './Button'
+import { ColorPicker, DateInput, DurationInput, TextInput, TimeInput } from './input'
 
 interface ScoreboardFormProps {
   mode: 'create' | 'edit'
@@ -25,8 +25,18 @@ interface ScoreboardFormProps {
   onError?: (error: string) => void // Called on error
 }
 
-const HOURS = Array.from({ length: 24 }, (_, index) => index.toString().padStart(2, '0'))
-const MINUTES = ['00', '15', '30', '45']
+interface FormData {
+  teamAName: string
+  teamBName: string
+  teamAColor: string
+  teamBColor: string
+  timerDurationMinutes: number
+  venue: string
+  gameDate: string
+  gameStartTime: string
+  gameEndTime: string
+}
+
 
 export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
   mode,
@@ -39,41 +49,28 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
   const navigate = useNavigate()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [teamAName, setTeamAName] = useState(initialData?.teamAName || '')
-  const [teamBName, setTeamBName] = useState(initialData?.teamBName || '')
-  const [teamAColor, setTeamAColor] = useState(initialData?.teamAColor || '#ef4444')
-  const [teamBColor, setTeamBColor] = useState(initialData?.teamBColor || '#3b82f6')
-  const [timerDuration, setTimerDuration] = useState(720) // Default 12 minutes
-  const [venue, setVenue] = useState(initialData?.venue || '')
-  const [gameDate, setGameDate] = useState(initialData?.gameDate || '')
-  const [gameStartTime, setGameStartTime] = useState(initialData?.gameStartTime || '')
-  const [gameEndTime, setGameEndTime] = useState(initialData?.gameEndTime || '')
-  const [startHour, setStartHour] = useState(() => initialData?.gameStartTime?.split(':')[0] || '')
-  const [startMinute, setStartMinute] = useState(() => initialData?.gameStartTime?.split(':')[1] || '')
-  const [endHour, setEndHour] = useState(() => initialData?.gameEndTime?.split(':')[0] || '')
-  const [endMinute, setEndMinute] = useState(() => initialData?.gameEndTime?.split(':')[1] || '')
-  const updateStartTime = (hour: string, minute: string) => {
-    if (hour && minute) {
-      const time = `${hour}:${minute}`
-      setGameStartTime(time)
-    } else {
-      setGameStartTime('')
-    }
-  }
+  
+  const [formData, setFormData] = useState<FormData>({
+    teamAName: initialData?.teamAName || '',
+    teamBName: initialData?.teamBName || '',
+    teamAColor: initialData?.teamAColor || '#ef4444',
+    teamBColor: initialData?.teamBColor || '#3b82f6',
+    timerDurationMinutes: 12, // Default 12 minutes
+    venue: initialData?.venue || '',
+    gameDate: initialData?.gameDate || '',
+    gameStartTime: initialData?.gameStartTime || '',
+    gameEndTime: initialData?.gameEndTime || '',
+  })
 
-  const updateEndTime = (hour: string, minute: string) => {
-    if (hour && minute) {
-      const time = `${hour}:${minute}`
-      setGameEndTime(time)
-    } else {
-      setGameEndTime('')
-    }
+  // Helper function to update form fields
+  const updateField = <K extends keyof FormData>(field: K, value: FormData[K]) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
   }
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!teamAName.trim() || !teamBName.trim()) return
+    if (!formData.teamAName.trim() || !formData.teamBName.trim()) return
 
     setLoading(true)
     try {
@@ -101,13 +98,13 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
       .from('scoreboards')
       .insert({
         owner_id: user.id,
-        timer_duration: timerDuration,
+        timer_duration: formData.timerDurationMinutes * 60,
         timer_state: 'stopped',
         timer_paused_duration: 0,
-        venue: venue.trim() || null,
-        game_date: gameDate || null,
-        game_start_time: gameStartTime || null,
-        game_end_time: gameEndTime || null,
+        venue: formData.venue.trim() || null,
+        game_date: formData.gameDate || null,
+        game_start_time: formData.gameStartTime || null,
+        game_end_time: formData.gameEndTime || null,
       })
       .select()
       .single()
@@ -120,15 +117,15 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
       .insert([
         {
           scoreboard_id: scoreboardData.id,
-          name: teamAName.trim(),
+          name: formData.teamAName.trim(),
           position: 'home',
-          color: teamAColor,
+          color: formData.teamAColor,
         },
         {
           scoreboard_id: scoreboardData.id,
-          name: teamBName.trim(),
+          name: formData.teamBName.trim(),
           position: 'away',
-          color: teamBColor,
+          color: formData.teamBColor,
         },
       ])
 
@@ -163,10 +160,10 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
     const { error: scoreboardError } = await supabase
       .from('scoreboards')
       .update({
-        venue: venue.trim() || null,
-        game_date: gameDate || null,
-        game_start_time: gameStartTime || null,
-        game_end_time: gameEndTime || null,
+        venue: formData.venue.trim() || null,
+        game_date: formData.gameDate || null,
+        game_start_time: formData.gameStartTime || null,
+        game_end_time: formData.gameEndTime || null,
       })
       .eq('id', scoreboardId)
 
@@ -182,14 +179,14 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
 
     const { error: teamAError } = await supabase
       .from('teams')
-      .update({ name: teamAName.trim(), color: teamAColor })
+      .update({ name: formData.teamAName.trim(), color: formData.teamAColor })
       .eq('id', homeTeam.id)
 
     if (teamAError) throw teamAError
 
     const { error: teamBError } = await supabase
       .from('teams')
-      .update({ name: teamBName.trim(), color: teamBColor })
+      .update({ name: formData.teamBName.trim(), color: formData.teamBColor })
       .eq('id', awayTeam.id)
 
     if (teamBError) throw teamBError
@@ -239,204 +236,77 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
-            <label htmlFor="teamA" className="block text-sm font-medium text-gray-700">
-              Home
-            </label>
-            <input
-              type="text"
+            <TextInput
+              label="Home"
+              value={formData.teamAName}
+              onChange={(value) => updateField('teamAName', value)}
               id="teamA"
-              value={teamAName}
-              onChange={(e) => setTeamAName(e.target.value)}
-              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Enter home team name"
               required
             />
             <ColorPicker
-              value={teamAColor}
-              onChange={setTeamAColor}
+              value={formData.teamAColor}
+              onChange={(value) => updateField('teamAColor', value)}
             />
           </div>
           <div>
-            <label htmlFor="teamB" className="block text-sm font-medium text-gray-700">
-              Away
-            </label>
-            <input
-              type="text"
+            <TextInput
+              label="Away"
+              value={formData.teamBName}
+              onChange={(value) => updateField('teamBName', value)}
               id="teamB"
-              value={teamBName}
-              onChange={(e) => setTeamBName(e.target.value)}
-              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Enter away team name"
               required
             />
             <ColorPicker
-              value={teamBColor}
-              onChange={setTeamBColor}
+              value={formData.teamBColor}
+              onChange={(value) => updateField('teamBColor', value)}
             />
           </div>
         </div>
         
         {/* Only show timer duration for create mode */}
         {mode === 'create' && (
-          <div className="space-y-3">
-            <label htmlFor="timerDuration" className="block text-sm font-medium text-gray-700">
-              Timer Duration (minutes)
-            </label>
-            <div className="flex flex-wrap items-center gap-4">
-              <input
-                type="number"
-                id="timerDuration"
-                value={Math.floor(timerDuration / 60)}
-                onChange={(e) => setTimerDuration((parseInt(e.target.value) || 12) * 60)}
-                className="block w-32 rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                min="1"
-                max="60"
-                required
-              />
-              <div className="text-sm text-gray-500">minutes</div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTimerDuration(720)} // 12 minutes
-                  className="rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
-                >
-                  12 min
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTimerDuration(600)} // 10 minutes
-                  className="rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
-                >
-                  10 min
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTimerDuration(300)} // 5 minutes
-                  className="rounded-md bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 transition hover:bg-gray-200"
-                >
-                  5 min
-                </button>
-              </div>
-            </div>
-          </div>
+          <DurationInput
+            label="Timer Duration (minutes)"
+            value={formData.timerDurationMinutes}
+            onChange={(value) => updateField('timerDurationMinutes', value)}
+            id="timerDuration"
+            min={1}
+            max={60}
+            required
+            quickOptions={[12, 10, 5]}
+          />
         )}
         
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="venue" className="block text-sm font-medium text-gray-700">
-              Venue (Optional)
-            </label>
-            <input
-              type="text"
-              id="venue"
-              value={venue}
-              onChange={(e) => setVenue(e.target.value)}
-              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              placeholder="Enter venue name"
-            />
-          </div>
-          <div>
-            <label htmlFor="gameDate" className="block text-sm font-medium text-gray-700">
-              Game Date (Optional)
-            </label>
-            <input
-              type="date"
-              id="gameDate"
-              value={gameDate}
-              onChange={(e) => setGameDate(e.target.value)}
-              className="mt-2 block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
+          <TextInput
+            label="Venue (Optional)"
+            value={formData.venue}
+            onChange={(value) => updateField('venue', value)}
+            id="venue"
+            placeholder="Enter venue name"
+          />
+          <DateInput
+            label="Game Date (Optional)"
+            value={formData.gameDate}
+            onChange={(value) => updateField('gameDate', value)}
+            id="gameDate"
+          />
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="gameStartTime" className="block text-sm font-medium text-gray-700">
-              Start Time (Optional)
-            </label>
-            <div className="mt-2 flex items-center gap-3">
-              <select
-                id="gameStartHour"
-                value={startHour}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setStartHour(value)
-                  updateStartTime(value, startMinute)
-                }}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">HH</option>
-                {!HOURS.includes(startHour) && startHour && <option value={startHour}>{startHour}</option>}
-                {HOURS.map(hour => (
-                  <option key={hour} value={hour}>
-                    {hour}
-                  </option>
-                ))}
-              </select>
-              <span className="text-lg text-gray-500">:</span>
-              <select
-                id="gameStartMinute"
-                value={startMinute}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setStartMinute(value)
-                  updateStartTime(startHour, value)
-                }}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">MM</option>
-                {!MINUTES.includes(startMinute) && startMinute && <option value={startMinute}>{startMinute}</option>}
-                {MINUTES.map(minute => (
-                  <option key={minute} value={minute}>
-                    {minute}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label htmlFor="gameEndTime" className="block text-sm font-medium text-gray-700">
-              End Time (Optional)
-            </label>
-            <div className="mt-2 flex items-center gap-3">
-              <select
-                id="gameEndHour"
-                value={endHour}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setEndHour(value)
-                  updateEndTime(value, endMinute)
-                }}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">HH</option>
-                {!HOURS.includes(endHour) && endHour && <option value={endHour}>{endHour}</option>}
-                {HOURS.map(hour => (
-                  <option key={hour} value={hour}>
-                    {hour}
-                  </option>
-                ))}
-              </select>
-              <span className="text-lg text-gray-500">:</span>
-              <select
-                id="gameEndMinute"
-                value={endMinute}
-                onChange={(e) => {
-                  const value = e.target.value
-                  setEndMinute(value)
-                  updateEndTime(endHour, value)
-                }}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">MM</option>
-                {!MINUTES.includes(endMinute) && endMinute && <option value={endMinute}>{endMinute}</option>}
-                {MINUTES.map(minute => (
-                  <option key={minute} value={minute}>
-                    {minute}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <TimeInput
+            label="Start Time (Optional)"
+            value={formData.gameStartTime}
+            onChange={(value) => updateField('gameStartTime', value)}
+            id="gameStartTime"
+          />
+          <TimeInput
+            label="End Time (Optional)"
+            value={formData.gameEndTime}
+            onChange={(value) => updateField('gameEndTime', value)}
+            id="gameEndTime"
+          />
         </div>
         <div className="flex justify-end space-x-3">
           <Button
@@ -451,7 +321,7 @@ export const ScoreboardForm: React.FC<ScoreboardFormProps> = ({
             type="submit"
             disabled={loading}
             variant="primary"
-            size="sm"
+            size="md"
           >
             {loading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Scoreboard' : 'Update Scoreboard')}
           </Button>
