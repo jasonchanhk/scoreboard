@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 const HOURS = Array.from({ length: 24 }, (_, index) => index.toString().padStart(2, '0'))
 const MINUTES = ['00', '15', '30', '45']
@@ -19,27 +19,43 @@ export const TimeInput: React.FC<TimeInputProps> = ({
   className = ''
 }) => {
   // Parse the time value into hour and minute
-  const [hour, minute] = value ? value.split(':') : ['', '']
+  const parseValue = (val: string) => {
+    if (!val) return ['', '']
+    const parts = val.split(':')
+    return [parts[0] || '', parts[1] || '']
+  }
+
+  const [hour, setHour] = useState(() => parseValue(value)[0])
+  const [minute, setMinute] = useState(() => parseValue(value)[1])
+
+  // Sync local state with prop value when it changes externally
+  useEffect(() => {
+    const [parsedHour, parsedMinute] = parseValue(value)
+    setHour(parsedHour)
+    setMinute(parsedMinute)
+  }, [value])
   
   const handleHourChange = (newHour: string) => {
+    setHour(newHour)
     if (newHour && minute) {
       onChange(`${newHour}:${minute}`)
     } else if (!newHour && !minute) {
       onChange('')
     } else {
-      // Keep the current minute if hour is cleared
-      onChange('')
+      // Don't call onChange yet if only one part is set
+      // This allows user to set hour first, then minute
     }
   }
   
   const handleMinuteChange = (newMinute: string) => {
+    setMinute(newMinute)
     if (hour && newMinute) {
       onChange(`${hour}:${newMinute}`)
     } else if (!hour && !newMinute) {
       onChange('')
     } else {
-      // Keep the current hour if minute is cleared
-      onChange('')
+      // Don't call onChange yet if only one part is set
+      // This allows user to set minute first, then hour
     }
   }
 
