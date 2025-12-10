@@ -1,5 +1,6 @@
 import React from 'react'
 import { IoAdd, IoRemove } from 'react-icons/io5'
+import { CircleButton } from './button'
 
 interface TeamScoreProps {
   teamName: string
@@ -49,20 +50,22 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
       </div>
       {isOwner && onScoreUpdate && (
         <div className="bg-white py-4 flex items-center justify-center gap-4">
-          <button
+          <CircleButton
             onClick={() => onScoreUpdate(1)}
-            className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
-            aria-label="Add 1 point"
+            variant="secondary"
+            size="md"
+            ariaLabel="Add 1 point"
           >
             <IoAdd className="text-gray-900 text-xl" />
-          </button>
-          <button
+          </CircleButton>
+          <CircleButton
             onClick={() => onScoreUpdate(-1)}
-            className="w-12 h-12 rounded-full bg-gray-200 hover:bg-gray-300 text-2xl font-bold flex items-center justify-center"
-            aria-label="Subtract 1 point"
+            variant="secondary"
+            size="md"
+            ariaLabel="Subtract 1 point"
           >
             <IoRemove className="text-gray-900 text-xl" />
-          </button>
+          </CircleButton>
         </div>
       )}
     </div>

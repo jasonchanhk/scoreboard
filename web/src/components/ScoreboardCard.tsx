@@ -1,7 +1,7 @@
 import React from 'react'
 import { HiX } from 'react-icons/hi'
 import { useGameDateTime } from '../hooks/useGameDateTime'
-import { Button } from './Button'
+import { Button } from './button'
 
 interface Team {
   id: string

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { HiChevronLeft, HiChevronRight, HiPlay, HiPause } from 'react-icons/hi'
-import { IoRefresh } from 'react-icons/io5'
+import { IoRefresh, IoPlay, IoPause, IoChevronForward, IoChevronBack } from 'react-icons/io5'
+import { CircleButton } from './button'
 
 interface TimerProps {
   duration: number // Total duration in seconds
@@ -94,23 +94,27 @@ export const Timer: React.FC<TimerProps> = ({
         {/* Quarter controls */}
         <div className="flex items-center gap-3">
           {isOwner && (
-            <button
+            <CircleButton
               onClick={() => onQuarterChange(-1)}
-              className="text-gray-900 bg-gray-300 hover:bg-gray-400 transition-colors text-2xl font-bold rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
-              aria-label="Previous Quarter"
+              variant="primary"
+              size="md"
+              ariaLabel="Previous Quarter"
+              type="button"
             >
-              <HiChevronLeft className="text-xl" />
-            </button>
+              <IoChevronBack className="text-white text-2xl" />
+            </CircleButton>
           )}
-          <span className="text-xl font-semibold">Q{currentQuarter}</span>
+          <span className="text-xl font-semibold w-8 text-center">Q{currentQuarter}</span>
           {isOwner && (
-            <button
+            <CircleButton
               onClick={() => onQuarterChange(1)}
-              className="text-gray-900 bg-gray-300 hover:bg-gray-400 transition-colors text-2xl font-bold rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
-              aria-label="Next Quarter"
+              variant="primary"
+              size="md"
+              ariaLabel="Next Quarter"
+              type="button"
             >
-              <HiChevronRight className="text-xl" />
-            </button>
+              <IoChevronForward className="text-white text-2xl" />
+            </CircleButton>
           )}
         </div>
 
@@ -120,16 +124,14 @@ export const Timer: React.FC<TimerProps> = ({
         {/* Status and controls */}
         <div className="flex items-center gap-4">
           {/* Timer state */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-24">
             <span
-              className={`w-3 h-3 rounded-full inline-block ${
+              className={`w-3 h-3 rounded-full inline-block flex-shrink-0 ${
                 state === 'running' ? 'bg-green-600' : state === 'paused' ? 'bg-yellow-500' : 'bg-gray-400'
               }`}
             />
-            <span className={`text-lg ${
-              state === 'running' ? 'text-green-600' : state === 'paused' ? 'text-yellow-600' : 'text-gray-600'
-            }`}>
-              {state === 'running' ? 'running' : state === 'paused' ? 'paused' : 'stopped'}
+            <span className="text-lg whitespace-nowrap font-semibold">
+              {state === 'running' ? 'Running' : state === 'paused' ? 'Paused' : 'Stopped'}
             </span>
           </div>
 
@@ -137,50 +139,50 @@ export const Timer: React.FC<TimerProps> = ({
           {isOwner && (
             <>
               {state === 'stopped' && (
-                <button
+                <CircleButton
                   onClick={onStart}
-                  className="w-12 h-12 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-100"
-                  aria-label="Start Timer"
-                  title="Start"
+                  variant="white"
+                  size="md"
+                  ariaLabel="Start Timer"
+                  type="button"
                 >
-                  <HiPlay className="text-green-600 text-2xl" />
-                </button>
+                  <IoPlay className="text-indigo-600 text-2xl" />
+                </CircleButton>
               )}
               {state === 'running' && (
-                <button
+                <CircleButton
                   onClick={onPause}
-                  className="w-12 h-12 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-100"
-                  aria-label="Pause Timer"
-                  title="Pause"
+                  variant="white"
+                  size="md"
+                  ariaLabel="Pause Timer"
+                  type="button"
                 >
-                  <HiPause className="text-green-600 text-2xl" />
-                </button>
+                  <IoPause className="text-indigo-600 text-2xl" />
+                </CircleButton>
               )}
               {state === 'paused' && (
-                <button
+                <CircleButton
                   onClick={onStart}
-                  className="w-12 h-12 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-100"
-                  aria-label="Resume Timer"
-                  title="Resume"
+                  variant="white"
+                  size="md"
+                  ariaLabel="Resume Timer"
+                  type="button"
                 >
-                  <HiPlay className="text-green-600 text-2xl" />
-                </button>
+                  <IoPlay className="text-indigo-600 text-2xl" />
+                </CircleButton>
               )}
 
-              {/* Reset (orange) */}
-              <button
+              {/* Reset */}
+              <CircleButton
                 onClick={onReset}
                 disabled={isResetDisabled}
-                className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                  isResetDisabled
-                    ? 'bg-orange-300 cursor-not-allowed opacity-60'
-                    : 'bg-orange-500 hover:bg-orange-600'
-                }`}
-                aria-label="Reset Timer"
-                title="Reset"
+                variant="primary"
+                size="md"
+                ariaLabel="Reset Timer"
+                type="button"
               >
                 <IoRefresh className="text-white text-2xl" />
-              </button>
+              </CircleButton>
             </>
           )}
         </div>
