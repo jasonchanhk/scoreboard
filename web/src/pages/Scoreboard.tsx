@@ -1,15 +1,13 @@
 import React, { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { QRCodeSVG } from 'qrcode.react'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
-import { HiX, HiPencil } from 'react-icons/hi'
+import { HiPencil } from 'react-icons/hi'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
-import { AlertDialog } from '../components/dialog'
-import { ScoreboardFormDialog } from '../components/dialog'
+import { AlertDialog, ScoreboardFormDialog, ShareDialog } from '../components/dialog'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
 import { useAlertDialog } from '../hooks/dialog'
@@ -199,71 +197,18 @@ export const Scoreboard: React.FC = () => {
       />
 
       {/* Share Dialog */}
-      {shareOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShareOpen(false)
-          }}
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-        >
-          <div className="relative top-20 mx-auto p-5 w-11/12 md:w-2/3 lg:w-1/2 shadow-2xl rounded-lg bg-white text-gray-900">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Share</h3>
-              <button
-                onClick={() => setShareOpen(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                aria-label="Close"
-              >
-                <HiX className="text-2xl" />
-              </button>
-            </div>
-            <div className="flex gap-4 items-start">
-              <div className="flex-1 flex flex-col">
-                <div className="mb-3">
-                  <div className="text-xs text-gray-600 mb-1">Share Code</div>
-                  {scoreboard.share_code ? (
-                    <div
-                      className="text-xl font-mono bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors text-center"
-                      onClick={handleCopyShareCode}
-                      title="Click to copy share code"
-                    >
-                      {showCopied ? 'Copied!' : scoreboard.share_code}
-                    </div>
-                  ) : isOwner ? (
-                    <button
-                      onClick={handleGenerateShareCodeWithError}
-                      disabled={isGeneratingShareCode}
-                      className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white px-3 py-3 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      {isGeneratingShareCode ? 'Generating...' : 'Generate Share Code'}
-                    </button>
-                  ) : (
-                    <div className="text-sm text-gray-400 text-center">Not available</div>
-                  )}
-                </div>
-                <div className="flex-shrink-0">
-                  <div className="text-xs text-gray-600 mb-1">Public View</div>
-                  <button
-                    onClick={handleViewPublic}
-                    className="bg-gray-800 hover:bg-gray-900 text-white px-3 py-3 rounded-lg text-sm font-medium text-center cursor-pointer w-full"
-                  >
-                    Go to Public View
-                  </button>
-                </div>
-              </div>
-              {publicViewUrl && (
-                <div className="flex-shrink-0 flex flex-col items-center">
-                  <div className="text-xs text-gray-600 mb-1">Scan to View</div>
-                  <div className="bg-white p-2 rounded-lg border">
-                    <QRCodeSVG value={publicViewUrl} size={120} level="H" includeMargin={false} />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ShareDialog
+        isOpen={shareOpen}
+        shareCode={scoreboard?.share_code || null}
+        publicViewUrl={publicViewUrl}
+        isOwner={isOwner}
+        showCopied={showCopied}
+        isGeneratingShareCode={isGeneratingShareCode}
+        onClose={() => setShareOpen(false)}
+        onCopyShareCode={handleCopyShareCode}
+        onGenerateShareCode={handleGenerateShareCodeWithError}
+        onViewPublic={handleViewPublic}
+      />
       <AlertDialog
         isOpen={alert.isOpen}
         title={alert.title}
