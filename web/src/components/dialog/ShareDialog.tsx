@@ -1,8 +1,7 @@
 import React from 'react'
 import { QRCodeSVG } from 'qrcode.react'
-import { HiX } from 'react-icons/hi'
 import { BaseDialog } from './BaseDialog'
-import { Button } from '../button'
+import { Button, CloseButton } from '../button'
 
 interface ShareDialogProps {
   isOpen: boolean
@@ -39,14 +38,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
     >
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-medium text-gray-900">Share</h3>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-          aria-label="Close"
-          type="button"
-        >
-          <HiX className="text-2xl" />
-        </button>
+        <CloseButton onClick={onClose} />
       </div>
       <div className="flex gap-4 items-start">
         <div className="flex-1 flex flex-col">
@@ -64,9 +56,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
               <Button
                 onClick={onGenerateShareCode}
                 disabled={isGeneratingShareCode}
-                variant="primary"
+                variant="secondary"
                 size="md"
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full"
               >
                 {isGeneratingShareCode ? 'Generating...' : 'Generate Share Code'}
               </Button>

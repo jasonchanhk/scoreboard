@@ -1,7 +1,6 @@
 import React from 'react'
-import { HiX } from 'react-icons/hi'
 import { useGameDateTime } from '../hooks/useGameDateTime'
-import { Button } from './button'
+import { Button, CloseButton } from './button'
 
 interface Team {
   id: string
@@ -64,13 +63,9 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
 
         {/* Delete button in top-right corner */}
         <div className="flex flex-col space-y-1">
-          <button
+          <CloseButton
             onClick={() => onDelete(scoreboard.id)}
-            className="text-gray-400 hover:text-red-600 text-2xl leading-none cursor-pointer"
-            title="Delete scoreboard"
-          >
-            <HiX className="text-2xl" />
-          </button>
+          />
         </div>
       </div>
 

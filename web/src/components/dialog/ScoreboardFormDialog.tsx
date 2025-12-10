@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HiX } from 'react-icons/hi'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { BaseDialog } from './BaseDialog'
 import { ColorPicker, DateInput, DurationInput, TextInput, TimeInput } from '../input'
+import { CloseButton } from '../button'
 
 interface ScoreboardFormDialogProps {
   mode: 'create' | 'edit'
@@ -219,14 +219,7 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
         <h3 className="text-lg font-medium text-gray-900">
           {mode === 'create' ? 'Create Scoreboard' : 'Edit Scoreboard'}
         </h3>
-        <button
-          onClick={onCancel}
-          className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-          title="Close"
-          type="button"
-        >
-          <HiX className="text-2xl" />
-        </button>
+        <CloseButton onClick={onCancel} />
       </div>
       <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
