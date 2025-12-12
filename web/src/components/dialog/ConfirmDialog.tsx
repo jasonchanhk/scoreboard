@@ -63,16 +63,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       }}
       contentClassName="w-11/12 md:w-2/3 lg:w-1/3"
     >
-      <div className="flex flex-col items-center text-center">
-        <div className={`${styles.iconBg} rounded-full w-16 h-16 flex items-center justify-center mb-4`}>
-          <Icon className={`text-3xl ${styles.iconColor}`} />
-        </div>
-        <h3 className={`text-xl font-semibold ${styles.titleColor} mb-3`}>
-          {title}
-        </h3>
-        <p className="text-sm text-gray-600 mb-6">
-          {message}
-        </p>
+        <div className="flex flex-col items-center text-center">
+          <div className={`${styles.iconBg} rounded-full w-16 h-16 flex items-center justify-center mb-4`}>
+            <Icon className={`text-3xl ${styles.iconColor}`} />
+          </div>
+          <h3 className={`text-xl font-semibold ${styles.titleColor} mb-3`}>
+            {title}
+          </h3>
+          <p className="text-sm text-gray-600 mb-6">
+            {message}
+          </p>
       </div>
     </BaseDialog>
   )

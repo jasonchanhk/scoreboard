@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { IoAdd, IoRemove } from 'react-icons/io5'
 import { CircleButton } from './button'
 
@@ -19,8 +19,42 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
 }) => {
   const defaultColor = color || '#ef4444'
   const borderColor = color || '#fca5a5'
-  // Use larger font size for non-owner views (public view)
-  const scoreFontSize = isOwner ? 'min(30vh, 28vw)' : 'min(50vh, 45vw)'
+  const scoreContainerRef = useRef<HTMLDivElement>(null)
+  const [fontSize, setFontSize] = useState<string>('4rem')
+
+  // Calculate font size based on container dimensions - maximize space usage
+  useEffect(() => {
+    const updateFontSize = () => {
+      if (scoreContainerRef.current) {
+        const container = scoreContainerRef.current
+        const containerHeight = container.clientHeight
+        
+        // Use a large percentage of the container to maximize visibility
+        // Use 70% of height to ensure the score is prominent
+        const heightPercentage = 0.7
+        const calculatedSize = containerHeight * heightPercentage
+        
+        // Set reasonable min and max to ensure readability
+        const minSize = 48 // pixels
+        const maxSize = 400 // pixels
+        const finalSize = Math.max(minSize, Math.min(maxSize, calculatedSize))
+        
+        setFontSize(`${finalSize}px`)
+      }
+    }
+
+    updateFontSize()
+    
+    // Update on resize
+    const resizeObserver = new ResizeObserver(updateFontSize)
+    if (scoreContainerRef.current) {
+      resizeObserver.observe(scoreContainerRef.current)
+    }
+
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [score])
 
   return (
     <div 
@@ -37,11 +71,14 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
       >
         {teamName}
       </div>
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-2 bg-white">
+      <div 
+        ref={scoreContainerRef}
+        className="flex-1 flex items-center justify-center px-2 bg-white min-w-0"
+      >
         <div 
-          className="font-extrabold leading-none" 
+          className="font-extrabold leading-none whitespace-nowrap" 
           style={{ 
-            fontSize: scoreFontSize,
+            fontSize: fontSize,
             color: defaultColor,
           }}
         >

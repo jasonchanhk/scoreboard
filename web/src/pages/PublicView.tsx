@@ -1,16 +1,19 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { HiChevronLeft } from 'react-icons/hi'
+import { FaBasketballBall, FaExpand } from 'react-icons/fa'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
 import { useTimerCalculation } from '../hooks/useTimerCalculation'
 import { useAuth } from '../contexts/AuthContext'
 import { TeamScore } from '../components/TeamScore'
+import { AppNav } from '../components/AppNav'
+import { Button } from '../components/button'
 
 export const PublicView: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const [isFullscreen, setIsFullscreen] = useState(false)
   
   const { scoreboard, allQuarters, loading, error } = useScoreboardData({
     scoreboardId: id
@@ -19,6 +22,35 @@ export const PublicView: React.FC = () => {
   // Custom hooks
   const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
   const { formattedTime } = useTimerCalculation(scoreboard)
+
+  // Handle fullscreen
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullscreen(true)
+      }).catch((err) => {
+        console.error('Error attempting to enable fullscreen:', err)
+      })
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false)
+      }).catch((err) => {
+        console.error('Error attempting to exit fullscreen:', err)
+      })
+    }
+  }
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
 
 
   if (loading) {
@@ -54,20 +86,27 @@ export const PublicView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col relative">
-      {/* Back Button - Top Left Corner */}
-      <button
-        onClick={() => navigate(user ? '/dashboard' : '/auth')}
-        className="absolute top-6 left-6 z-10 text-gray-600 hover:text-gray-900 transition-colors text-2xl font-bold bg-gray-100 hover:bg-gray-200 rounded-full w-12 h-12 flex items-center justify-center"
-        aria-label="Back to Dashboard"
-      >
-        <HiChevronLeft className="text-2xl" />
-      </button>
+      {/* Navbar - Hidden in fullscreen */}
+      {!isFullscreen && (
+        <AppNav 
+          rightContent={
+            <Button
+              onClick={toggleFullscreen}
+              variant="primary"
+              size="sm"
+            >
+              <FaExpand className="inline mr-2" />
+              Fullscreen
+            </Button>
+          }
+        />
+      )}
 
       {/* Main Scoreboard */}
-      <div className="flex-1 flex flex-col justify-center py-10 px-20">
-        <div className="w-full h-[70vh]">
-          {/* Top Section: Team Names and Scores */}
-          <div className="grid grid-cols-2 gap-8 h-full">
+      <div className="flex-1 flex flex-col py-10 px-20 min-h-0">
+        {/* Top Section: Team Names and Scores - Dynamic height */}
+        <div className="flex-1 flex items-stretch min-h-0">
+          <div className="grid grid-cols-2 gap-8 w-full">
             {/* Left Team */}
             <TeamScore
               teamName={team0?.name || 'Team 1'}
@@ -84,8 +123,8 @@ export const PublicView: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom Section: Quarter and Time Widget */}
-        <div className="flex justify-center mt-8">
+        {/* Bottom Section: Quarter and Time Widget - Fixed size */}
+        <div className="flex justify-center mt-8 flex-shrink-0">
           <div className="border-4 border-gray-300 rounded-lg px-4 py-3 flex items-center bg-gray-50">
             {/* Quarter Display */}
             <div className="px-4">
@@ -102,6 +141,24 @@ export const PublicView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Branding - Bottom Right Corner - Only shown in fullscreen */}
+      {isFullscreen && (
+        <div
+          onClick={() => navigate(user ? '/dashboard' : '/')}
+          className="absolute bottom-6 right-6 z-10 cursor-pointer"
+        >
+          <div className="flex items-center space-x-2 bg-white border border-black rounded-lg px-3 py-2">
+            <div className="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-full flex-shrink-0">
+              <FaBasketballBall className="text-white text-sm" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-900 leading-tight">Powered by</span>
+              <span className="text-sm font-bold text-gray-900">Pretty Scoreboard</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { FaBasketballBall } from 'react-icons/fa'
+import { useAuth } from '../contexts/AuthContext'
 
 interface AppNavProps {
   rightContent?: React.ReactNode
@@ -9,11 +10,16 @@ interface AppNavProps {
 export const AppNav: React.FC<AppNavProps> = ({ rightContent }) => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const isDashboard = location.pathname === '/dashboard'
   
   const handleClick = () => {
     if (!isDashboard) {
-      navigate('/dashboard')
+      if (user) {
+        navigate('/dashboard')
+      } else {
+        navigate('/')
+      }
     }
   }
 
@@ -29,7 +35,7 @@ export const AppNav: React.FC<AppNavProps> = ({ rightContent }) => {
               <div className="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-full">
                 <FaBasketballBall className="text-white text-sm" />
               </div>
-              <h1 className="text-xl font-semibold text-gray-900">Pretty Scoreboard</h1>
+              <h1 className="text-xl font-bold text-gray-900">Pretty Scoreboard</h1>
             </div>
           </div>
           {rightContent && (
