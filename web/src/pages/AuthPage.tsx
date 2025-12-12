@@ -2,6 +2,7 @@ import React from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { LoginForm } from '../components/LoginForm'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 
 export const AuthPage: React.FC = () => {
   const { user, loading } = useAuth()
@@ -12,11 +13,7 @@ export const AuthPage: React.FC = () => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   return <LoginForm onToggleMode={() => {}} />

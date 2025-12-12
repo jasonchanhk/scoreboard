@@ -6,6 +6,7 @@ import { CreateScoreboardCTA, JoinScoreboardCTA } from '../components/cta/'
 import { AppNav } from '../components/AppNav'
 import { UserMenu } from '../components/UserMenu'
 import { AlertDialog, ScoreboardFormDialog, ConfirmDialog } from '../components/dialog'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import { sortTeams } from '../utils/teamUtils'
 import { useAlertDialog, useConfirmDialog } from '../hooks/dialog'
 
@@ -186,11 +187,7 @@ export const Dashboard: React.FC = () => {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   return (
