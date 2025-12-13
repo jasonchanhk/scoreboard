@@ -29,6 +29,7 @@ export const DurationInput: React.FC<DurationInputProps> = ({
     <div className={`space-y-3 ${className}`}>
       <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
         {label}
+        {!required && <span className="text-gray-400 font-normal ml-1">(Optional)</span>}
       </label>
       <div className="flex flex-wrap items-center gap-4">
         <input

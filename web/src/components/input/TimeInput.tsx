@@ -8,6 +8,7 @@ interface TimeInputProps {
   value: string // Format: "HH:MM" or empty string
   onChange: (value: string) => void // Callback with "HH:MM" format or empty string
   id?: string
+  required?: boolean
   className?: string
 }
 
@@ -16,6 +17,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
   value,
   onChange,
   id,
+  required = false,
   className = ''
 }) => {
   // Parse the time value into hour and minute
@@ -65,6 +67,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
     <div className={className}>
       <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
         {label}
+        {!required && <span className="text-gray-400 font-normal ml-1">(Optional)</span>}
       </label>
       <div className="mt-2 flex items-center gap-3">
         <select

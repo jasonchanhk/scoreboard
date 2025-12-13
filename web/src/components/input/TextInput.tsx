@@ -27,6 +27,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     <div className={className}>
       <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
         {label}
+        {!required && <span className="text-gray-400 font-normal ml-1">(Optional)</span>}
       </label>
       <input
         type={type}

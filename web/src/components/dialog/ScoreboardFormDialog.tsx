@@ -269,14 +269,14 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
         
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <TextInput
-            label="Venue (Optional)"
+            label="Venue"
             value={formData.venue}
             onChange={(value) => updateField('venue', value)}
               id="venue"
               placeholder="Enter venue name"
             />
           <DateInput
-            label="Game Date (Optional)"
+            label="Game Date"
             value={formData.gameDate}
             onChange={(value) => updateField('gameDate', value)}
               id="gameDate"
@@ -284,13 +284,13 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-6">
           <TimeInput
-            label="Start Time (Optional)"
+            label="Start Time"
             value={formData.gameStartTime}
             onChange={(value) => updateField('gameStartTime', value)}
             id="gameStartTime"
           />
           <TimeInput
-            label="End Time (Optional)"
+            label="End Time"
             value={formData.gameEndTime}
             onChange={(value) => updateField('gameEndTime', value)}
             id="gameEndTime"
