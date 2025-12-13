@@ -222,6 +222,7 @@ export const Scoreboard: React.FC = () => {
             gameDate: scoreboard.game_date || '',
             gameStartTime: scoreboard.game_start_time || '',
             gameEndTime: scoreboard.game_end_time || '',
+            timerDurationMinutes: scoreboard.timer_duration ? Math.round(scoreboard.timer_duration / 60) : 12,
           }}
           onSuccess={handleUpdateSuccess}
           onCancel={() => setShowEditForm(false)}

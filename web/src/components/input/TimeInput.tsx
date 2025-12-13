@@ -67,7 +67,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
     <div className={className}>
       <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
         {label}
-        {!required && <span className="text-gray-400 font-normal ml-1">(Optional)</span>}
+        {!required && <span className="text-gray-400 font-normal ml-1">- Optional</span>}
       </label>
       <div className="mt-2 flex items-center gap-3">
         <select

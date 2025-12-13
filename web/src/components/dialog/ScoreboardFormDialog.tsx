@@ -19,6 +19,7 @@ interface ScoreboardFormDialogProps {
     gameDate?: string
     gameStartTime?: string
     gameEndTime?: string
+    timerDurationMinutes?: number
   }
   onSuccess?: () => void // Called after successful create/update
   onCancel: () => void
@@ -56,7 +57,7 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
     teamBName: initialData?.teamBName || '',
     teamAColor: initialData?.teamAColor || '#ef4444',
     teamBColor: initialData?.teamBColor || '#3b82f6',
-    timerDurationMinutes: 12, // Default 12 minutes
+    timerDurationMinutes: initialData?.timerDurationMinutes || 12, // Default 12 minutes
     venue: initialData?.venue || '',
     gameDate: initialData?.gameDate || '',
     gameStartTime: initialData?.gameStartTime || '',
@@ -253,19 +254,18 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
           </div>
         </div>
         
-        {/* Only show timer duration for create mode */}
-        {mode === 'create' && (
-          <DurationInput
-            label="Timer Duration (minutes)"
-            value={formData.timerDurationMinutes}
-            onChange={(value) => updateField('timerDurationMinutes', value)}
-                id="timerDuration"
-            min={1}
-            max={60}
-                required
-            quickOptions={[12, 10, 5]}
-          />
-        )}
+        {/* Show timer duration - editable in create mode, read-only in edit mode */}
+        <DurationInput
+          label="Timer Duration (minutes)"
+          value={formData.timerDurationMinutes}
+          onChange={(value) => updateField('timerDurationMinutes', value)}
+          id="timerDuration"
+          min={1}
+          max={60}
+          required
+          disabled={mode === 'edit'}
+          quickOptions={mode === 'create' ? [12, 10, 5] : []}
+        />
         
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <TextInput
