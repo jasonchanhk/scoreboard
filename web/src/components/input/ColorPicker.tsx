@@ -12,6 +12,8 @@ const TEAM_COLORS = [
   { name: 'Teal', value: '#14b8a6' },
   { name: 'Indigo', value: '#6366f1' },
   { name: 'Gray', value: '#6b7280' },
+  { name: 'Black', value: '#000000' },
+  { name: 'White', value: '#fafafa' }
 ]
 
 interface ColorPickerProps {
@@ -36,7 +38,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
             key={color.value}
             type="button"
             onClick={() => onChange(color.value)}
-            className={`w-6 h-6 rounded-full border-2 transition-all ${
+            className={`w-6 h-6 rounded-full cursor-pointer border-2 transition-all ${
               value === color.value
                 ? 'border-gray-900 scale-110 ring-2 ring-offset-2 ring-gray-400'
                 : 'border-gray-300 hover:border-gray-400 hover:scale-105'

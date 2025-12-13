@@ -22,6 +22,10 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
   const scoreContainerRef = useRef<HTMLDivElement>(null)
   const [fontSize, setFontSize] = useState<string>('4rem')
 
+  // Check if color is black
+  const isBlack = defaultColor.toLowerCase() === '#000000' || defaultColor.toLowerCase() === '#000'
+  const teamNameTextColor = isBlack ? 'text-white' : 'text-black'
+
   // Calculate font size based on container dimensions - maximize space usage
   useEffect(() => {
     const updateFontSize = () => {
@@ -64,7 +68,7 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
       }}
     >
       <div 
-        className="text-black text-3xl font-extrabold py-3 text-center"
+        className={`${teamNameTextColor} text-3xl font-extrabold py-3 text-center`}
         style={{ 
           backgroundColor: defaultColor,
         }}
@@ -79,7 +83,7 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
           className="font-extrabold leading-none whitespace-nowrap" 
           style={{ 
             fontSize: fontSize,
-            color: defaultColor,
+            color: '#000000',
           }}
         >
           {score}
