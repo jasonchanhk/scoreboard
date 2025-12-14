@@ -46,7 +46,7 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
         <div>
           {/* App Logo and Name */}
           <div className="flex flex-col items-center mb-8">
-            <div className="flex items-center justify-center w-20 h-20 bg-orange-500 rounded-full mb-4 shadow-lg">
+            <div className="flex items-center justify-center w-20 h-20 bg-indigo-700 rounded-full mb-4 shadow-lg">
               <FaBasketballBall className="text-white text-4xl" />
             </div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Pretty Scoreboard</h1>
