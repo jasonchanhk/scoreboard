@@ -3,12 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { FaBasketballBall, FaExpand } from 'react-icons/fa'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
-import { useTimerCalculation } from '../hooks/useTimerCalculation'
 import { useAuth } from '../contexts/AuthContext'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
 import { LoadingSpinner } from '../components/LoadingSpinner'
+import { Timer } from '../components/Timer'
 
 export const PublicView: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -22,7 +22,6 @@ export const PublicView: React.FC = () => {
 
   // Custom hooks
   const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
-  const { formattedTime } = useTimerCalculation(scoreboard)
 
   // Handle fullscreen
   const toggleFullscreen = () => {
@@ -114,25 +113,30 @@ export const PublicView: React.FC = () => {
           </div>
         </div>
 
-        {/* Bottom Section: Quarter and Time Widget - Fixed size */}
-        <div className="flex justify-center mt-8 flex-shrink-0">
-          <div className="border-4 border-gray-300 rounded-lg px-4 py-3 flex items-center bg-gray-50">
-            {/* Quarter Display */}
-            <div className="px-4">
-              <div className="text-6xl font-bold text-gray-900">Q{currentQuarter}</div>
-            </div>
-            
-            {/* Divider Line */}
-            <div className="h-16 border-l-4 border-gray-300 mx-4"></div>
-            
-            {/* Time Display */}
-            <div className="px-4">
-              <div className="text-6xl font-mono font-bold text-gray-900">{formattedTime}</div>
-            </div>
+      </div>
+        {/* Bottom Section: Timer and Quarter Control Only */}
+        <div
+          className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900"
+          style={{ height: '20vh' }}
+        >
+          {/* Timer with integrated quarter controls */}
+          <div className="flex-1 rounded-2xl p-3 flex flex-row items-stretch gap-6 min-w-0">
+            <Timer
+              duration={scoreboard?.timer_duration || 0}
+              startedAt={scoreboard?.timer_started_at || null}
+              state={scoreboard?.timer_state || 'stopped'}
+              pausedDuration={scoreboard?.timer_paused_duration || 0}
+              isOwner={false}
+              onStart={() => {}}
+              onPause={() => {}}
+              onReset={() => {}}
+              currentQuarter={currentQuarter}
+              onQuarterChange={() => {}}
+              className="w-full h-full"
+            />
           </div>
         </div>
-      </div>
-
+        
       {/* Branding - Bottom Right Corner - Only shown in fullscreen */}
       {isFullscreen && (
         <div

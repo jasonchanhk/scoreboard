@@ -104,7 +104,7 @@ export const Timer: React.FC<TimerProps> = ({
               <IoChevronBack className="text-white text-2xl" />
             </CircleButton>
           )}
-          <span className="text-xl font-semibold w-8 text-center">Q{currentQuarter}</span>
+          <span className={`${isOwner ? 'text-xl w-8' : 'text-8xl'} font-mono font-extrabold text-black text-center`}>Q{currentQuarter}</span>
           {isOwner && (
             <CircleButton
               onClick={() => onQuarterChange(1)}
@@ -118,13 +118,18 @@ export const Timer: React.FC<TimerProps> = ({
           )}
         </div>
 
+        {/* Divider Line - Only show for non-owner view */}
+        {!isOwner && (
+          <div className="h-16 border-l-4 border-gray-300"></div>
+        )}
+
         {/* Time display */}
-        <div className="text-8xl font-mono font-extrabold px-4 text-black">{displayTime}</div>
+        <div className={`${isOwner ? 'text-8xl' : 'text-8xl'} font-mono font-extrabold text-black`}>{displayTime}</div>
 
         {/* Status and controls */}
         <div className="flex items-center gap-4">
           {/* Timer state */}
-          <div className="flex items-center gap-2 w-24">
+          {/* <div className="flex items-center gap-2 w-24">
             <span
               className={`w-3 h-3 rounded-full inline-block flex-shrink-0 ${
                 state === 'running' ? 'bg-green-600' : state === 'paused' ? 'bg-yellow-500' : 'bg-gray-400'
@@ -133,7 +138,7 @@ export const Timer: React.FC<TimerProps> = ({
             <span className="text-lg whitespace-nowrap font-semibold">
               {state === 'running' ? 'Running' : state === 'paused' ? 'Paused' : 'Stopped'}
             </span>
-          </div>
+          </div> */}
 
           {/* Start/Pause button */}
           {isOwner && (
