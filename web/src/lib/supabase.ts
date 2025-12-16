@@ -55,18 +55,24 @@ export type Database = {
           id: string
           scoreboard_id: string
           name: string
+          position: 'home' | 'away' | null
+          color: string | null
           created_at: string
         }
         Insert: {
           id?: string
           scoreboard_id: string
           name: string
+          position?: 'home' | 'away' | null
+          color?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           scoreboard_id?: string
           name?: string
+          position?: 'home' | 'away' | null
+          color?: string | null
           created_at?: string
         }
       }

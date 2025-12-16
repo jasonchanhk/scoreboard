@@ -6,16 +6,13 @@ import { Scoreboard } from './pages/Scoreboard'
 import { PublicView } from './pages/PublicView'
 import { LandingPage } from './pages/LandingPage'
 import { AuthPage } from './pages/AuthPage'
+import { LoadingSpinner } from './components/LoadingSpinner'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   return user ? <>{children}</> : <Navigate to="/auth" replace />
@@ -26,11 +23,7 @@ const InvalidUrlRedirect: React.FC = () => {
   const { user, loading } = useAuth()
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   // If user is authenticated, redirect to dashboard

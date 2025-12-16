@@ -3,6 +3,7 @@ export interface Team {
   name: string
   scoreboard_id: string
   position: 'home' | 'away'
+  color: string | null
   created_at: string
 }
 

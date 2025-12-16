@@ -1,11 +1,13 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { useGameDateTime } from '../hooks/useGameDateTime'
+import { Button, CloseButton } from './button'
 
 interface Team {
   id: string
   name: string
   scoreboard_id: string
   position: 'home' | 'away'
+  color: string | null
   created_at: string
 }
 
@@ -36,24 +38,10 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
   onDelete,
   onEdit,
 }) => {
-  const startTime = scoreboard.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
-  const endTime = scoreboard.game_end_time ? scoreboard.game_end_time.substring(0, 5) : ''
-  const timeDisplay =
-    startTime && endTime
-      ? `${startTime} – ${endTime}`
-      : startTime
-        ? `Starts ${startTime}`
-        : endTime
-          ? `Ends ${endTime}`
-          : '-'
+  // Custom hooks
+  const { timeDisplayForCard, dateDisplayForCard } = useGameDateTime(scoreboard)
+  
   const venueDisplay = scoreboard.venue?.trim() || '-'
-  const dateDisplay = scoreboard.game_date
-    ? new Date(scoreboard.game_date).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      })
-    : '-'
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
@@ -67,7 +55,7 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
 
           <div className="space-y-1">
             <div className="text-sm font-medium text-gray-700">
-              {dateDisplay} · <span className="uppercase tracking-wide text-gray-500">{timeDisplay}</span>
+              {dateDisplayForCard} · <span className="uppercase tracking-wide text-gray-500">{timeDisplayForCard}</span>
             </div>
             <div className="text-sm font-normal text-gray-900">{venueDisplay}</div>
           </div>
@@ -75,13 +63,9 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
 
         {/* Delete button in top-right corner */}
         <div className="flex flex-col space-y-1">
-          <button
+          <CloseButton
             onClick={() => onDelete(scoreboard.id)}
-            className="text-gray-400 hover:text-red-600 text-2xl leading-none cursor-pointer"
-            title="Delete scoreboard"
-          >
-            ×
-          </button>
+          />
         </div>
       </div>
 
@@ -96,24 +80,21 @@ export const ScoreboardCard: React.FC<ScoreboardCardProps> = ({
 
       <div className="flex flex-col space-y-2">
         <div className="flex space-x-2">
-          <Link
+          <Button
             to={`/scoreboard/${scoreboard.id}`}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center py-2 px-4 rounded-md text-sm font-medium"
+            variant="primary"
+            size="sm"
+            className="flex-1"
           >
             Open
-          </Link>
-          {!scoreboard.share_code ? (
-            <button
-              onClick={() => onEdit(scoreboard.id)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-md text-sm font-medium cursor-pointer"
-            >
-              Edit
-            </button>
-          ) : (
-            <div className="bg-green-100 text-green-800 py-2 px-4 rounded-md text-sm font-medium">
-              {scoreboard.share_code}
-            </div>
-          )}
+          </Button>
+          <Button
+            onClick={() => onEdit(scoreboard.id)}
+            variant="secondary"
+            size="sm"
+          >
+            Edit
+          </Button>
         </div>
       </div>
     </div>
