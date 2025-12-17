@@ -114,28 +114,29 @@ export const PublicView: React.FC = () => {
         </div>
 
       </div>
-        {/* Bottom Section: Timer and Quarter Control Only */}
-        <div
-          className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900"
-          style={{ height: '20vh' }}
-        >
-          {/* Timer with integrated quarter controls */}
-          <div className="flex-1 rounded-2xl p-3 flex flex-row items-stretch gap-6 min-w-0">
-            <Timer
-              duration={scoreboard?.timer_duration || 0}
-              startedAt={scoreboard?.timer_started_at || null}
-              state={scoreboard?.timer_state || 'stopped'}
-              pausedDuration={scoreboard?.timer_paused_duration || 0}
-              isOwner={false}
-              onStart={() => {}}
-              onPause={() => {}}
-              onReset={() => {}}
-              currentQuarter={currentQuarter}
-              onQuarterChange={() => {}}
-              className="w-full h-full"
-            />
-          </div>
+      
+      {/* Bottom Section: Timer and Quarter Control Only */}
+      <div
+        className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900"
+        style={{ height: '20vh' }}
+      >
+        {/* Timer with integrated quarter controls */}
+        <div className="flex-1 rounded-2xl p-3 flex flex-row items-stretch gap-6 min-w-0">
+          <Timer
+            duration={scoreboard?.timer_duration || 0}
+            startedAt={scoreboard?.timer_started_at || null}
+            state={scoreboard?.timer_state || 'stopped'}
+            pausedDuration={scoreboard?.timer_paused_duration || 0}
+            isOwner={false}
+            onStart={() => {}}
+            onPause={() => {}}
+            onReset={() => {}}
+            currentQuarter={currentQuarter}
+            onQuarterChange={() => {}}
+            className="w-full h-full"
+          />
         </div>
+      </div>
         
       {/* Branding - Bottom Right Corner - Only shown in fullscreen */}
       {isFullscreen && (

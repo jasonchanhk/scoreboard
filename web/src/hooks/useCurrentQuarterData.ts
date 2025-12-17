@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { getByTeamIdsAndQuarter } from '../data/quartersRepo'
 import type { ScoreboardData, Quarter } from '../types/scoreboard'
 
 export const useCurrentQuarterData = (
@@ -13,17 +13,12 @@ export const useCurrentQuarterData = (
 
     const fetchCurrentQuarter = async () => {
       const teamIds = scoreboard.teams.map(team => team.id)
-      const { data: quartersData, error: quartersError } = await supabase
-        .from('quarters')
-        .select('*')
-        .in('team_id', teamIds)
-        .eq('quarter_number', currentQuarter)
-
-      if (quartersError) {
+      try {
+        const quartersData = await getByTeamIdsAndQuarter(teamIds, currentQuarter)
+        setQuarters(quartersData || [])
+      } catch (quartersError) {
         console.error('Error fetching current quarter:', quartersError)
-        return
       }
-      setQuarters(quartersData || [])
     }
 
     fetchCurrentQuarter()

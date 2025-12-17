@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { ScoreboardCard } from '../components/ScoreboardCard'
 import { CreateScoreboardCTA, JoinScoreboardCTA } from '../components/cta/'
@@ -9,12 +8,14 @@ import { AlertDialog, ScoreboardFormDialog, ConfirmDialog } from '../components/
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { sortTeams } from '../utils/teamUtils'
 import { useAlertDialog, useConfirmDialog } from '../hooks/dialog'
+import { getByOwner, remove as removeScoreboard } from '../data/scoreboardsRepo'
+import { getByTeamIds } from '../data/quartersRepo'
 
 interface Team {
   id: string
   name: string
   scoreboard_id: string
-  position: 'home' | 'away'
+  position: 'home' | 'away' | null
   color: string | null
   created_at: string
 }
@@ -54,27 +55,18 @@ export const Dashboard: React.FC = () => {
     if (!user) return
 
     try {
-      const { data, error } = await supabase
-        .from('scoreboards')
-        .select(`
-          *,
-          teams (*)
-        `)
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
+      const list = await getByOwner(user.id)
+      const normalized = list.map((scoreboard) => ({
+        ...scoreboard,
+        venue: scoreboard.venue ?? null,
+        game_date: scoreboard.game_date ?? null,
+        game_start_time: scoreboard.game_start_time ?? null,
+        game_end_time: scoreboard.game_end_time ?? null,
+        teams: scoreboard.teams ? sortTeams(scoreboard.teams) : [],
+      }))
 
-      if (error) throw error
-      const list = data || []
-      
-      // Ensure teams are ordered consistently (home first, away second)
-      list.forEach(scoreboard => {
-        if (scoreboard.teams) {
-          scoreboard.teams = sortTeams(scoreboard.teams)
-        }
-      })
-
-      setScoreboards(list)
-      await computeAndSetScores(list)
+      setScoreboards(normalized)
+      await computeAndSetScores(normalized)
     } catch (error) {
       console.error('Error fetching scoreboards:', error)
     } finally {
@@ -98,15 +90,7 @@ export const Dashboard: React.FC = () => {
     const teamIds = Object.keys(teamIdToScoreboard)
     if (teamIds.length === 0) return
 
-    const { data: quarters, error } = await supabase
-      .from('quarters')
-      .select('team_id, quarter_number, points')
-      .in('team_id', teamIds)
-
-    if (error) {
-      console.error('Error fetching quarters for dashboard:', error)
-      return
-    }
+    const quarters = await getByTeamIds(teamIds)
 
     const next: Record<string, { a: number; b: number }> = {}
     for (const sb of list) {
@@ -162,13 +146,7 @@ export const Dashboard: React.FC = () => {
   const performDelete = async (scoreboardId: string) => {
     try {
       // Delete scoreboard (this will cascade delete teams and quarters due to foreign key constraints)
-      const { error } = await supabase
-        .from('scoreboards')
-        .delete()
-        .eq('id', scoreboardId)
-        .eq('owner_id', user!.id) // Ensure user can only delete their own scoreboards
-
-      if (error) throw error
+      await removeScoreboard(scoreboardId, user!.id) // Ensure user can only delete their own scoreboards
 
       // Remove from local state
       const updatedScoreboards = scoreboards.filter(sb => sb.id !== scoreboardId)

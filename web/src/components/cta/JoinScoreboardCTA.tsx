@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
 import { AlertDialog } from '../dialog'
 import { Button } from '../button'
+import { findByShareCode } from '../../data/scoreboardsRepo'
 
 export const JoinScoreboardCTA: React.FC = () => {
   const [joinCode, setJoinCode] = useState('')
@@ -21,13 +21,7 @@ export const JoinScoreboardCTA: React.FC = () => {
     if (/^[A-Z0-9]{6}$/.test(code)) {
       setJoining(true)
       try {
-        const { data, error } = await supabase
-          .from('scoreboards')
-          .select('id')
-          .eq('share_code', code)
-          .single()
-
-        if (error) throw error
+        const data = await findByShareCode(code)
         if (!data) {
           setAlert({
             isOpen: true,

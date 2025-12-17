@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { upsertQuarters } from '../data/quartersRepo'
 import type { ScoreboardData, Quarter } from '../types/scoreboard'
 
 export const useScoreUpdate = (
@@ -19,22 +19,15 @@ export const useScoreUpdate = (
 
     try {
       // Atomic upsert to avoid unique constraint violations
-      const { error } = await supabase
-        .from('quarters')
-        .upsert(
-          [
-            {
-              team_id: team.id,
-              quarter_number: scoreboard.current_quarter,
-              points: newScore,
-              fouls: 0,
-              timeouts: 0,
-            },
-          ],
-          { onConflict: 'team_id,quarter_number' }
-        )
-
-      if (error) throw error
+      await upsertQuarters([
+        {
+          team_id: team.id,
+          quarter_number: scoreboard.current_quarter,
+          points: newScore,
+          fouls: 0,
+          timeouts: 0,
+        },
+      ])
 
       // Optimistically update local state for snappy UI
       const updateQuarters = (prev: Quarter[]) => {

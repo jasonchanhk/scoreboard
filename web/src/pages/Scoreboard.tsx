@@ -4,7 +4,6 @@ import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
 import { HiPencil } from 'react-icons/hi'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
 import { AlertDialog, ScoreboardFormDialog, ShareDialog } from '../components/dialog'
@@ -17,6 +16,8 @@ import { useShareCode } from '../hooks/useShareCode'
 import { useTimerControls } from '../hooks/useTimerControls'
 import { useScoreUpdate } from '../hooks/useScoreUpdate'
 import { sortTeams } from '../utils/teamUtils'
+import { getByIdWithTeams, update as updateScoreboard } from '../data/scoreboardsRepo'
+import { getByTeamIdsAndQuarter } from '../data/quartersRepo'
 
 export const Scoreboard: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -75,20 +76,18 @@ export const Scoreboard: React.FC = () => {
   const handleUpdateSuccess = async () => {
     // Refresh the scoreboard data after update
     if (id) {
-      const { data: updatedScoreboard, error: fetchError } = await supabase
-        .from('scoreboards')
-        .select(`
-          *,
-          teams (*)
-        `)
-        .eq('id', id)
-        .single()
-
-      if (!fetchError && updatedScoreboard) {
-        if (updatedScoreboard.teams) {
-          updatedScoreboard.teams = sortTeams(updatedScoreboard.teams)
+      const updatedScoreboard = await getByIdWithTeams(id)
+      if (updatedScoreboard) {
+        const teams = updatedScoreboard.teams ? sortTeams(updatedScoreboard.teams) : []
+        const normalized = {
+          ...(updatedScoreboard as any),
+          venue: updatedScoreboard.venue ?? null,
+          game_date: updatedScoreboard.game_date ?? null,
+          game_start_time: updatedScoreboard.game_start_time ?? null,
+          game_end_time: updatedScoreboard.game_end_time ?? null,
+          teams,
         }
-        setScoreboard(updatedScoreboard)
+        setScoreboard(normalized)
       }
     }
     setShowEditForm(false)
@@ -104,12 +103,8 @@ export const Scoreboard: React.FC = () => {
     const newQuarter = Math.max(1, Math.min(4, scoreboard.current_quarter + delta))
 
     try {
-      const { error } = await supabase
-        .from('scoreboards')
-        .update({ current_quarter: newQuarter })
-        .eq('id', id)
-
-      if (error) throw error
+      if (!id) return
+      await updateScoreboard(id, { current_quarter: newQuarter })
 
       // Update local scoreboard state with new quarter
       setScoreboard(prev => prev ? { ...prev, current_quarter: newQuarter } : null)
@@ -117,15 +112,7 @@ export const Scoreboard: React.FC = () => {
       // Refresh quarters for the new quarter
       if (scoreboard?.teams && scoreboard.teams.length > 0) {
         const teamIds = scoreboard.teams.map(team => team.id)
-        
-        // Fetch quarters for the new quarter
-        const { data: quartersData, error: quartersError } = await supabase
-          .from('quarters')
-          .select('*')
-          .in('team_id', teamIds)
-          .eq('quarter_number', newQuarter)
-
-        if (quartersError) throw quartersError
+        const quartersData = await getByTeamIdsAndQuarter(teamIds, newQuarter)
         setQuarters(quartersData || [])
       }
     } catch (error) {

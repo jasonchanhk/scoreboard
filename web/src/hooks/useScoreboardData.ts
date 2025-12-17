@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { sortTeams } from '../utils/teamUtils'
+import { getByTeamIds } from '../data/quartersRepo'
+import { getByIdWithTeams, getByShareCodeWithTeams } from '../data/scoreboardsRepo'
 import type { ScoreboardData, Team, Quarter } from '../types/scoreboard'
 
 interface UseScoreboardDataProps {
@@ -21,56 +23,40 @@ export const useScoreboardData = ({ scoreboardId, shareCode, userId }: UseScoreb
 
   // Helper function to fetch quarters for teams
   const fetchQuarters = async (teamIds: string[]) => {
-    const { data: quartersData, error: quartersError } = await supabase
-      .from('quarters')
-      .select('*')
-      .in('team_id', teamIds)
-      .order('quarter_number', { ascending: true })
-
-    if (quartersError) throw quartersError
-    return quartersData || []
+    return getByTeamIds(teamIds)
   }
 
   const fetchScoreboard = async () => {
     try {
-      const query = supabase
-        .from('scoreboards')
-        .select(`
-          *,
-          teams (*)
-        `)
-
-      let result
+      let data: ScoreboardData | null = null
       if (scoreboardId) {
-        result = await query.eq('id', scoreboardId).single()
+        data = (await getByIdWithTeams(scoreboardId)) as ScoreboardData | null
       } else if (shareCode) {
-        result = await query.eq('share_code', shareCode).single()
+        data = (await getByShareCodeWithTeams(shareCode)) as ScoreboardData | null
       } else {
         throw new Error('No scoreboard ID or share code provided')
       }
 
-      const { data, error } = result
-
-      if (error) throw error
       if (!data) {
         setError(shareCode ? 'Scoreboard not found or not shared' : 'Scoreboard not found')
         return
       }
 
       // Ensure teams are ordered consistently (home first, away second)
-      if (data.teams) {
-        data.teams = sortTeams(data.teams)
-      }
+      const teams = data.teams ? sortTeams(data.teams) : []
+      const normalized = { ...data, teams }
 
-      setScoreboard(data)
-      scoreboardRef.current = data
-      setIsOwner(userId ? userId === data.owner_id : false)
+      setScoreboard(normalized)
+      scoreboardRef.current = normalized
+      setIsOwner(userId ? userId === normalized.owner_id : false)
 
       // Fetch all quarters for teams
-      if (data.teams && data.teams.length > 0) {
-        const teamIds = data.teams.map((team: Team) => team.id)
+      if (teams.length > 0) {
+        const teamIds = teams.map((team: Team) => team.id)
         const quartersData = await fetchQuarters(teamIds)
         setAllQuarters(quartersData)
+      } else {
+        setAllQuarters([])
       }
     } catch (error) {
       console.error('Error fetching scoreboard:', error)
@@ -99,45 +85,7 @@ export const useScoreboardData = ({ scoreboardId, shareCode, userId }: UseScoreb
         },
         async () => {
           console.log('Scoreboard update received, fetching complete data...')
-          
-          // Fetch complete scoreboard data with teams
-          const query = supabase
-            .from('scoreboards')
-            .select(`
-              *,
-              teams (*)
-            `)
-
-          let result
-          if (scoreboardId) {
-            result = await query.eq('id', scoreboardId).single()
-          } else if (shareCode) {
-            result = await query.eq('share_code', shareCode).single()
-          }
-
-          if (result) {
-            const { data: completeData, error } = result
-
-            if (error) {
-              console.error('Error fetching complete scoreboard data:', error)
-              return
-            }
-
-            // Ensure teams are ordered consistently (home first, away second)
-            if (completeData.teams) {
-              completeData.teams = sortTeams(completeData.teams)
-            }
-            
-            setScoreboard(completeData)
-            scoreboardRef.current = completeData
-            
-            // Also refresh quarters data when scoreboard updates
-            if (completeData.teams && completeData.teams.length > 0) {
-              const teamIds = completeData.teams.map((team: Team) => team.id)
-              const quartersData = await fetchQuarters(teamIds)
-              setAllQuarters(quartersData)
-            }
-          }
+          await fetchScoreboard()
         }
       )
       .on(
@@ -189,22 +137,15 @@ export const useScoreboardData = ({ scoreboardId, shareCode, userId }: UseScoreb
     subscriptionRef.current = subscribeToUpdates()
     
     // Add fallback polling every 10 seconds
-    pollIntervalRef.current = setInterval(() => {
-      if (scoreboard?.id) {
-        supabase
-          .from('scoreboards')
-          .select(`*, teams (*)`)
-          .eq('id', scoreboard.id)
-          .single()
-          .then(({ data }) => {
-            if (data && JSON.stringify(data) !== JSON.stringify(scoreboard)) {
-              // Ensure teams are ordered consistently (home first, away second)
-              if (data.teams) {
-                data.teams = sortTeams(data.teams)
-              }
-              setScoreboard(data)
-            }
-          })
+    pollIntervalRef.current = setInterval(async () => {
+      if (!scoreboard?.id) return
+      const reload = await getByIdWithTeams(scoreboard.id!)
+      if (reload) {
+        const teams = reload.teams ? sortTeams(reload.teams) : []
+        const normalized = { ...reload, teams } as ScoreboardData
+        if (JSON.stringify(normalized) !== JSON.stringify(scoreboard)) {
+          setScoreboard(normalized)
+        }
       }
     }, 10000)
 
