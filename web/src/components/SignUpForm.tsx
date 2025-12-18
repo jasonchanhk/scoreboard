@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { AuthPageLayout, AppLogo, AuthDivider, AuthToggleLink } from './auth'
+import { GoogleSignInButton } from './button'
 
 interface SignUpFormProps {
   onToggleMode: () => void
@@ -12,7 +14,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const { signUp } = useAuth()
+  const { signUp, signInWithGoogle } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,47 +44,49 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
     setLoading(false)
   }
 
+  const handleGoogleSignIn = async () => {
+    setError(null)
+    const { error } = await signInWithGoogle()
+    if (error) {
+      console.error('Google sign in error:', error)
+      setError(error.message)
+    }
+  }
+
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-              Check your email
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              We've sent you a confirmation link. Please check your email and click the link to verify your account.
-            </p>
-            <button
-              onClick={onToggleMode}
-              className="mt-4 font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              Back to sign in
-            </button>
-          </div>
+      <AuthPageLayout>
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Check your email
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            We've sent you a confirmation link. Please check your email and click the link to verify your account.
+          </p>
+          <button
+            onClick={onToggleMode}
+            className="mt-4 font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer"
+          >
+            Back to sign in
+          </button>
         </div>
-      </div>
+      </AuthPageLayout>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          {/* <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <button
-              onClick={onToggleMode}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              sign in to your existing account
-            </button>
-          </p> */}
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+    <AuthPageLayout>
+      <div>
+        <AppLogo />
+        <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
+          Create your account
+        </h2>
+      </div>
+      <div className="mt-8 space-y-6">
+        <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
+        <AuthDivider />
+      </div>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
@@ -148,7 +152,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        <AuthToggleLink prompt="Already have an account?" linkText="Sign in" onToggle={onToggleMode} />
+    </AuthPageLayout>
   )
 }

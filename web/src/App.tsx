@@ -6,6 +6,8 @@ import { Scoreboard } from './pages/Scoreboard'
 import { PublicView } from './pages/PublicView'
 import { LandingPage } from './pages/LandingPage'
 import { AuthPage } from './pages/AuthPage'
+import { PrivacyPolicy } from './pages/PrivacyPolicy'
+import { TermsOfService } from './pages/TermsOfService'
 import { LoadingSpinner } from './components/LoadingSpinner'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -39,6 +41,8 @@ const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route
               path="/dashboard"
               element={

@@ -153,6 +153,12 @@ export const LandingPage: React.FC = () => {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-slate-400 sm:flex-row">
           <p>&copy; {new Date().getFullYear()} Scoreboard. All rights reserved.</p>
           <div className="flex items-center gap-6">
+            <Link to="/privacy" className="hover:text-white">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="hover:text-white">
+              Terms of Service
+            </Link>
             <a href="mailto:support@scoreboard.app" className="hover:text-white">
               Support
             </a>

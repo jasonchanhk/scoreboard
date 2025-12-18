@@ -1,19 +1,18 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { FaBasketballBall } from 'react-icons/fa'
-import { HiChevronLeft } from 'react-icons/hi'
 import { useAuth } from '../contexts/AuthContext'
+import { AuthPageLayout, AppLogo, AuthDivider, AuthToggleLink } from './auth'
+import { GoogleSignInButton } from './button'
 
 interface LoginFormProps {
   onToggleMode: () => void
 }
-// export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
-export const LoginForm: React.FC<LoginFormProps> = () => {
+
+export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { signIn } = useAuth()
+  const { signIn, signInWithGoogle } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,30 +32,28 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
     setLoading(false)
   }
 
+  const handleGoogleSignIn = async () => {
+    setError(null)
+    const { error } = await signInWithGoogle()
+    if (error) {
+      console.error('Google sign in error:', error)
+      setError(error.message)
+    }
+  }
+
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Link
-        to="/"
-        className="absolute top-6 left-6 z-10 text-gray-300 hover:text-white transition-colors text-2xl font-bold bg-gray-800 hover:bg-gray-700 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer"
-        aria-label="Back to Landing"
-      >
-        <HiChevronLeft className="text-2xl" />
-      </Link>
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          {/* App Logo and Name */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="flex items-center justify-center w-20 h-20 bg-indigo-700 rounded-full mb-4 shadow-lg">
-              <FaBasketballBall className="text-white text-4xl" />
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Pretty Scoreboard</h1>
-          </div>
-          
-          <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
-            Sign in to your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+    <AuthPageLayout>
+      <div>
+        <AppLogo />
+        <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
+          Sign in to your account
+        </h2>
+      </div>
+      <div className="mt-8 space-y-6">
+        <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
+        <AuthDivider />
+      </div>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
@@ -100,13 +97,13 @@ export const LoginForm: React.FC<LoginFormProps> = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-2 px-4 cursor-pointer border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        <AuthToggleLink prompt="Don't have an account?" linkText="Sign up" onToggle={onToggleMode} />
+    </AuthPageLayout>
   )
 }
