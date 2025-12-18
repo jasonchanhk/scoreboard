@@ -1,7 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { AuthPageLayout, AppLogo, AuthDivider, AuthToggleLink } from './auth'
 import { GoogleSignInButton } from './button'
+import { PasswordInput } from './input'
+import { AlertDialog } from './dialog'
+import { useAlertDialog } from '../hooks/dialog'
+import { Toast } from './Toast'
+import { useToast } from '../hooks/useToast'
+import { useGoogleSignIn } from '../hooks/useGoogleSignIn'
+import { isValidEmailFormat, hasPlusAddressing } from '../utils/emailValidation'
 
 interface SignUpFormProps {
   onToggleMode: () => void
@@ -12,46 +19,88 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState(false)
   const [success, setSuccess] = useState(false)
-  const { signUp, signInWithGoogle } = useAuth()
+  const { signUp } = useAuth()
+  const { alert, showError: showAlertError, hideAlert } = useAlertDialog()
+  const { toast, showError, hideToast } = useToast()
+  const { handleGoogleSignIn } = useGoogleSignIn()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailBlur = useCallback(() => {
+    const trimmedEmail = email.trim()
+    
+    // Check for plus addressing
+    if (trimmedEmail && hasPlusAddressing(trimmedEmail)) {
+      showAlertError(
+        'Plus Addressing Not Allowed',
+        'Email addresses with plus signs (e.g., user+tag@example.com) are not allowed. Please use your regular email address.'
+      )
+      setEmailError(true)
+      return
+    }
+
+    // Basic email format validation
+    if (trimmedEmail && !isValidEmailFormat(trimmedEmail)) {
+      showError('Please enter a valid email address')
+      setEmailError(true)
+      return
+    }
+
+    // Clear error if email is valid
+    if (trimmedEmail && isValidEmailFormat(trimmedEmail) && !hasPlusAddressing(trimmedEmail)) {
+      setEmailError(false)
+    }
+  }, [email, showAlertError, showError])
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
+    setEmailError(false)
+
+    const trimmedEmail = email.trim()
+
+    // Validate email format
+    if (!trimmedEmail || !isValidEmailFormat(trimmedEmail)) {
+      showError('Please enter a valid email address')
+      setEmailError(true)
+      setLoading(false)
+      return
+    }
+
+    // Check for plus addressing
+    if (hasPlusAddressing(trimmedEmail)) {
+      showAlertError(
+        'Plus Addressing Not Allowed',
+        'Email addresses with plus signs (e.g., user+tag@example.com) are not allowed. Please use your regular email address.'
+      )
+      setEmailError(true)
+      setLoading(false)
+      return
+    }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      showError('Passwords do not match')
       setLoading(false)
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      showError('Password must be at least 6 characters')
       setLoading(false)
       return
     }
 
-    const { error } = await signUp(email, password)
+    const { error } = await signUp(trimmedEmail, password)
     
     if (error) {
-      setError(error.message)
+      showError(error.message)
     } else {
       setSuccess(true)
     }
     
     setLoading(false)
-  }
+  }, [email, password, confirmPassword, signUp, showError, showAlertError])
 
-  const handleGoogleSignIn = async () => {
-    setError(null)
-    const { error } = await signInWithGoogle()
-    if (error) {
-      console.error('Google sign in error:', error)
-      setError(error.message)
-    }
-  }
 
   if (success) {
     return (
@@ -76,6 +125,19 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
 
   return (
     <AuthPageLayout>
+      <AlertDialog
+        isOpen={alert.isOpen}
+        title={alert.title}
+        message={alert.message}
+        variant={alert.variant}
+        onClose={hideAlert}
+      />
+      <Toast
+        message={toast.message}
+        variant={toast.variant}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
       <div>
         <AppLogo />
         <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
@@ -98,49 +160,57 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+                  emailError ? 'border-red-300' : 'border-gray-300'
+                } placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
                 placeholder="Email address"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  // Clear error state when user starts typing
+                  if (emailError) {
+                    const trimmed = e.target.value.trim()
+                    if (trimmed && isValidEmailFormat(trimmed) && !hasPlusAddressing(trimmed)) {
+                      setEmailError(false)
+                    }
+                  }
+                }}
+                onBlur={handleEmailBlur}
               />
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="new-password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password (min 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div>
               <label htmlFor="confirmPassword" className="sr-only">
                 Confirm Password
               </label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
                 name="confirmPassword"
-                type="password"
                 autoComplete="new-password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
               />
             </div>
           </div>
-
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
 
           <div>
             <button

@@ -1,7 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { AuthPageLayout, AppLogo, AuthDivider, AuthToggleLink } from './auth'
 import { GoogleSignInButton } from './button'
+import { PasswordInput } from './input'
+import { Toast } from './Toast'
+import { useToast } from '../hooks/useToast'
+import { useGoogleSignIn } from '../hooks/useGoogleSignIn'
 
 interface LoginFormProps {
   onToggleMode: () => void
@@ -11,38 +15,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { signIn, signInWithGoogle } = useAuth()
+  const { signIn } = useAuth()
+  const { toast, showError, hideToast } = useToast()
+  const { handleGoogleSignIn } = useGoogleSignIn()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
 
-    console.log('LoginForm: Attempting sign in...')
     const { error } = await signIn(email, password)
     
     if (error) {
-      console.error('LoginForm: Sign in failed:', error)
-      setError(error.message)
-    } else {
-      console.log('LoginForm: Sign in successful')
+      showError(error.message)
     }
     
     setLoading(false)
-  }
-
-  const handleGoogleSignIn = async () => {
-    setError(null)
-    const { error } = await signInWithGoogle()
-    if (error) {
-      console.error('Google sign in error:', error)
-      setError(error.message)
-    }
-  }
+  }, [email, password, signIn, showError])
 
   return (
     <AuthPageLayout>
+      <Toast
+        message={toast.message}
+        variant={toast.variant}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
       <div>
         <AppLogo />
         <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
@@ -75,23 +72,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
               <label htmlFor="password" className="sr-only">
                 Password
               </label>
-              <input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="current-password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
               />
             </div>
           </div>
-
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
-          )}
 
           <div>
             <button
