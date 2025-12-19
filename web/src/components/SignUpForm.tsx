@@ -105,20 +105,20 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
   if (success) {
     return (
       <AuthPageLayout>
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Check your email
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            We've sent you a confirmation link. Please check your email and click the link to verify your account.
-          </p>
-          <button
-            onClick={onToggleMode}
+          <div className="text-center">
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+              Check your email
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              We've sent you a confirmation link. Please check your email and click the link to verify your account.
+            </p>
+            <button
+              onClick={onToggleMode}
             className="mt-4 font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer"
-          >
-            Back to sign in
-          </button>
-        </div>
+            >
+              Back to sign in
+            </button>
+          </div>
       </AuthPageLayout>
     )
   }
@@ -138,16 +138,16 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggleMode }) => {
         isVisible={toast.isVisible}
         onClose={hideToast}
       />
-      <div>
+        <div>
         <AppLogo />
         <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
-          Create your account
-        </h2>
+            Create your account
+          </h2>
       </div>
       <div className="mt-8 space-y-6">
         <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
         <AuthDivider />
-      </div>
+        </div>
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>

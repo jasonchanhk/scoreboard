@@ -40,12 +40,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onToggleMode }) => {
         isVisible={toast.isVisible}
         onClose={hideToast}
       />
-      <div>
+        <div>
         <AppLogo />
-        <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
-          Sign in to your account
-        </h2>
-      </div>
+          <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
+            Sign in to your account
+          </h2>
+        </div>
       <div className="mt-8 space-y-6">
         <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
         <AuthDivider />
