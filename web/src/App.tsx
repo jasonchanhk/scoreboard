@@ -9,6 +9,9 @@ import { AuthPage } from './pages/AuthPage'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
 import { TermsOfService } from './pages/TermsOfService'
 import { Settings } from './pages/Settings'
+import { Subscription } from './pages/Subscription'
+import { CheckoutSuccess } from './pages/CheckoutSuccess'
+import { CheckoutCancel } from './pages/CheckoutCancel'
 import { LoadingSpinner } from './components/LoadingSpinner'
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -57,6 +60,30 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/subscription"
+              element={
+                <ProtectedRoute>
+                  <Subscription />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout/success"
+              element={
+                <ProtectedRoute>
+                  <CheckoutSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout/cancel"
+              element={
+                <ProtectedRoute>
+                  <CheckoutCancel />
                 </ProtectedRoute>
               }
             />

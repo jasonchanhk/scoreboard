@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.6.0",
+    "@stripe/stripe-js": "^8.6.0",
     "@supabase/supabase-js": "^2.58.0",
     "@tailwindcss/vite": "^4.1.14",
     "@types/react-router-dom": "^5.3.3",

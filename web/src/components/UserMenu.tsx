@@ -1,9 +1,11 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useSubscription } from '../hooks/useSubscription'
 
 export const UserMenu: React.FC = () => {
   const { user, signOut } = useAuth()
+  const { subscription } = useSubscription()
   const navigate = useNavigate()
   
   // Get display name from user metadata, or fallback to first part of email
@@ -27,6 +29,17 @@ export const UserMenu: React.FC = () => {
   const displayName = getDisplayName()
   const initials = (displayName?.slice(0, 2) || 'US').toUpperCase()
 
+  // Get plan display name
+  const getPlanDisplayName = (): string => {
+    if (!subscription) {
+      return 'Basic'
+    }
+    const tier = subscription.plan_tier.charAt(0).toUpperCase() + subscription.plan_tier.slice(1)
+    return `${tier}`
+  }
+
+  const planDisplayName = getPlanDisplayName()
+
   return (
     <div className="relative group">
       <button
@@ -49,6 +62,9 @@ export const UserMenu: React.FC = () => {
               <div className="text-xs text-gray-500 cursor-default select-text mt-0.5">
                 {user.email}
               </div>
+              <div className="text-xs text-gray-600 cursor-default select-text mt-1 font-medium">
+                {planDisplayName}
+              </div>
             </div>
           )}
           <div className="py-1">
@@ -66,12 +82,12 @@ export const UserMenu: React.FC = () => {
             </button>
           </div>
           <div className="border-t border-gray-100 pt-1">
-            <button
-              onClick={signOut}
+          <button
+            onClick={signOut}
               className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-red-600 hover:bg-red-50"
-            >
-              Sign out
-            </button>
+          >
+            Sign out
+          </button>
           </div>
         </div>
       </div>
