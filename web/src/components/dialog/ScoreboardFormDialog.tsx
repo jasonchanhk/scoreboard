@@ -2,6 +2,9 @@ import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useSubscription } from '../../hooks/useSubscription'
+import { countByOwner } from '../../data/scoreboardsRepo'
+import { getScoreboardLimit } from '../../utils/subscriptionLimits'
 import { BaseDialog } from './BaseDialog'
 import { ColorPicker, DateInput, DurationInput, TextInput, TimeInput } from '../input'
 import { CloseButton } from '../button'
@@ -49,6 +52,7 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
 }) => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { subscription } = useSubscription()
   const [loading, setLoading] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   
@@ -93,6 +97,25 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
   const handleCreate = async () => {
     if (!user) {
       throw new Error('User must be authenticated to create a scoreboard')
+    }
+
+    // Check scoreboard limit based on subscription plan
+    const planTier = subscription?.plan_tier || 'basic'
+    const limit = getScoreboardLimit(planTier)
+    
+    // Only check limit if it's not unlimited (Infinity)
+    if (limit !== Infinity) {
+      // Count existing scoreboards
+      const currentCount = await countByOwner(user.id)
+      
+      // Check if user has reached their limit
+      if (currentCount >= limit) {
+        const planName = planTier.charAt(0).toUpperCase() + planTier.slice(1)
+        throw new Error(
+          `You've reached your ${planName} plan limit of ${limit} scoreboards. ` +
+          `Please delete an existing scoreboard or upgrade your plan to create more.`
+        )
+      }
     }
 
     // First create the scoreboard

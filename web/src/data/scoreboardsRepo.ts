@@ -82,3 +82,16 @@ export async function remove(id: string, ownerId?: string): Promise<void> {
   }
 }
 
+export async function countByOwner(ownerId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('scoreboards')
+    .select('*', { count: 'exact', head: true })
+    .eq('owner_id', ownerId)
+  
+  if (error) {
+    throw new Error(`Count scoreboards: ${error.message}`)
+  }
+  
+  return count || 0
+}
+

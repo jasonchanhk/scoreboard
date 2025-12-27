@@ -62,7 +62,7 @@ export const UserMenu: React.FC = () => {
               <div className="text-xs text-gray-500 cursor-default select-text mt-0.5">
                 {user.email}
               </div>
-              <div className="text-xs text-gray-600 cursor-default select-text mt-1 font-medium">
+              <div className="text-xs text-gray-600 cursor-default select-text mt-1 font-medium border py-0.5 px-1 rounded-md inline-block">
                 {planDisplayName}
               </div>
             </div>
