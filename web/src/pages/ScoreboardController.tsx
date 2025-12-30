@@ -19,7 +19,7 @@ import { sortTeams } from '../utils/teamUtils'
 import { getByIdWithTeams, update as updateScoreboard } from '../data/scoreboardsRepo'
 import { getByTeamIdsAndQuarter } from '../data/quartersRepo'
 
-export const Scoreboard: React.FC = () => {
+export const ScoreboardController: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()

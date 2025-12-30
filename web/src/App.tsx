@@ -2,8 +2,8 @@ import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Dashboard } from './pages/Dashboard'
-import { Scoreboard } from './pages/Scoreboard'
-import { PublicView } from './pages/PublicView'
+import { ScoreboardController } from './pages/ScoreboardController'
+import { ScoreboardDisplay } from './pages/ScoreboardDisplay'
 import { LandingPage } from './pages/LandingPage'
 import { AuthPage } from './pages/AuthPage'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
@@ -91,11 +91,11 @@ const App: React.FC = () => {
               path="/scoreboard/:id"
               element={
                 <ProtectedRoute>
-                  <Scoreboard />
+                  <ScoreboardController />
                 </ProtectedRoute>
               }
             />
-            <Route path="/scoreboard/:id/view" element={<PublicView />} />
+            <Route path="/scoreboard/:id/view" element={<ScoreboardDisplay />} />
             {/* Catch-all route for invalid URLs */}
             <Route path="*" element={<InvalidUrlRedirect />} />
           </Routes>

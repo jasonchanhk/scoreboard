@@ -10,7 +10,7 @@ import { Button } from '../components/button'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { Timer } from '../components/Timer'
 
-export const PublicView: React.FC = () => {
+export const ScoreboardDisplay: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
