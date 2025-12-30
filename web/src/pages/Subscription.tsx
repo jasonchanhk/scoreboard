@@ -18,9 +18,7 @@ interface Tier {
   priceYearly: string
   priceIdMonthly: string // Stripe Price ID for monthly (starts with price_)
   priceIdYearly: string // Stripe Price ID for yearly (starts with price_)
-  scoreboards: string
-  devices: string
-  features: string[]
+  features: string[] // All features for this tier
   popular?: boolean
 }
 
@@ -32,8 +30,6 @@ const tiers: Tier[] = [
     priceYearly: 'Free',
     priceIdMonthly: 'free', // No Stripe price ID needed for free tier
     priceIdYearly: 'free',
-    scoreboards: '2 scoreboards',
-    devices: '2 viewing devices',
     features: [
       'Create up to 2 scoreboards',
       'Public viewing on 2 devices',
@@ -48,13 +44,9 @@ const tiers: Tier[] = [
     priceYearly: '£29.99',
     priceIdMonthly: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID_MONTHLY || 'price_plus_monthly',
     priceIdYearly: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID_YEARLY || 'price_plus_yearly',
-    scoreboards: '50 scoreboards',
-    devices: '5 viewing devices',
     features: [
       'Create up to 50 scoreboards',
       'Public viewing on 5 devices',
-      'Real-time updates',
-      'Share codes',
       'Priority support',
     ],
     popular: true,
@@ -63,19 +55,10 @@ const tiers: Tier[] = [
     id: 'premium',
     name: 'Premium',
     priceMonthly: '£5.99',
-    priceYearly: '£49.99',
+    priceYearly: '£59.99',
     priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_PRICE_ID_MONTHLY || 'price_premium_monthly',
     priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_PRICE_ID_YEARLY || 'price_premium_yearly',
-    scoreboards: 'Unlimited',
-    devices: 'Unlimited',
     features: [
-      'Unlimited scoreboards',
-      'Unlimited viewing devices',
-      'Real-time updates',
-      'Share codes',
-      'Priority support',
-      'Advanced analytics',
-      'Custom branding',
     ],
   },
 ]
@@ -97,6 +80,11 @@ export const Subscription: React.FC = () => {
   const handleSubscribe = async (tier: Tier) => {
     if (!user) {
       showError('Please sign in to subscribe')
+      return
+    }
+
+    // Premium tier is disabled
+    if (tier.id === 'premium') {
       return
     }
 
@@ -157,7 +145,7 @@ export const Subscription: React.FC = () => {
             <button
               type="button"
               onClick={() => setBillingPeriod('monthly')}
-              className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+              className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
                 billingPeriod === 'monthly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-gray-400'
@@ -168,7 +156,7 @@ export const Subscription: React.FC = () => {
             <button
               type="button"
               onClick={() => setBillingPeriod('yearly')}
-              className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all relative ${
+              className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all relative cursor-pointer ${
                 billingPeriod === 'yearly'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-gray-400'
@@ -186,13 +174,13 @@ export const Subscription: React.FC = () => {
           {tiers.map((tier) => (
             <div
               key={tier.id}
-              className={`relative bg-white rounded-2xl shadow-lg border-2 ${
+              className={`relative bg-white rounded-2xl shadow-lg border-2 flex flex-col h-full ${
                 tier.id === 'basic'
                   ? 'border-green-500'
                   : tier.popular
                   ? 'border-indigo-600 transform scale-105'
                   : 'border-gray-200'
-              } overflow-hidden`}
+              } overflow-hidden ${tier.id === 'premium' ? 'opacity-60' : ''}`}
             >
               {tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic') && (
                 <div className="absolute top-0 left-0 right-0 bg-green-600 text-white text-center py-1 text-xs font-semibold">
@@ -214,9 +202,14 @@ export const Subscription: React.FC = () => {
                   Most Popular
                 </div>
               )}
+              {tier.id === 'premium' && (
+                <div className="absolute top-0 left-0 right-0 bg-gray-500 text-white text-center py-1 text-xs font-semibold">
+                  Coming Soon
+                </div>
+              )}
               
-              <div className={`p-8 ${tier.popular || tier.id === 'basic' ? 'pt-12' : ''}`}>
-                <div className="mb-6">
+              <div className={`p-8 flex flex-col h-full ${tier.popular || tier.id === 'basic' || tier.id === 'premium' ? 'pt-12' : ''}`}>
+                <div className="mb-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
                   <div className="flex items-baseline">
                     <span className="text-4xl font-extrabold text-gray-900">
@@ -230,37 +223,33 @@ export const Subscription: React.FC = () => {
                   </div>
                   {billingPeriod === 'yearly' && tier.id !== 'basic' && (
                     <p className="text-sm text-gray-500 mt-1">
-                      £{(parseFloat(tier.priceYearly.replace('£', '')) / 12).toFixed(2)} per month billed annually
+                      {(tier.priceYearly.startsWith('$') ? '$' : '£')}{(parseFloat(tier.priceYearly.replace(/[£$]/g, '')) / 12).toFixed(2)} per month billed annually
                     </p>
                   )}
                 </div>
 
-                <div className="mb-6 space-y-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <HiCheck className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
-                    <span className="font-medium">{tier.scoreboards}</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <HiCheck className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
-                    <span className="font-medium">{tier.devices}</span>
-                  </div>
+                <div className="mb-8">
+                  <p className="text-sm text-gray-500 mb-2">
+                    {tier.id === 'basic' ? 'Get started with:' : tier.id === 'plus' ? 'Everything in the Basic Plan, plus:' : 'Coming soon...'}
+                  </p>
+                  <ul className="space-y-3">
+                    {tier.features.map((feature, index) => (
+                      <li key={index} className="flex items-start text-sm text-gray-700">
+                        <HiCheck className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-
-                <ul className="mb-8 space-y-3">
-                  {tier.features.map((feature, index) => (
-                    <li key={index} className="flex items-start text-sm text-gray-600">
-                      <HiCheck className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
 
                 <button
                   onClick={() => handleSubscribe(tier)}
-                  disabled={loading !== null || !!(subscription && subscription.plan_tier === tier.id)}
-                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors ${
-                    (tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic')) ||
-                    (subscription && subscription.plan_tier === tier.id)
+                  disabled={loading !== null || !!(subscription && subscription.plan_tier === tier.id) || tier.id === 'premium'}
+                  className={`mt-auto w-full py-3 px-6 rounded-lg font-semibold transition-colors ${
+                    tier.id === 'premium'
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : (tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic')) ||
+                        (subscription && subscription.plan_tier === tier.id)
                       ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-not-allowed'
                       : tier.popular
                       ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
@@ -293,6 +282,8 @@ export const Subscription: React.FC = () => {
                       </svg>
                       Processing...
                     </span>
+                  ) : tier.id === 'premium' ? (
+                    'Coming Soon'
                   ) : (tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic')) ||
                       (subscription && subscription.plan_tier === tier.id) ? (
                     'Current Plan'
@@ -309,7 +300,7 @@ export const Subscription: React.FC = () => {
 
         <div className="mt-12 text-center">
           <p className="text-sm text-gray-500">
-            Basic plan is free forever. Upgrade to Plus or Premium for more features. Cancel anytime.
+            Basic plan is free forever. Upgrade to Plus for more features. Cancel anytime.
           </p>
         </div>
       </div>
