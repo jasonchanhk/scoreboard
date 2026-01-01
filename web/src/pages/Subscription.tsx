@@ -83,8 +83,8 @@ export const Subscription: React.FC = () => {
       return
     }
 
-    // Premium tier is disabled
-    if (tier.id === 'premium') {
+    // Premium and Plus tiers are disabled
+    if (tier.id === 'premium' || tier.id === 'plus') {
       return
     }
 
@@ -177,10 +177,12 @@ export const Subscription: React.FC = () => {
               className={`relative bg-white rounded-2xl shadow-lg border-2 flex flex-col h-full ${
                 tier.id === 'basic'
                   ? 'border-green-500'
+                  : tier.id === 'premium' || tier.id === 'plus'
+                  ? 'border-gray-300'
                   : tier.popular
                   ? 'border-indigo-600 transform scale-105'
                   : 'border-gray-200'
-              } overflow-hidden ${tier.id === 'premium' ? 'opacity-60' : ''}`}
+              } overflow-hidden ${tier.id === 'premium' || tier.id === 'plus' ? 'opacity-60' : ''}`}
             >
               {tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic') && (
                 <div className="absolute top-0 left-0 right-0 bg-green-600 text-white text-center py-1 text-xs font-semibold">
@@ -192,23 +194,23 @@ export const Subscription: React.FC = () => {
                   Current Plan
                 </div>
               )}
-              {!subscription && tier.popular && tier.id !== 'basic' && (
+              {!subscription && tier.popular && tier.id !== 'basic' && tier.id !== 'plus' && (
                 <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-center py-1 text-xs font-semibold">
                   Most Popular
                 </div>
               )}
-              {subscription && subscription.plan_tier !== tier.id && tier.popular && tier.id !== 'basic' && (
+              {subscription && subscription.plan_tier !== tier.id && tier.popular && tier.id !== 'basic' && tier.id !== 'plus' && (
                 <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-center py-1 text-xs font-semibold">
                   Most Popular
                 </div>
               )}
-              {tier.id === 'premium' && (
+              {(tier.id === 'premium' || tier.id === 'plus') && (
                 <div className="absolute top-0 left-0 right-0 bg-gray-500 text-white text-center py-1 text-xs font-semibold">
                   Coming Soon
                 </div>
               )}
               
-              <div className={`p-8 flex flex-col h-full ${tier.popular || tier.id === 'basic' || tier.id === 'premium' ? 'pt-12' : ''}`}>
+              <div className={`p-8 flex flex-col h-full ${tier.popular || tier.id === 'basic' || tier.id === 'premium' || tier.id === 'plus' ? 'pt-12' : ''}`}>
                 <div className="mb-8">
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{tier.name}</h3>
                   <div className="flex items-baseline">
@@ -230,12 +232,14 @@ export const Subscription: React.FC = () => {
 
                 <div className="mb-8">
                   <p className="text-sm text-gray-500 mb-2">
-                    {tier.id === 'basic' ? 'Get started with:' : tier.id === 'plus' ? 'Everything in the Basic Plan, plus:' : 'Coming soon...'}
+                    {tier.id === 'basic' ? 'Get started with:' : tier.id === 'plus' ? 'Everything in the Basic Plan, plus:' : ''}
                   </p>
                   <ul className="space-y-3">
                     {tier.features.map((feature, index) => (
                       <li key={index} className="flex items-start text-sm text-gray-700">
-                        <HiCheck className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0 mt-0.5" />
+                        <HiCheck className={`w-5 h-5 mr-2 flex-shrink-0 mt-0.5 ${
+                          tier.id === 'basic' ? 'text-indigo-600' : 'text-gray-400'
+                        }`} />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -244,9 +248,15 @@ export const Subscription: React.FC = () => {
 
                 <button
                   onClick={() => handleSubscribe(tier)}
-                  disabled={loading !== null || !!(subscription && subscription.plan_tier === tier.id) || tier.id === 'premium'}
+                  disabled={
+                    loading !== null || 
+                    tier.id === 'premium' || 
+                    tier.id === 'plus' ||
+                    (tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic')) ||
+                    !!(subscription && subscription.plan_tier === tier.id)
+                  }
                   className={`mt-auto w-full py-3 px-6 rounded-lg font-semibold transition-colors ${
-                    tier.id === 'premium'
+                    tier.id === 'premium' || tier.id === 'plus'
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : (tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic')) ||
                         (subscription && subscription.plan_tier === tier.id)
@@ -282,7 +292,7 @@ export const Subscription: React.FC = () => {
                       </svg>
                       Processing...
                     </span>
-                  ) : tier.id === 'premium' ? (
+                  ) : tier.id === 'premium' || tier.id === 'plus' ? (
                     'Coming Soon'
                   ) : (tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic')) ||
                       (subscription && subscription.plan_tier === tier.id) ? (
@@ -300,7 +310,7 @@ export const Subscription: React.FC = () => {
 
         <div className="mt-12 text-center">
           <p className="text-sm text-gray-500">
-            Basic plan is free forever. Upgrade to Plus for more features. Cancel anytime.
+            Basic plan is free forever. Cancel anytime.
           </p>
         </div>
       </div>
