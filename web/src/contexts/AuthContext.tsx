@@ -92,8 +92,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const deleteAccount = async () => {
-    const { error } = await supabase.auth.deleteUser()
-    return { error }
+    try {
+      // Get current session to ensure user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session) {
+        return { error: { message: 'No active session. Please sign in again.' } }
+      }
+
+      // Use Edge Function to delete account (requires admin privileges)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      if (!supabaseUrl) {
+        return { error: { message: 'Missing Supabase configuration' } }
+      }
+
+      const functionUrl = `${supabaseUrl}/functions/v1/delete-account`
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to delete account' }))
+        return { error: { message: errorData.error || 'Failed to delete account' } }
+      }
+
+      return { error: null }
+    } catch (error: any) {
+      console.error('Unexpected error in deleteAccount:', error)
+      return { error: { message: error.message || 'An unexpected error occurred while deleting your account.' } }
+    }
   }
 
   const value = {

@@ -101,17 +101,21 @@ export const Settings: React.FC = () => {
     try {
       const { error } = await deleteAccount()
       if (error) {
+        console.error('Delete account error:', error)
         showError(error.message || 'Failed to delete account. Please try again.')
         setDeleting(false)
+        hideConfirmDialog()
       } else {
         // Account deleted successfully, sign out and redirect
+        hideConfirmDialog()
         await signOut()
         navigate('/')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting account:', error)
-      showError('An unexpected error occurred. Please try again.')
+      showError(error?.message || 'An unexpected error occurred. Please try again.')
       setDeleting(false)
+      hideConfirmDialog()
     }
   }
 
