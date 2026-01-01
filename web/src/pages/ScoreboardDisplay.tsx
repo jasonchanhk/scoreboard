@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaBasketballBall, FaExpand } from 'react-icons/fa'
+import { HiClock } from 'react-icons/hi'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
+import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
 import { useAuth } from '../contexts/AuthContext'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { Timer } from '../components/Timer'
+import { QuarterHistoryDialog } from '../components/dialog'
 
 export const ScoreboardDisplay: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [quarterHistoryOpen, setQuarterHistoryOpen] = useState(false)
   
   const { scoreboard, allQuarters, loading, error } = useScoreboardData({
     scoreboardId: id
@@ -22,6 +26,10 @@ export const ScoreboardDisplay: React.FC = () => {
 
   // Custom hooks
   const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
+  const { quarters } = useCurrentQuarterData(
+    scoreboard,
+    scoreboard?.current_quarter || 1
+  )
 
   // Handle fullscreen
   const toggleFullscreen = () => {
@@ -80,17 +88,37 @@ export const ScoreboardDisplay: React.FC = () => {
       {!isFullscreen && (
         <AppNav 
           rightContent={
-            <Button
-              onClick={toggleFullscreen}
-              variant="primary"
-              size="sm"
-            >
-              <FaExpand className="inline mr-2" />
-              Fullscreen
-            </Button>
+            <div className="flex items-center space-x-3">
+              <Button
+                onClick={() => setQuarterHistoryOpen(true)}
+                variant="secondary"
+                size="sm"
+              >
+                <HiClock className="mr-2" />
+                History
+              </Button>
+              <Button
+                onClick={toggleFullscreen}
+                variant="primary"
+                size="sm"
+              >
+                <FaExpand className="inline mr-2" />
+                Fullscreen
+              </Button>
+            </div>
           }
         />
       )}
+
+      {/* Quarter History Dialog */}
+      <QuarterHistoryDialog
+        isOpen={quarterHistoryOpen}
+        teams={scoreboard?.teams || []}
+        allQuarters={allQuarters}
+        currentQuarter={currentQuarter}
+        quarters={quarters}
+        onClose={() => setQuarterHistoryOpen(false)}
+      />
 
       {/* Main Scoreboard */}
       <div className="flex-1 flex flex-col py-10 px-20 min-h-0">

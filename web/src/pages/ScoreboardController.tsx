@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
-import { HiPencil } from 'react-icons/hi'
+import { HiPencil, HiClock } from 'react-icons/hi'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
-import { AlertDialog, ScoreboardFormDialog, ShareDialog } from '../components/dialog'
+import { AlertDialog, ScoreboardFormDialog, ShareDialog, QuarterHistoryDialog } from '../components/dialog'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
@@ -25,6 +25,7 @@ export const ScoreboardController: React.FC = () => {
   const { user } = useAuth()
   const [shareOpen, setShareOpen] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
+  const [quarterHistoryOpen, setQuarterHistoryOpen] = useState(false)
   
   const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
     scoreboardId: id,
@@ -164,6 +165,14 @@ export const ScoreboardController: React.FC = () => {
                 </Button>
                   )}
               <Button
+                onClick={() => setQuarterHistoryOpen(true)}
+                variant="secondary"
+                size="sm"
+              >
+                <HiClock className="mr-2" />
+                History
+              </Button>
+              <Button
                 onClick={() => setShareOpen(true)}
                 variant="primary"
                 size="sm"
@@ -172,6 +181,16 @@ export const ScoreboardController: React.FC = () => {
               </Button>
             </div>
         }
+      />
+
+      {/* Quarter History Dialog */}
+      <QuarterHistoryDialog
+        isOpen={quarterHistoryOpen}
+        teams={scoreboard?.teams || []}
+        allQuarters={allQuarters}
+        currentQuarter={scoreboard?.current_quarter || 1}
+        quarters={quarters}
+        onClose={() => setQuarterHistoryOpen(false)}
       />
 
       {/* Share Dialog */}
