@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
-import { HiPencil, HiClock } from 'react-icons/hi'
+import { HiPencil, HiClock, HiEye } from 'react-icons/hi'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
 import { AlertDialog, ScoreboardFormDialog, ShareDialog, QuarterHistoryDialog } from '../components/dialog'
@@ -178,6 +178,13 @@ export const ScoreboardController: React.FC = () => {
                 size="sm"
               >
                 Share
+              </Button>
+              <Button
+                onClick={handleViewPublic}
+                variant="primary"
+                size="sm"
+              >
+                <HiEye className="w-5 h-5" />
               </Button>
             </div>
         }

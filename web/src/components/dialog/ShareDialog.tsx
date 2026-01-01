@@ -66,17 +66,6 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
               <div className="text-sm text-gray-400 text-center">Not available</div>
             )}
           </div>
-          <div className="flex-shrink-0">
-            <div className="text-xs text-gray-600 mb-1">Public View</div>
-            <Button
-              onClick={onViewPublic}
-              variant="primary"
-              size="md"
-              className="w-full bg-gray-800 hover:bg-gray-900"
-            >
-              Go to Public View
-            </Button>
-          </div>
         </div>
         {publicViewUrl && (
           <div className="flex-shrink-0 flex flex-col items-center">
