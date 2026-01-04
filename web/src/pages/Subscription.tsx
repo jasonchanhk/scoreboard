@@ -235,15 +235,15 @@ export const Subscription: React.FC = () => {
                     {tier.id === 'basic' ? 'Get started with:' : tier.id === 'plus' ? 'Everything in the Basic Plan, plus:' : ''}
                   </p>
                   <ul className="space-y-3">
-                    {tier.features.map((feature, index) => (
+                  {tier.features.map((feature, index) => (
                       <li key={index} className="flex items-start text-sm text-gray-700">
                         <HiCheck className={`w-5 h-5 mr-2 flex-shrink-0 mt-0.5 ${
                           tier.id === 'basic' ? 'text-indigo-600' : 'text-gray-400'
                         }`} />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
                 </div>
 
                 <button
@@ -259,7 +259,7 @@ export const Subscription: React.FC = () => {
                     tier.id === 'premium' || tier.id === 'plus'
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : (tier.id === 'basic' && (!subscription || subscription.plan_tier === 'basic')) ||
-                        (subscription && subscription.plan_tier === tier.id)
+                    (subscription && subscription.plan_tier === tier.id)
                       ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 cursor-not-allowed'
                       : tier.popular
                       ? 'bg-indigo-600 hover:bg-indigo-700 text-white'

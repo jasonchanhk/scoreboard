@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FaBasketballBall, FaExpand } from 'react-icons/fa'
+import { FaExpand } from 'react-icons/fa'
 import { HiClock } from 'react-icons/hi'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
@@ -11,6 +11,7 @@ import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { Timer } from '../components/Timer'
+import { BrandingLogo } from '../components/BrandingLogo'
 import { QuarterHistoryDialog } from '../components/dialog'
 
 export const ScoreboardDisplay: React.FC = () => {
@@ -168,19 +169,12 @@ export const ScoreboardDisplay: React.FC = () => {
         
       {/* Branding - Bottom Right Corner - Only shown in fullscreen */}
       {isFullscreen && (
-        <div
-          onClick={() => navigate(user ? '/dashboard' : '/')}
-          className="absolute bottom-6 right-6 z-10 cursor-pointer"
-        >
-          <div className="flex items-center space-x-2 bg-white border border-black rounded-lg px-3 py-2">
-            <div className="flex items-center justify-center w-8 h-8 bg-indigo-600 rounded-full flex-shrink-0">
-              <FaBasketballBall className="text-white text-sm" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-900 leading-tight">Powered by</span>
-              <span className="text-sm font-bold text-gray-900">Pretty Scoreboard</span>
-            </div>
-          </div>
+        <div className="absolute bottom-6 right-6 z-10">
+          <BrandingLogo
+            variant="default"
+            borderColor="black"
+            onClick={() => navigate(user ? '/dashboard' : '/')}
+          />
         </div>
       )}
     </div>

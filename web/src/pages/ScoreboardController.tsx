@@ -208,10 +208,14 @@ export const ScoreboardController: React.FC = () => {
         isOwner={isOwner}
         showCopied={showCopied}
         isGeneratingShareCode={isGeneratingShareCode}
+        teams={scoreboard?.teams || []}
+        allQuarters={allQuarters}
+        currentQuarter={scoreboard?.current_quarter || 1}
+        gameDate={scoreboard?.game_date || null}
+        venue={scoreboard?.venue || null}
         onClose={() => setShareOpen(false)}
         onCopyShareCode={handleCopyShareCode}
         onGenerateShareCode={handleGenerateShareCodeWithError}
-        onViewPublic={handleViewPublic}
       />
       <AlertDialog
         isOpen={alert.isOpen}
