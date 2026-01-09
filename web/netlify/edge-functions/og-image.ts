@@ -1,5 +1,6 @@
 import type { Config, Context } from "@netlify/edge-functions"
 import { ImageResponse } from "https://deno.land/x/og_edge/mod.ts"
+import React from "https://esm.sh/react@18.2.0"
 
 export const config: Config = {
   path: "/.netlify/edge-functions/og-image",
@@ -87,12 +88,12 @@ export default async (request: Request, context: Context) => {
     const score0 = team0 ? getTeamTotalScore(team0.id) : 0
     const score1 = team1 ? getTeamTotalScore(team1.id) : 0
 
-    // Generate the image using og_edge
+    // Generate the image using og_edge with React.createElement
     return new ImageResponse(
-      // @ts-ignore - og_edge uses JSX-like syntax
-      (
-        <div
-          style={{
+      React.createElement(
+        "div",
+        {
+          style: {
             display: "flex",
             flexDirection: "column",
             width: "100%",
@@ -101,105 +102,123 @@ export default async (request: Request, context: Context) => {
             alignItems: "center",
             justifyContent: "center",
             fontFamily: "system-ui, -apple-system, sans-serif",
-          }}
-        >
-          {/* Title */}
-          <div
-            style={{
+          },
+        },
+        // Title
+        React.createElement(
+          "div",
+          {
+            style: {
               fontSize: 48,
               fontWeight: "bold",
               color: "#111827",
               marginBottom: 40,
-            }}
-          >
-            {team0Name} vs {team1Name}
-          </div>
-
-          {/* Scores */}
-          <div
-            style={{
+            },
+          },
+          `${team0Name} vs ${team1Name}`
+        ),
+        // Scores container
+        React.createElement(
+          "div",
+          {
+            style: {
               display: "flex",
               flexDirection: "row",
               gap: 80,
               alignItems: "center",
-            }}
-          >
-            <div
-              style={{
+            },
+          },
+          // Team 0 score
+          React.createElement(
+            "div",
+            {
+              style: {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-              }}
-            >
-              <div
-                style={{
+              },
+            },
+            React.createElement(
+              "div",
+              {
+                style: {
                   fontSize: 120,
                   fontWeight: "bold",
                   color: team0?.color || "#ef4444",
-                }}
-              >
-                {score0}
-              </div>
-              <div
-                style={{
+                },
+              },
+              score0.toString()
+            ),
+            React.createElement(
+              "div",
+              {
+                style: {
                   fontSize: 24,
                   color: "#6b7280",
                   marginTop: 8,
-                }}
-              >
-                {team0Name}
-              </div>
-            </div>
-
-            <div
-              style={{
+                },
+              },
+              team0Name
+            )
+          ),
+          // Dash
+          React.createElement(
+            "div",
+            {
+              style: {
                 fontSize: 48,
                 color: "#9ca3af",
                 fontWeight: "bold",
-              }}
-            >
-              -
-            </div>
-
-            <div
-              style={{
+              },
+            },
+            "-"
+          ),
+          // Team 1 score
+          React.createElement(
+            "div",
+            {
+              style: {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-              }}
-            >
-              <div
-                style={{
+              },
+            },
+            React.createElement(
+              "div",
+              {
+                style: {
                   fontSize: 120,
                   fontWeight: "bold",
                   color: team1?.color || "#3b82f6",
-                }}
-              >
-                {score1}
-              </div>
-              <div
-                style={{
+                },
+              },
+              score1.toString()
+            ),
+            React.createElement(
+              "div",
+              {
+                style: {
                   fontSize: 24,
                   color: "#6b7280",
                   marginTop: 8,
-                }}
-              >
-                {team1Name}
-              </div>
-            </div>
-          </div>
-
-          {/* Branding */}
-          <div
-            style={{
+                },
+              },
+              team1Name
+            )
+          )
+        ),
+        // Branding
+        React.createElement(
+          "div",
+          {
+            style: {
               fontSize: 24,
               color: "#6b7280",
               marginTop: 60,
-            }}
-          >
-            Pretty Scoreboard
-          </div>
-        </div>
+            },
+          },
+          "Pretty Scoreboard"
+        )
       ),
       {
         width: 1200,
