@@ -3,6 +3,23 @@
   command = "npm run build"
   publish = "dist"
 
+# Netlify Functions are in netlify/functions directory
+# They are automatically available at /.netlify/functions/{function-name}
+
+# Functions:
+# - scoreboard-preview: Serves HTML with meta tags for /scoreboard/:id/preview
+# - og-image: Generates preview images for link previews
+# - scoreboard-meta: Legacy function for crawler detection (can be removed if not used)
+
+# Route scoreboard view URLs to the function for crawler detection
+# The function will serve HTML with meta tags for crawlers, or let browsers through to SPA
+[[redirects]]
+  from = "/scoreboard/:id/view"
+  to = "/.netlify/functions/scoreboard-meta"
+  status = 200
+  force = true
+
+# All other routes go to SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"

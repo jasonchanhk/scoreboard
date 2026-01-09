@@ -82,6 +82,58 @@ export const ScoreboardDisplay: React.FC = () => {
   const team0 = scoreboard.teams?.[0]
   const team1 = scoreboard.teams?.[1]
   const currentQuarter = scoreboard.current_quarter || 1
+  
+  // Calculate scores for meta tags
+  const score0 = team0 ? getTeamTotalScore(team0.id) : 0
+  const score1 = team1 ? getTeamTotalScore(team1.id) : 0
+  const team0Name = team0?.name || 'Team 1'
+  const team1Name = team1?.name || 'Team 2'
+  
+  const title = `${team0Name} vs ${team1Name} - Live Scoreboard`
+  const description = `Live score: ${team0Name} ${score0} - ${score1} ${team1Name} on Pretty Scoreboard`
+  const imageUrl = id ? `${window.location.origin}/.netlify/functions/og-image?id=${id}` : ''
+  const pageUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
+
+  // Set meta tags dynamically (for platforms that execute JavaScript)
+  useEffect(() => {
+    if (!id) return
+    
+    // Update or create meta tags
+    const setMetaTag = (property: string, content: string) => {
+      let element = document.querySelector(`meta[property="${property}"]`) || 
+                    document.querySelector(`meta[name="${property}"]`)
+      if (!element) {
+        element = document.createElement('meta')
+        if (property.startsWith('og:') || property.startsWith('twitter:')) {
+          element.setAttribute('property', property)
+        } else {
+          element.setAttribute('name', property)
+        }
+        document.head.appendChild(element)
+      }
+      element.setAttribute('content', content)
+    }
+    
+    // Set title
+    document.title = title
+    
+    // Set Open Graph tags
+    setMetaTag('og:title', title)
+    setMetaTag('og:description', description)
+    setMetaTag('og:image', imageUrl)
+    setMetaTag('og:url', pageUrl)
+    setMetaTag('og:type', 'website')
+    setMetaTag('og:site_name', 'Pretty Scoreboard')
+    
+    // Set Twitter Card tags
+    setMetaTag('twitter:card', 'summary_large_image')
+    setMetaTag('twitter:title', title)
+    setMetaTag('twitter:description', description)
+    setMetaTag('twitter:image', imageUrl)
+    
+    // Set standard meta tags
+    setMetaTag('description', description)
+  }, [id, title, description, imageUrl, pageUrl])
 
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col relative">

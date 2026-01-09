@@ -1,1 +1,6 @@
+# Redirect all non-crawler requests to SPA
 /*    /index.html   200
+
+# Note: Crawler requests to /scoreboard/:id/view will be handled by
+# the Netlify Function at /.netlify/functions/scoreboard-meta
+# The function detects crawlers via User-Agent and serves HTML with meta tags

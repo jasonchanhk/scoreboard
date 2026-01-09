@@ -40,6 +40,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
   onGenerateShareCode
 }) => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const [urlCopied, setUrlCopied] = useState(false)
 
   const handleGeneratePNG = async () => {
     if (!teams || teams.length < 2) return
@@ -57,6 +58,22 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       console.error('Error generating PNG:', error)
     } finally {
       setIsGeneratingImage(false)
+    }
+  }
+
+  const handleCopyUrl = async () => {
+    if (!publicViewUrl || !teams || teams.length < 2) return
+
+    const teamAName = teams[0]?.name || 'Team A'
+    const teamBName = teams[1]?.name || 'Team B'
+    const message = `See scoreboard for ${teamAName} vs ${teamBName} on Pretty Scoreboard\n\n${publicViewUrl}`
+
+    try {
+      await navigator.clipboard.writeText(message)
+      setUrlCopied(true)
+      setTimeout(() => setUrlCopied(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy URL:', error)
     }
   }
 
@@ -99,6 +116,18 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
               <div className="text-sm text-gray-400 text-center">Not available</div>
             )}
           </div>
+          {publicViewUrl && (
+            <div className="mb-6">
+              <div className="text-xs text-gray-600 mb-2">Display Link</div>
+              <div
+                className="text-sm bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors break-all"
+                onClick={handleCopyUrl}
+                title="Click to copy link"
+              >
+                {urlCopied ? 'Copied!' : publicViewUrl}
+              </div>
+            </div>
+          )}
           {publicViewUrl && (
             <div className="flex flex-col items-center">
               <div className="text-xs text-gray-600 mb-2">Scan to View</div>
