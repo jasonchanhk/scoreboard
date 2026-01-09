@@ -1,7 +1,18 @@
 // This function generates a preview image for the scoreboard
-// It uses the same logic as generateScoreboardImage but returns the image directly
+// Returns PNG image for better compatibility with messaging apps
 
 const { createClient } = require('@supabase/supabase-js')
+const { Resvg } = require('@resvg/resvg-js')
+
+// Helper to escape XML special characters
+function escapeXml(unsafe) {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
 
 // Note: This is a simplified version. For full image generation, you might want to use
 // a library like canvas or puppeteer, or generate the image client-side and cache it.
@@ -77,23 +88,48 @@ exports.handler = async (event, context) => {
     const score0 = team0 ? getTeamTotalScore(team0.id) : 0
     const score1 = team1 ? getTeamTotalScore(team1.id) : 0
     
-    // Generate a simple SVG preview
+    // Generate SVG first
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
   <rect width="1200" height="630" fill="#ffffff"/>
-  <text x="600" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#111827">${team0Name} vs ${team1Name}</text>
+  <text x="600" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#111827">${escapeXml(team0Name)} vs ${escapeXml(team1Name)}</text>
   <text x="300" y="350" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="${team0?.color || '#ef4444'}">${score0}</text>
   <text x="900" y="350" font-family="Arial, sans-serif" font-size="120" font-weight="bold" text-anchor="middle" fill="${team1?.color || '#3b82f6'}">${score1}</text>
   <text x="600" y="550" font-family="Arial, sans-serif" font-size="24" text-anchor="middle" fill="#6b7280">Pretty Scoreboard</text>
 </svg>`
     
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-      },
-      body: svg,
+    try {
+      // Convert SVG to PNG using resvg
+      const resvg = new Resvg(svg, {
+        background: 'white',
+        fitTo: {
+          mode: 'width',
+          value: 1200,
+        },
+      })
+      const pngData = resvg.render()
+      const pngBuffer = pngData.asPng()
+      
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        },
+        body: pngBuffer.toString('base64'),
+        isBase64Encoded: true,
+      }
+    } catch (error) {
+      console.error('Error converting SVG to PNG, falling back to SVG:', error)
+      // Fallback to SVG if PNG conversion fails
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'public, max-age=3600',
+        },
+        body: svg,
+      }
     }
   } catch (error) {
     console.error('Error generating OG image:', error)
