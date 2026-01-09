@@ -1,17 +1,14 @@
 import React, { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { useSubscription } from '../hooks/useSubscription'
 import { AppNav } from '../components/AppNav'
 import { UserMenu } from '../components/UserMenu'
-import { LoadingSpinner } from '../components/LoadingSpinner'
 import { HiCheckCircle } from 'react-icons/hi'
 
 export const CheckoutSuccess: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { user } = useAuth()
-  const { subscription, refetch } = useSubscription()
+  const { refetch } = useSubscription()
   const sessionId = searchParams.get('session_id')
 
   useEffect(() => {

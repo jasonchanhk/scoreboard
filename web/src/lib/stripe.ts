@@ -23,8 +23,8 @@ export const getStripe = () => {
  */
 export const createCheckoutSession = async (
   priceId: string,
-  userId: string,
-  userEmail: string | undefined,
+  _userId: string, // Not used - Edge Function gets user from auth token
+  _userEmail: string | undefined, // Not used - Edge Function gets user from auth token
   tier: string
 ): Promise<{ sessionId: string; url: string | null }> => {
   // Get the current session to include auth token
