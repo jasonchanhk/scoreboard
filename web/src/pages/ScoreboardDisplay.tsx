@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaExpand } from 'react-icons/fa'
 import { HiClock } from 'react-icons/hi'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
 import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
+import { useFullscreen } from '../hooks/useFullscreen'
+import { useMetaTags } from '../hooks/useMetaTags'
 import { useAuth } from '../contexts/AuthContext'
+import { generateScoreboardMetaTags } from '../utils/scoreboardHelpers'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
@@ -18,55 +21,64 @@ export const ScoreboardDisplay: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [quarterHistoryOpen, setQuarterHistoryOpen] = useState(false)
-  
+
+  // Fetch scoreboard data
   const { scoreboard, allQuarters, loading, error } = useScoreboardData({
-    scoreboardId: id
+    scoreboardId: id,
   })
 
   // Custom hooks
   const { getTeamTotalScore } = useTeamTotalScore(allQuarters)
-  const { quarters } = useCurrentQuarterData(
-    scoreboard,
-    scoreboard?.current_quarter || 1
-  )
+  const { quarters } = useCurrentQuarterData(scoreboard, scoreboard?.current_quarter || 1)
+  const { isFullscreen, toggleFullscreen } = useFullscreen()
 
-  // Handle fullscreen
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true)
-      }).catch((err) => {
-        console.error('Error attempting to enable fullscreen:', err)
-      })
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false)
-      }).catch((err) => {
-        console.error('Error attempting to exit fullscreen:', err)
-      })
+  // Calculate team data and scores
+  const teamData = useMemo(() => {
+    if (!scoreboard) return null
+
+    const team0 = scoreboard.teams?.[0]
+    const team1 = scoreboard.teams?.[1]
+    const score0 = team0 ? getTeamTotalScore(team0.id) : 0
+    const score1 = team1 ? getTeamTotalScore(team1.id) : 0
+
+    return {
+      team0: {
+        name: team0?.name || 'Team 1',
+        score: score0,
+        color: team0?.color || null,
+      },
+      team1: {
+        name: team1?.name || 'Team 2',
+        score: score1,
+        color: team1?.color || null,
+      },
+      currentQuarter: scoreboard.current_quarter || 1,
     }
-  }
+  }, [scoreboard, getTeamTotalScore])
 
-  // Listen for fullscreen changes
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
-    }
+  // Generate meta tags data
+  const metaTagsData = useMemo(() => {
+    if (!teamData || !id) return null
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-    }
-  }, [])
+    return generateScoreboardMetaTags(
+      teamData.team0.name,
+      teamData.team1.name,
+      teamData.team0.score,
+      teamData.team1.score,
+      id
+    )
+  }, [teamData, id])
 
+  // Set meta tags
+  useMetaTags(metaTagsData)
 
+  // Early returns AFTER all hooks
   if (loading) {
     return <LoadingSpinner />
   }
 
-  if (error || !scoreboard) {
+  if (error || !scoreboard || !teamData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
@@ -79,67 +91,11 @@ export const ScoreboardDisplay: React.FC = () => {
     )
   }
 
-  const team0 = scoreboard.teams?.[0]
-  const team1 = scoreboard.teams?.[1]
-  const currentQuarter = scoreboard.current_quarter || 1
-  
-  // Calculate scores for meta tags
-  const score0 = team0 ? getTeamTotalScore(team0.id) : 0
-  const score1 = team1 ? getTeamTotalScore(team1.id) : 0
-  const team0Name = team0?.name || 'Team 1'
-  const team1Name = team1?.name || 'Team 2'
-  
-  const title = `${team0Name} vs ${team1Name} - Live Scoreboard`
-  const description = `Live score: ${team0Name} ${score0} - ${score1} ${team1Name} on Pretty Scoreboard`
-  const imageUrl = id ? `${window.location.origin}/.netlify/functions/og-image?id=${id}` : ''
-  const pageUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
-
-  // Set meta tags dynamically (for platforms that execute JavaScript)
-  useEffect(() => {
-    if (!id) return
-    
-    // Update or create meta tags
-    const setMetaTag = (property: string, content: string) => {
-      let element = document.querySelector(`meta[property="${property}"]`) || 
-                    document.querySelector(`meta[name="${property}"]`)
-      if (!element) {
-        element = document.createElement('meta')
-        if (property.startsWith('og:') || property.startsWith('twitter:')) {
-          element.setAttribute('property', property)
-        } else {
-          element.setAttribute('name', property)
-        }
-        document.head.appendChild(element)
-      }
-      element.setAttribute('content', content)
-    }
-    
-    // Set title
-    document.title = title
-    
-    // Set Open Graph tags
-    setMetaTag('og:title', title)
-    setMetaTag('og:description', description)
-    setMetaTag('og:image', imageUrl)
-    setMetaTag('og:url', pageUrl)
-    setMetaTag('og:type', 'website')
-    setMetaTag('og:site_name', 'Pretty Scoreboard')
-    
-    // Set Twitter Card tags
-    setMetaTag('twitter:card', 'summary_large_image')
-    setMetaTag('twitter:title', title)
-    setMetaTag('twitter:description', description)
-    setMetaTag('twitter:image', imageUrl)
-    
-    // Set standard meta tags
-    setMetaTag('description', description)
-  }, [id, title, description, imageUrl, pageUrl])
-
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col relative">
       {/* Navbar - Hidden in fullscreen */}
       {!isFullscreen && (
-        <AppNav 
+        <AppNav
           rightContent={
             <div className="flex items-center space-x-3">
               <Button
@@ -150,11 +106,7 @@ export const ScoreboardDisplay: React.FC = () => {
                 <HiClock className="mr-2" />
                 History
               </Button>
-              <Button
-                onClick={toggleFullscreen}
-                variant="primary"
-                size="sm"
-              >
+              <Button onClick={toggleFullscreen} variant="primary" size="sm">
                 <FaExpand className="inline mr-2" />
                 Fullscreen
               </Button>
@@ -166,59 +118,50 @@ export const ScoreboardDisplay: React.FC = () => {
       {/* Quarter History Dialog */}
       <QuarterHistoryDialog
         isOpen={quarterHistoryOpen}
-        teams={scoreboard?.teams || []}
+        teams={scoreboard.teams || []}
         allQuarters={allQuarters}
-        currentQuarter={currentQuarter}
+        currentQuarter={teamData.currentQuarter}
         quarters={quarters}
         onClose={() => setQuarterHistoryOpen(false)}
       />
 
       {/* Main Scoreboard */}
       <div className="flex-1 flex flex-col py-10 px-20 min-h-0">
-        {/* Top Section: Team Names and Scores - Dynamic height */}
         <div className="flex-1 flex items-stretch min-h-0">
           <div className="grid grid-cols-2 gap-8 w-full">
-            {/* Left Team */}
             <TeamScore
-              teamName={team0?.name || 'Team 1'}
-              score={team0 ? getTeamTotalScore(team0.id) : 0}
-              color={team0?.color || null}
+              teamName={teamData.team0.name}
+              score={teamData.team0.score}
+              color={teamData.team0.color}
             />
-
-            {/* Right Team */}
             <TeamScore
-              teamName={team1?.name || 'Team 2'}
-              score={team1 ? getTeamTotalScore(team1.id) : 0}
-              color={team1?.color || null}
+              teamName={teamData.team1.name}
+              score={teamData.team1.score}
+              color={teamData.team1.color}
             />
           </div>
         </div>
-
       </div>
-      
-      {/* Bottom Section: Timer and Quarter Control Only */}
-      <div
-        className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900"
-        style={{ height: '20vh' }}
-      >
-        {/* Timer with integrated quarter controls */}
+
+      {/* Bottom Section: Timer */}
+      <div className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900" style={{ height: '20vh' }}>
         <div className="flex-1 rounded-2xl p-3 flex flex-row items-stretch gap-6 min-w-0">
           <Timer
-            duration={scoreboard?.timer_duration || 0}
-            startedAt={scoreboard?.timer_started_at || null}
-            state={scoreboard?.timer_state || 'stopped'}
-            pausedDuration={scoreboard?.timer_paused_duration || 0}
+            duration={scoreboard.timer_duration || 0}
+            startedAt={scoreboard.timer_started_at || null}
+            state={scoreboard.timer_state || 'stopped'}
+            pausedDuration={scoreboard.timer_paused_duration || 0}
             isOwner={false}
             onStart={() => {}}
             onPause={() => {}}
             onReset={() => {}}
-            currentQuarter={currentQuarter}
+            currentQuarter={teamData.currentQuarter}
             onQuarterChange={() => {}}
             className="w-full h-full"
           />
         </div>
       </div>
-        
+
       {/* Branding - Bottom Right Corner - Only shown in fullscreen */}
       {isFullscreen && (
         <div className="absolute bottom-6 right-6 z-10">
