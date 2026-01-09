@@ -16,6 +16,7 @@
     "@tailwindcss/vite": "^4.1.14",
     "@types/react-router-dom": "^5.3.3",
     "html-to-image": "^1.11.13",
+    "logrocket": "^11.0.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

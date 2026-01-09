@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { identifyUser } from '../lib/logrocket'
 
 interface AuthContextType {
   user: User | null
@@ -34,6 +35,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+
+      // Identify user in LogRocket if already logged in
+      if (session?.user) {
+        identifyUser(
+          session.user.id,
+          session.user.email,
+          session.user.user_metadata?.full_name || session.user.user_metadata?.name
+        )
+      }
     })
 
     // Listen for auth changes (includes OAuth callbacks)
@@ -44,6 +54,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+
+      // Identify user in LogRocket when they sign in
+      if (session?.user) {
+        identifyUser(
+          session.user.id,
+          session.user.email,
+          session.user.user_metadata?.full_name || session.user.user_metadata?.name
+        )
+      }
     })
 
     return () => subscription.unsubscribe()
