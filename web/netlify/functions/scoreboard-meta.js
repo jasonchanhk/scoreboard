@@ -45,8 +45,8 @@ function generateMetaHTML(scoreboard, url, isCrawler) {
   const description = `Live score: ${team0Name} ${score0} - ${score1} ${team1Name} on Pretty Scoreboard`
   const siteName = 'Pretty Scoreboard'
   
-  // Generate preview image URL using Netlify Function
-  const imageUrl = `${new URL(url).origin}/.netlify/functions/og-image?id=${scoreboard.id}`
+  // Generate preview image URL using Netlify Edge Function
+  const imageUrl = `${new URL(url).origin}/.netlify/edge-functions/og-image?id=${scoreboard.id}`
   
   // For crawlers, return simple HTML with meta tags
   // For browsers, include SPA script tags so the app loads

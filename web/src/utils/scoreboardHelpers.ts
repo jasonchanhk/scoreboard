@@ -33,7 +33,7 @@ export const generateScoreboardMetaTags = (
   const title = `${team0Name} vs ${team1Name} - Live Scoreboard`
   const description = `Live score: ${team0Name} ${score0} - ${score1} ${team1Name} on Pretty Scoreboard`
   const imageUrl = scoreboardId
-    ? `${window.location.origin}/.netlify/functions/og-image?id=${scoreboardId}`
+    ? `${window.location.origin}/.netlify/edge-functions/og-image?id=${scoreboardId}`
     : ''
   const pageUrl = scoreboardId
     ? `${window.location.origin}/scoreboard/${scoreboardId}/view`
