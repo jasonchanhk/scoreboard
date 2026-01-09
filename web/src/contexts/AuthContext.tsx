@@ -63,6 +63,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           session.user.user_metadata?.full_name || session.user.user_metadata?.name
         )
       }
+
+      // Clean up hash fragment after OAuth callback
+      // Supabase adds a hash fragment with auth data that we need to remove after processing
+      if (event === 'SIGNED_IN' && window.location.hash) {
+        // Remove the hash fragment from URL without causing a page reload
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      }
     })
 
     return () => subscription.unsubscribe()
