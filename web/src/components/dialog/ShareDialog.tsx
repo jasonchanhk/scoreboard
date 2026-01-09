@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { BaseDialog } from './BaseDialog'
 import { Button, CloseButton } from '../button'
@@ -41,6 +41,23 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
 }) => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [urlCopied, setUrlCopied] = useState(false)
+  const [isSharingEnabled, setIsSharingEnabled] = useState(false)
+
+  // If share code already exists, enable sharing immediately
+  useEffect(() => {
+    if (shareCode) {
+      setIsSharingEnabled(true)
+    } else {
+      setIsSharingEnabled(false)
+    }
+  }, [shareCode])
+
+  const handleEnableSharing = async () => {
+    if (!shareCode && isOwner) {
+      await onGenerateShareCode()
+    }
+    setIsSharingEnabled(true)
+  }
 
   const handleGeneratePNG = async () => {
     if (!teams || teams.length < 2) return
@@ -92,49 +109,69 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       <div className="flex gap-6">
         {/* Left Side: Share Code and QR Code */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="mb-6">
-            <div className="text-xs text-gray-600 mb-2">Share Code</div>
-            {shareCode ? (
-              <div
-                className="text-xl font-mono bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors text-center"
-                onClick={onCopyShareCode}
-                title="Click to copy share code"
-              >
-                {showCopied ? 'Copied!' : shareCode}
+          {!isSharingEnabled ? (
+            /* Initial state: Show "Share with public" button */
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="text-center mb-6">
+                <h4 className="text-lg font-medium text-gray-900 mb-2">Share with Public</h4>
+                <p className="text-sm text-gray-600">
+                  Enable public sharing to generate a share code and display link that anyone can use to view this scoreboard.
+                </p>
               </div>
-            ) : isOwner ? (
-              <Button
-                onClick={onGenerateShareCode}
-                disabled={isGeneratingShareCode}
-                variant="secondary"
-                size="md"
-                className="w-full"
-              >
-                {isGeneratingShareCode ? 'Generating...' : 'Generate Share Code'}
-              </Button>
-            ) : (
-              <div className="text-sm text-gray-400 text-center">Not available</div>
-            )}
-          </div>
-          {publicViewUrl && (
-            <div className="mb-6">
-              <div className="text-xs text-gray-600 mb-2">Display Link</div>
-              <div
-                className="text-sm bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors break-all"
-                onClick={handleCopyUrl}
-                title="Click to copy link"
-              >
-                {urlCopied ? 'Copied!' : publicViewUrl}
-              </div>
+              {isOwner ? (
+                <Button
+                  onClick={handleEnableSharing}
+                  disabled={isGeneratingShareCode}
+                  variant="primary"
+                  size="md"
+                  className="w-full max-w-xs"
+                >
+                  {isGeneratingShareCode ? 'Generating...' : 'Share with Public'}
+                </Button>
+              ) : (
+                <div className="text-sm text-gray-400 text-center">
+                  Only the owner can enable public sharing
+                </div>
+              )}
             </div>
-          )}
-          {publicViewUrl && (
-            <div className="flex flex-col items-center">
-              <div className="text-xs text-gray-600 mb-2">Scan to View</div>
-              <div className="bg-white p-2 rounded-lg border">
-                <QRCodeSVG value={publicViewUrl} size={120} level="H" includeMargin={false} />
+          ) : (
+            /* Sharing enabled: Show share code, link, and QR code */
+            <>
+              <div className="mb-6">
+                <div className="text-xs text-gray-600 mb-2">Share Code</div>
+                {shareCode ? (
+                  <div
+                    className="text-xl font-mono bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors text-center"
+                    onClick={onCopyShareCode}
+                    title="Click to copy share code"
+                  >
+                    {showCopied ? 'Copied!' : shareCode}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400 text-center">Generating...</div>
+                )}
               </div>
-            </div>
+              {publicViewUrl && (
+                <div className="mb-6">
+                  <div className="text-xs text-gray-600 mb-2">Display Link</div>
+                  <div
+                    className="text-sm bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors break-all"
+                    onClick={handleCopyUrl}
+                    title="Click to copy link"
+                  >
+                    {urlCopied ? 'Copied!' : publicViewUrl}
+                  </div>
+                </div>
+              )}
+              {publicViewUrl && (
+                <div className="flex flex-col items-center">
+                  <div className="text-xs text-gray-600 mb-2">Scan to View</div>
+                  <div className="bg-white p-2 rounded-lg border">
+                    <QRCodeSVG value={publicViewUrl} size={120} level="H" includeMargin={false} />
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

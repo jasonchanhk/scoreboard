@@ -84,7 +84,7 @@ export const ScoreboardDisplay: React.FC = () => {
         <div className="text-center">
           <div className="text-gray-900 text-xl mb-4">{error || 'Scoreboard not found'}</div>
           <div className="text-gray-500 text-sm">
-            This scoreboard may not be shared or the share code is invalid.
+            This scoreboard may not be shared, ask the owner for permission.
           </div>
         </div>
       </div>
