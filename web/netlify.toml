@@ -13,7 +13,7 @@
 # The function will serve HTML with meta tags for crawlers, or let browsers through to SPA
 [[redirects]]
   from = "/scoreboard/:id/view"
-  to = "/.netlify/functions/scoreboard-meta"
+  to = "/.netlify/functions/scoreboard-meta?id=:id"
   status = 200
   force = true
 

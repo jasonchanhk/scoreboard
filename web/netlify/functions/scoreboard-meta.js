@@ -1,12 +1,20 @@
 const { createClient } = require('@supabase/supabase-js')
 
 // Common crawler user agents
+// WhatsApp uses "WhatsApp" in user agent
+// Signal uses "Signal" in user agent
+// Telegram uses "TelegramBot" or "Telegram"
 const CRAWLER_USER_AGENTS = [
   'facebookexternalhit',
   'WhatsApp',
+  'whatsapp', // lowercase variant
+  'Signal',
+  'signal', // lowercase variant
   'Twitterbot',
   'LinkedInBot',
   'TelegramBot',
+  'Telegram',
+  'telegram', // lowercase variant
   'Slackbot',
   'Discordbot',
   'Applebot',
@@ -181,14 +189,14 @@ exports.handler = async (event, context) => {
     const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || ''
     const path = event.path || event.rawPath || ''
     
-    // Extract scoreboard ID from path
-    // Path format: /scoreboard/:id/view
-    const pathMatch = path.match(/\/scoreboard\/([^/]+)\/view/)
-    let scoreboardId = pathMatch ? pathMatch[1] : null
-    
-    // Also check query string as fallback
-    if (!scoreboardId && event.queryStringParameters && event.queryStringParameters.id) {
+    // Extract scoreboard ID - prioritize query parameter (from redirect), then path
+    let scoreboardId = null
+    if (event.queryStringParameters && event.queryStringParameters.id) {
       scoreboardId = event.queryStringParameters.id
+    } else {
+      // Fallback: extract from path format: /scoreboard/:id/view
+      const pathMatch = path.match(/\/scoreboard\/([^/]+)\/view/)
+      scoreboardId = pathMatch ? pathMatch[1] : null
     }
     
     if (!scoreboardId) {
@@ -211,17 +219,10 @@ exports.handler = async (event, context) => {
       }
     }
     
-    // For regular browsers (not crawlers), redirect to SPA
-    if (!isCrawler(userAgent)) {
-      // Serve the SPA - Netlify will handle this via the redirect rule
-      // We return a redirect to let Netlify's routing handle it
-      return {
-        statusCode: 302,
-        headers: {
-          Location: path, // Redirect back to same path, Netlify will route to index.html
-        },
-      }
-    }
+    // For regular browsers (not crawlers), we still serve HTML with meta tags
+    // but include a script that loads the SPA
+    // This ensures meta tags are always present for SEO and social sharing
+    // The generateMetaHTML function handles both crawlers and browsers
     
     // Initialize Supabase client
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
