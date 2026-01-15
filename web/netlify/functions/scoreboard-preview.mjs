@@ -176,10 +176,22 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 
 async function generateOGImage(scoreboardId, baseUrl) {
   // Use Puppeteer with @sparticuz/chromium for Netlify
+  // Configure Chromium for Netlify environment
+  chromium.setGraphicsMode(false)
+  
+  let executablePath
+  try {
+    executablePath = await chromium.executablePath()
+    console.log('Chromium executable path:', executablePath)
+  } catch (error) {
+    console.error('Error getting Chromium executable path:', error)
+    throw new Error(`Failed to get Chromium executable: ${error.message}`)
+  }
+  
   const browser = await puppeteer.launch({
     args: chromium.args,
     defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath(),
+    executablePath: executablePath,
     headless: chromium.headless,
   })
 
@@ -264,10 +276,23 @@ export const handler = async (event, context) => {
     // Handle default image request (no scoreboard ID needed)
     if (isImageRequest && isDefaultImage) {
       const defaultImageUrl = `${baseUrl}/og-image/default`
+      
+      // Configure Chromium for Netlify environment
+      chromium.setGraphicsMode(false)
+      
+      let executablePath
+      try {
+        executablePath = await chromium.executablePath()
+        console.log('Chromium executable path (default):', executablePath)
+      } catch (error) {
+        console.error('Error getting Chromium executable path:', error)
+        throw new Error(`Failed to get Chromium executable: ${error.message}`)
+      }
+      
       const browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
+        executablePath: executablePath,
         headless: chromium.headless,
       })
       const page = await browser.newPage()
