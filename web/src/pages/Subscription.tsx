@@ -40,8 +40,8 @@ const tiers: Tier[] = [
   {
     id: 'plus',
     name: 'Plus',
-    priceMonthly: '£2.99',
-    priceYearly: '£29.99',
+    priceMonthly: 'Coming Soon',
+    priceYearly: 'Coming Soon',
     priceIdMonthly: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID_MONTHLY || 'price_plus_monthly',
     priceIdYearly: import.meta.env.VITE_STRIPE_PLUS_PRICE_ID_YEARLY || 'price_plus_yearly',
     features: [
@@ -54,8 +54,8 @@ const tiers: Tier[] = [
   {
     id: 'premium',
     name: 'Premium',
-    priceMonthly: '£5.99',
-    priceYearly: '£59.99',
+    priceMonthly: 'Coming Soon',
+    priceYearly: 'Coming Soon',
     priceIdMonthly: import.meta.env.VITE_STRIPE_PREMIUM_PRICE_ID_MONTHLY || 'price_premium_monthly',
     priceIdYearly: import.meta.env.VITE_STRIPE_PREMIUM_PRICE_ID_YEARLY || 'price_premium_yearly',
     features: [
@@ -217,13 +217,13 @@ export const Subscription: React.FC = () => {
                     <span className="text-4xl font-extrabold text-gray-900">
                       {billingPeriod === 'monthly' ? tier.priceMonthly : tier.priceYearly}
                     </span>
-                    {tier.id !== 'basic' && (
+                    {tier.id !== 'basic' && tier.priceMonthly !== 'Coming Soon' && (
                       <span className="text-gray-600 ml-2">
                         /{billingPeriod === 'monthly' ? 'month' : 'year'}
                       </span>
                     )}
                   </div>
-                  {billingPeriod === 'yearly' && tier.id !== 'basic' && (
+                  {billingPeriod === 'yearly' && tier.id !== 'basic' && tier.priceYearly !== 'Coming Soon' && (
                     <p className="text-sm text-gray-500 mt-1">
                       {(tier.priceYearly.startsWith('$') ? '$' : '£')}{(parseFloat(tier.priceYearly.replace(/[£$]/g, '')) / 12).toFixed(2)} per month billed annually
                     </p>
