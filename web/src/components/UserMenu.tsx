@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useSubscription } from '../hooks/useSubscription'
@@ -7,6 +7,8 @@ export const UserMenu: React.FC = () => {
   const { user, signOut } = useAuth()
   const { subscription } = useSubscription()
   const navigate = useNavigate()
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   
   // Get display name from user metadata, or fallback to first part of email
   const getDisplayName = (): string => {
@@ -40,19 +42,55 @@ export const UserMenu: React.FC = () => {
 
   const planDisplayName = getPlanDisplayName()
 
+  // Close menu when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [isOpen])
+
+  const toggleMenu = () => {
+    setIsOpen(!isOpen)
+  }
+
+  const handleMenuItemClick = (callback: () => void) => {
+    callback()
+    setIsOpen(false)
+  }
+
   return (
-    <div className="relative group">
+    <div className="relative group" ref={menuRef}>
       <button
+        onClick={toggleMenu}
         className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         aria-haspopup="true"
-        aria-expanded="false"
+        aria-expanded={isOpen}
       >
         <span className="sr-only">Open user menu</span>
         {initials}
       </button>
       {/* Invisible bridge to maintain hover state when moving from button to menu */}
       <div className="absolute right-0 top-full h-2 w-56" />
-      <div className="absolute right-0 top-full mt-2 z-50 hidden group-hover:block focus-within:block w-56 rounded-md shadow-lg bg-white border border-gray-200">
+      <div className={`absolute right-0 top-full mt-2 z-50 w-56 rounded-md shadow-lg bg-white border border-gray-200 ${
+        isOpen ? 'block' : 'hidden group-hover:block'
+      }`}>
         <div className="py-2">
           {user?.email && (
             <div className="px-4 py-2 border-b border-gray-100">
@@ -69,13 +107,13 @@ export const UserMenu: React.FC = () => {
           )}
           <div className="py-1">
             <button
-              onClick={() => navigate('/settings')}
+              onClick={() => handleMenuItemClick(() => navigate('/settings'))}
               className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
             >
               Settings
             </button>
             <button
-              onClick={() => navigate('/subscription')}
+              onClick={() => handleMenuItemClick(() => navigate('/subscription'))}
               className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
             >
               Subscription
@@ -83,7 +121,7 @@ export const UserMenu: React.FC = () => {
           </div>
           <div className="border-t border-gray-100 pt-1">
           <button
-            onClick={signOut}
+            onClick={() => handleMenuItemClick(signOut)}
               className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-red-600 hover:bg-red-50"
           >
             Sign out
