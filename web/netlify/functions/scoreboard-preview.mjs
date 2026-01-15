@@ -175,8 +175,14 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 
 async function generateOGImage(scoreboardId, baseUrl) {
   // Dynamically import Chromium and Puppeteer only when needed
-  const chromium = await import('@sparticuz/chromium').then(m => m.default)
-  const puppeteer = await import('puppeteer-core')
+  let chromium, puppeteer
+  try {
+    chromium = (await import('@sparticuz/chromium')).default
+    puppeteer = await import('puppeteer-core')
+  } catch (importError) {
+    console.error('Error importing Chromium/Puppeteer:', importError)
+    throw new Error(`Failed to import Chromium/Puppeteer: ${importError.message}`)
+  }
   
   // Use Puppeteer with @sparticuz/chromium for Netlify
   let executablePath
@@ -185,6 +191,11 @@ async function generateOGImage(scoreboardId, baseUrl) {
     console.log('Chromium executable path:', executablePath)
   } catch (error) {
     console.error('Error getting Chromium executable path:', error)
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     throw new Error(`Failed to get Chromium executable: ${error.message}`)
   }
   
@@ -271,13 +282,25 @@ export const handler = async (event, context) => {
       isDefaultImage,
       baseUrl,
       scoreboardId: event.queryStringParameters?.id,
+      queryParams: event.queryStringParameters,
     })
+    
+    // Early return for HTML requests - no Chromium needed
+    if (!isImageRequest) {
+      console.log('HTML request detected - skipping Chromium initialization')
+    }
     
     // Handle default image request (no scoreboard ID needed)
     if (isImageRequest && isDefaultImage) {
       // Dynamically import Chromium and Puppeteer only when needed
-      const chromium = await import('@sparticuz/chromium').then(m => m.default)
-      const puppeteer = await import('puppeteer-core')
+      let chromium, puppeteer
+      try {
+        chromium = (await import('@sparticuz/chromium')).default
+        puppeteer = await import('puppeteer-core')
+      } catch (importError) {
+        console.error('Error importing Chromium/Puppeteer (default):', importError)
+        throw new Error(`Failed to import Chromium/Puppeteer: ${importError.message}`)
+      }
       
       const defaultImageUrl = `${baseUrl}/og-image/default`
       
