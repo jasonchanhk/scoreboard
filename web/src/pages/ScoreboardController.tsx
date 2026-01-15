@@ -123,34 +123,11 @@ export const ScoreboardController: React.FC = () => {
     }
   }
 
-
-
-  if (loading) {
-    return <LoadingSpinner />
-  }
-
-  if (error || !scoreboard) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-center">
-          <div className="text-white text-xl mb-4">{error || 'Scoreboard not found'}</div>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  const team0 = scoreboard.teams?.[0]
-  const team1 = scoreboard.teams?.[1]
-  
-  const publicViewUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
-  
   // Calculate team data and scores for meta tags
+  // These hooks must be called before any early returns
+  const team0 = scoreboard?.teams?.[0]
+  const team1 = scoreboard?.teams?.[1]
+  
   const teamData = useMemo(() => {
     if (!scoreboard) return null
 
@@ -184,6 +161,29 @@ export const ScoreboardController: React.FC = () => {
 
   // Set meta tags
   useMetaTags(metaTagsData)
+
+  // Early returns after all hooks
+  if (loading) {
+    return <LoadingSpinner />
+  }
+
+  if (error || !scoreboard) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="text-center">
+          <div className="text-white text-xl mb-4">{error || 'Scoreboard not found'}</div>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+  
+  const publicViewUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
 
   return (
     <div className="h-screen bg-white text-gray-900 flex flex-col relative overflow-hidden">
