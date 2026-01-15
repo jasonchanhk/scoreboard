@@ -176,9 +176,6 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 
 async function generateOGImage(scoreboardId, baseUrl) {
   // Use Puppeteer with @sparticuz/chromium for Netlify
-  // Configure Chromium for Netlify environment
-  chromium.setGraphicsMode(false)
-  
   let executablePath
   try {
     executablePath = await chromium.executablePath()
@@ -276,9 +273,6 @@ export const handler = async (event, context) => {
     // Handle default image request (no scoreboard ID needed)
     if (isImageRequest && isDefaultImage) {
       const defaultImageUrl = `${baseUrl}/og-image/default`
-      
-      // Configure Chromium for Netlify environment
-      chromium.setGraphicsMode(false)
       
       let executablePath
       try {
