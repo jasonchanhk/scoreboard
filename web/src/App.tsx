@@ -16,35 +16,35 @@ import { ScoreboardOGImage } from './pages/og/ScoreboardOGImage'
 import { DefaultOGImage } from './pages/og/DefaultOGImage'
 import { LoadingSpinner } from './components/LoadingSpinner'
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth()
+// Inner component that uses Router and auth context
+const AppRoutes: React.FC = () => {
+  // Components that use auth context - must be inside AuthProvider
+  const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { user, loading } = useAuth()
 
-  if (loading) {
-    return <LoadingSpinner />
+    if (loading) {
+      return <LoadingSpinner />
+    }
+
+    return user ? <>{children}</> : <Navigate to="/auth" replace />
   }
 
-  return user ? <>{children}</> : <Navigate to="/auth" replace />
-}
+  // Component to handle invalid URLs and redirect based on authentication status
+  const InvalidUrlRedirect: React.FC = () => {
+    const { user, loading } = useAuth()
 
-// Component to handle invalid URLs and redirect based on authentication status
-const InvalidUrlRedirect: React.FC = () => {
-  const { user, loading } = useAuth()
+    if (loading) {
+      return <LoadingSpinner />
+    }
 
-  if (loading) {
-    return <LoadingSpinner />
+    // If user is authenticated, redirect to dashboard
+    // If not authenticated, redirect to auth page
+    return <Navigate to={user ? "/dashboard" : "/"} replace />
   }
-
-  // If user is authenticated, redirect to dashboard
-  // If not authenticated, redirect to auth page
-  return <Navigate to={user ? "/dashboard" : "/"} replace />
-}
-
-const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <Routes>
+    <Router>
+      <div className="App">
+        <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -103,9 +103,16 @@ const App: React.FC = () => {
             <Route path="/og-image/default" element={<DefaultOGImage />} />
             {/* Catch-all route for invalid URLs */}
             <Route path="*" element={<InvalidUrlRedirect />} />
-          </Routes>
-        </div>
-      </Router>
+        </Routes>
+      </div>
+    </Router>
+  )
+}
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppRoutes />
     </AuthProvider>
   )
 }
