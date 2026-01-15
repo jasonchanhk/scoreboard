@@ -1,20 +1,25 @@
-const { createClient } = require('@supabase/supabase-js')
+/**
+ * Unified function for scoreboard previews
+ * Handles both HTML (meta tags) and OG images in one function
+ * More efficient than having two separate functions
+ */
+
+import { createClient } from '@supabase/supabase-js'
+import chromium from '@sparticuz/chromium'
+import puppeteer from 'puppeteer-core'
 
 // Common crawler user agents
-// WhatsApp uses "WhatsApp" in user agent
-// Signal uses "Signal" in user agent
-// Telegram uses "TelegramBot" or "Telegram"
 const CRAWLER_USER_AGENTS = [
   'facebookexternalhit',
   'WhatsApp',
-  'whatsapp', // lowercase variant
+  'whatsapp',
   'Signal',
-  'signal', // lowercase variant
+  'signal',
   'Twitterbot',
   'LinkedInBot',
   'TelegramBot',
   'Telegram',
-  'telegram', // lowercase variant
+  'telegram',
   'Slackbot',
   'Discordbot',
   'Applebot',
@@ -32,19 +37,18 @@ function isCrawler(userAgent) {
   return CRAWLER_USER_AGENTS.some(bot => ua.includes(bot.toLowerCase()))
 }
 
-function generateMetaHTML(scoreboard, url, isCrawler) {
+function getTeamTotalScore(teamId, quarters) {
+  return (quarters || [])
+    .filter(q => q.team_id === teamId)
+    .reduce((sum, q) => sum + (q.points || 0), 0)
+}
+
+function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
   const team0 = scoreboard.teams?.[0]
   const team1 = scoreboard.teams?.[1]
   
   const team0Name = team0?.name || 'Team 1'
   const team1Name = team1?.name || 'Team 2'
-  
-  // Calculate scores from quarters
-  const getTeamTotalScore = (teamId, quarters) => {
-    return (quarters || [])
-      .filter(q => q.team_id === teamId)
-      .reduce((sum, q) => sum + (q.points || 0), 0)
-  }
   
   const score0 = team0 ? getTeamTotalScore(team0.id, scoreboard.quarters || []) : 0
   const score1 = team1 ? getTeamTotalScore(team1.id, scoreboard.quarters || []) : 0
@@ -53,24 +57,15 @@ function generateMetaHTML(scoreboard, url, isCrawler) {
   const description = `Live score: ${team0Name} ${score0} - ${score1} ${team1Name} on Pretty Scoreboard`
   const siteName = 'Pretty Scoreboard'
   
-  // Generate preview image URL using Netlify Edge Function
-  const imageUrl = `${new URL(url).origin}/.netlify/edge-functions/og-image?id=${scoreboard.id}`
-  
-  // For crawlers, return simple HTML with meta tags
-  // For browsers, include SPA script tags so the app loads
-  if (isCrawler) {
+  if (isCrawlerBot) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Primary Meta Tags -->
   <title>${title}</title>
   <meta name="title" content="${title}">
   <meta name="description" content="${description}">
-  
-  <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="${url}">
   <meta property="og:title" content="${title}">
@@ -79,14 +74,11 @@ function generateMetaHTML(scoreboard, url, isCrawler) {
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="${siteName}">
-  
-  <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="${url}">
   <meta property="twitter:title" content="${title}">
   <meta property="twitter:description" content="${description}">
   <meta property="twitter:image" content="${imageUrl}">
-  
   <link rel="canonical" href="${url}">
 </head>
 <body>
@@ -97,22 +89,15 @@ function generateMetaHTML(scoreboard, url, isCrawler) {
 </html>`
   }
   
-  // For browsers, return HTML with meta tags and a script that loads the SPA
-  // The script will fetch the actual index.html and replace the current document
-  // This way, crawlers see the meta tags, and browsers get the SPA
+  // For browsers, return HTML with meta tags and SPA script
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏀</text></svg>">
-  
-  <!-- Primary Meta Tags -->
   <title>${title}</title>
   <meta name="title" content="${title}">
   <meta name="description" content="${description}">
-  
-  <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="${url}">
   <meta property="og:title" content="${title}">
@@ -121,46 +106,33 @@ function generateMetaHTML(scoreboard, url, isCrawler) {
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="${siteName}">
-  
-  <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="${url}">
   <meta property="twitter:title" content="${title}">
   <meta property="twitter:description" content="${description}">
   <meta property="twitter:image" content="${imageUrl}">
-  
   <link rel="canonical" href="${url}">
-  
-  <!-- Load SPA for browsers -->
   <script>
-    // Only load SPA if we're in a browser (not a crawler)
     if (typeof window !== 'undefined' && window.document) {
-      // Fetch index.html and replace current document
       fetch('/index.html?spa=true')
         .then(response => response.text())
         .then(html => {
-          // Parse and inject the SPA
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
           const scripts = doc.querySelectorAll('script[type="module"]');
           const links = doc.querySelectorAll('link[rel="stylesheet"]');
-          
-          // Add scripts and styles to current document
           scripts.forEach(script => {
             const newScript = document.createElement('script');
             newScript.type = 'module';
             newScript.src = script.src;
             document.head.appendChild(newScript);
           });
-          
           links.forEach(link => {
             const newLink = document.createElement('link');
             newLink.rel = 'stylesheet';
             newLink.href = link.href;
             document.head.appendChild(newLink);
           });
-          
-          // Keep the root div
           if (!document.getElementById('root')) {
             const root = document.createElement('div');
             root.id = 'root';
@@ -168,7 +140,6 @@ function generateMetaHTML(scoreboard, url, isCrawler) {
           }
         })
         .catch(() => {
-          // Fallback: redirect to index.html
           window.location.href = '/index.html';
         });
     }
@@ -184,63 +155,157 @@ function generateMetaHTML(scoreboard, url, isCrawler) {
 </html>`
 }
 
-exports.handler = async (event, context) => {
+async function generateOGImage(scoreboardId, baseUrl) {
+  // Use Puppeteer with @sparticuz/chromium for Netlify
+  const browser = await puppeteer.launch({
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    executablePath: await chromium.executablePath(),
+    headless: chromium.headless,
+  })
+
+  const page = await browser.newPage()
+  await page.setViewport({ width: 1200, height: 630 })
+  
+  // Navigate to React app's OG image page for scoreboard
+  const ogImageUrl = `${baseUrl}/og-image?id=${encodeURIComponent(scoreboardId)}`
+  
+  await page.goto(ogImageUrl, { 
+    waitUntil: 'networkidle0',
+    timeout: 30000,
+  })
+  
+  // Wait for React to fetch data and render
+  await page.waitForFunction(
+    () => {
+      const teamNames = document.querySelectorAll('[style*="font-size"]')
+      return teamNames.length >= 2 && 
+             teamNames[0].textContent && 
+             teamNames[0].textContent.trim() !== 'Team 1' &&
+             teamNames[1].textContent && 
+             teamNames[1].textContent.trim() !== 'Team 2'
+    },
+    { timeout: 10000 }
+  ).catch(() => {
+    console.log('Waiting for teams to load...')
+  })
+  
+  // Wait for font size adjustment to complete
+  await page.waitForTimeout(1500)
+  
+  const screenshot = await page.screenshot({
+    type: 'png',
+    clip: { x: 0, y: 0, width: 1200, height: 630 },
+  })
+
+  await browser.close()
+  return screenshot
+}
+
+export const handler = async (event, context) => {
   try {
     const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || ''
     const path = event.path || event.rawPath || ''
+    const acceptHeader = event.headers['accept'] || event.headers['Accept'] || ''
     
-    // Extract scoreboard ID - prioritize query parameter (from redirect), then path
+    // Determine if this is an image request or HTML request
+    // Check query parameter, Accept header, or path
+    const isImageRequest = 
+      event.queryStringParameters?.image === 'true' ||
+      acceptHeader.includes('image/') || 
+      path.includes('/og-image') ||
+      path.includes('og-image')
+    
+    const isDefaultImage = event.queryStringParameters?.default === 'true'
+    
+    // Initialize base URL (needed for both default and scoreboard images)
+    const baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || 'http://localhost:5173'
+    
+    // Handle default image request (no scoreboard ID needed)
+    if (isImageRequest && isDefaultImage) {
+      const defaultImageUrl = `${baseUrl}/og-image/default`
+      const browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      })
+      const page = await browser.newPage()
+      await page.setViewport({ width: 1200, height: 630 })
+      await page.goto(defaultImageUrl, { waitUntil: 'networkidle0', timeout: 30000 })
+      await page.waitForTimeout(500)
+      const screenshot = await page.screenshot({
+        type: 'png',
+        clip: { x: 0, y: 0, width: 1200, height: 630 },
+      })
+      await browser.close()
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=3600',
+        },
+        body: screenshot.toString('base64'),
+        isBase64Encoded: true,
+      }
+    }
+    
+    // Extract scoreboard ID (needed for scoreboard-specific requests)
     let scoreboardId = null
     if (event.queryStringParameters && event.queryStringParameters.id) {
       scoreboardId = event.queryStringParameters.id
     } else {
-      // Fallback: extract from path format: /scoreboard/:id/view
       const pathMatch = path.match(/\/scoreboard\/([^/]+)\/view/)
       scoreboardId = pathMatch ? pathMatch[1] : null
     }
     
-    if (!scoreboardId) {
-      // If no ID, serve the SPA index.html for browsers
-      if (!isCrawler(userAgent)) {
-        // Read and return index.html (this will be handled by Netlify's default routing)
-        return {
-          statusCode: 302,
-          headers: {
-            Location: '/index.html',
-          },
-        }
+    if (isImageRequest && !scoreboardId) {
+      // Image request but no scoreboard ID and not default
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: 'Missing scoreboard ID' }),
       }
+    }
+    
+    if (!scoreboardId && !isImageRequest) {
+      // HTML request but no scoreboard ID
       return {
         statusCode: 404,
-        headers: {
-          'Content-Type': 'text/html',
-        },
+        headers: { 'Content-Type': 'text/html' },
         body: '<!DOCTYPE html><html><head><title>Scoreboard not found</title></head><body><h1>Scoreboard not found</h1></body></html>',
       }
     }
     
-    // For regular browsers (not crawlers), we still serve HTML with meta tags
-    // but include a script that loads the SPA
-    // This ensures meta tags are always present for SEO and social sharing
-    // The generateMetaHTML function handles both crawlers and browsers
-    
-    // Initialize Supabase client
+    // Initialize Supabase (needed for scoreboard data)
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
     
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase environment variables')
       return {
         statusCode: 500,
-        headers: {
-          'Content-Type': 'text/html',
-        },
-        body: '<!DOCTYPE html><html><head><title>Error</title></head><body><h1>Server configuration error</h1></body></html>',
+        headers: { 'Content-Type': 'text/html' },
+        body: '<!DOCTYPE html><html><head><title>Server Error</title></head><body><h1>Server configuration error</h1></body></html>',
       }
     }
     
     const supabase = createClient(supabaseUrl, supabaseKey)
     
+    if (isImageRequest && scoreboardId) {
+      // Generate scoreboard-specific OG image
+      const screenshot = await generateOGImage(scoreboardId, baseUrl)
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'public, max-age=3600',
+        },
+        body: screenshot.toString('base64'),
+        isBase64Encoded: true,
+      }
+    }
+    
+    // Otherwise, return HTML with meta tags
     // Fetch scoreboard data
     const { data: scoreboard, error: scoreboardError } = await supabase
       .from('scoreboards')
@@ -251,71 +316,54 @@ exports.handler = async (event, context) => {
     if (scoreboardError || !scoreboard) {
       return {
         statusCode: 404,
-        headers: {
-          'Content-Type': 'text/html',
-        },
+        headers: { 'Content-Type': 'text/html' },
         body: '<!DOCTYPE html><html><head><title>Scoreboard not found</title></head><body><h1>Scoreboard not found</h1></body></html>',
       }
     }
     
     // Fetch teams
-    const { data: teams, error: teamsError } = await supabase
+    const { data: teams } = await supabase
       .from('teams')
       .select('*')
       .eq('scoreboard_id', scoreboardId)
     
-    if (teamsError) {
-      console.error('Error fetching teams:', teamsError)
-    }
-    
-    // Fetch quarters for score calculation
+    // Fetch quarters
     const teamIds = (teams || []).map(t => t.id)
     let quarters = []
     if (teamIds.length > 0) {
-      const { data: quartersData, error: quartersError } = await supabase
+      const { data: quartersData } = await supabase
         .from('quarters')
         .select('*')
         .in('team_id', teamIds)
-      
-      if (!quartersError && quartersData) {
-        quarters = quartersData
-      }
+      quarters = quartersData || []
     }
     
-    // Combine data
-    const scoreboardWithData = {
-      ...scoreboard,
-      teams: teams || [],
-      quarters: quarters,
-    }
+    scoreboard.teams = teams || []
+    scoreboard.quarters = quarters
     
-    // Build the full URL
-    const protocol = event.headers['x-forwarded-proto'] || event.headers['X-Forwarded-Proto'] || 'https'
-    const host = event.headers.host || event.headers.Host
-    const fullPath = `/scoreboard/${scoreboardId}/view`
-    const fullUrl = `${protocol}://${host}${fullPath}`
+    // Generate image URL (pointing back to this same function)
+    const url = `${baseUrl}/scoreboard/${scoreboardId}/view`
+    const imageUrl = `${baseUrl}/.netlify/functions/scoreboard-preview?id=${scoreboardId}&image=true`
     
-    // Check if it's a crawler
-    const crawler = isCrawler(userAgent)
+    // Fix isCrawler check (can't use window in server context)
+    const isCrawlerBot = isCrawler(userAgent)
     
-    // Generate HTML with meta tags
-    const html = generateMetaHTML(scoreboardWithData, fullUrl, crawler)
+    const html = generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot)
     
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'text/html',
+        'Cache-Control': 'public, max-age=300',
       },
       body: html,
     }
   } catch (error) {
-    console.error('Error in scoreboard-meta function:', error)
+    console.error('Error in scoreboard-preview:', error)
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'text/html',
-      },
-      body: '<!DOCTYPE html><html><head><title>Error</title></head><body><h1>An error occurred</h1></body></html>',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: error.message }),
     }
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
@@ -15,6 +15,8 @@ import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
 import { useShareCode } from '../hooks/useShareCode'
 import { useTimerControls } from '../hooks/useTimerControls'
 import { useScoreUpdate } from '../hooks/useScoreUpdate'
+import { useMetaTags } from '../hooks/useMetaTags'
+import { generateScoreboardMetaTags } from '../utils/scoreboardHelpers'
 import { sortTeams } from '../utils/teamUtils'
 import { getByIdWithTeams, update as updateScoreboard } from '../data/scoreboardsRepo'
 import { getByTeamIdsAndQuarter } from '../data/quartersRepo'
@@ -147,6 +149,41 @@ export const ScoreboardController: React.FC = () => {
   const team1 = scoreboard.teams?.[1]
   
   const publicViewUrl = id ? `${window.location.origin}/scoreboard/${id}/view` : ''
+  
+  // Calculate team data and scores for meta tags
+  const teamData = useMemo(() => {
+    if (!scoreboard) return null
+
+    const score0 = team0 ? getTeamTotalScore(team0.id) : 0
+    const score1 = team1 ? getTeamTotalScore(team1.id) : 0
+
+    return {
+      team0: {
+        name: team0?.name || 'Team 1',
+        score: score0,
+      },
+      team1: {
+        name: team1?.name || 'Team 2',
+        score: score1,
+      },
+    }
+  }, [scoreboard, team0, team1, getTeamTotalScore])
+
+  // Generate meta tags data
+  const metaTagsData = useMemo(() => {
+    if (!teamData || !id) return null
+
+    return generateScoreboardMetaTags(
+      teamData.team0.name,
+      teamData.team1.name,
+      teamData.team0.score,
+      teamData.team1.score,
+      id
+    )
+  }, [teamData, id])
+
+  // Set meta tags
+  useMetaTags(metaTagsData)
 
   return (
     <div className="h-screen bg-white text-gray-900 flex flex-col relative overflow-hidden">

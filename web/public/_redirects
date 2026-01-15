@@ -1,5 +1,5 @@
 # Route scoreboard view URLs to the function (must come before catch-all)
-/scoreboard/:id/view    /.netlify/functions/scoreboard-meta?id=:id    200
+/scoreboard/:id/view    /.netlify/functions/scoreboard-preview?id=:id    200
 
 # Redirect all other requests to SPA
 /*    /index.html   200
