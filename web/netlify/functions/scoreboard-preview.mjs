@@ -43,6 +43,16 @@ function getTeamTotalScore(teamId, quarters) {
     .reduce((sum, q) => sum + (q.points || 0), 0)
 }
 
+function escapeHtml(text) {
+  if (!text) return ''
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
   const team0 = scoreboard.teams?.[0]
   const team1 = scoreboard.teams?.[1]
@@ -57,34 +67,42 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
   const description = `Live score: ${team0Name} ${score0} - ${score1} ${team1Name} on Pretty Scoreboard`
   const siteName = 'Pretty Scoreboard'
   
+  // Escape HTML entities for safe rendering
+  const escapedTitle = escapeHtml(title)
+  const escapedDescription = escapeHtml(description)
+  const escapedUrl = escapeHtml(url)
+  const escapedImageUrl = escapeHtml(imageUrl)
+  const escapedSiteName = escapeHtml(siteName)
+  
   if (isCrawlerBot) {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <meta name="title" content="${title}">
-  <meta name="description" content="${description}">
+  <title>${escapedTitle}</title>
+  <meta name="title" content="${escapedTitle}">
+  <meta name="description" content="${escapedDescription}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="${url}">
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:url" content="${escapedUrl}">
+  <meta property="og:title" content="${escapedTitle}">
+  <meta property="og:description" content="${escapedDescription}">
+  <meta property="og:image" content="${escapedImageUrl}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:site_name" content="${siteName}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:site_name" content="${escapedSiteName}">
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="${url}">
-  <meta property="twitter:title" content="${title}">
-  <meta property="twitter:description" content="${description}">
-  <meta property="twitter:image" content="${imageUrl}">
-  <link rel="canonical" href="${url}">
+  <meta property="twitter:url" content="${escapedUrl}">
+  <meta property="twitter:title" content="${escapedTitle}">
+  <meta property="twitter:description" content="${escapedDescription}">
+  <meta property="twitter:image" content="${escapedImageUrl}">
+  <link rel="canonical" href="${escapedUrl}">
 </head>
 <body>
-  <h1>${title}</h1>
-  <p>${description}</p>
-  <p><a href="${url}">View Live Scoreboard</a></p>
+  <h1>${escapedTitle}</h1>
+  <p>${escapedDescription}</p>
+  <p><a href="${escapedUrl}">View Live Scoreboard</a></p>
 </body>
 </html>`
   }
@@ -95,23 +113,24 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <meta name="title" content="${title}">
-  <meta name="description" content="${description}">
+  <title>${escapedTitle}</title>
+  <meta name="title" content="${escapedTitle}">
+  <meta name="description" content="${escapedDescription}">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="${url}">
-  <meta property="og:title" content="${title}">
-  <meta property="og:description" content="${description}">
-  <meta property="og:image" content="${imageUrl}">
+  <meta property="og:url" content="${escapedUrl}">
+  <meta property="og:title" content="${escapedTitle}">
+  <meta property="og:description" content="${escapedDescription}">
+  <meta property="og:image" content="${escapedImageUrl}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:site_name" content="${siteName}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:site_name" content="${escapedSiteName}">
   <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="${url}">
-  <meta property="twitter:title" content="${title}">
-  <meta property="twitter:description" content="${description}">
-  <meta property="twitter:image" content="${imageUrl}">
-  <link rel="canonical" href="${url}">
+  <meta property="twitter:url" content="${escapedUrl}">
+  <meta property="twitter:title" content="${escapedTitle}">
+  <meta property="twitter:description" content="${escapedDescription}">
+  <meta property="twitter:image" content="${escapedImageUrl}">
+  <link rel="canonical" href="${escapedUrl}">
   <script>
     if (typeof window !== 'undefined' && window.document) {
       fetch('/index.html?spa=true')
@@ -149,7 +168,7 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
   <div id="root"></div>
   <noscript>
     <p>Please enable JavaScript to view this scoreboard.</p>
-    <p><a href="${url}">View Scoreboard</a></p>
+    <p><a href="${escapedUrl}">View Scoreboard</a></p>
   </noscript>
 </body>
 </html>`
@@ -207,6 +226,8 @@ export const handler = async (event, context) => {
     const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || ''
     const path = event.path || event.rawPath || ''
     const acceptHeader = event.headers['accept'] || event.headers['Accept'] || ''
+    const host = event.headers['host'] || event.headers['Host'] || ''
+    const protocol = event.headers['x-forwarded-proto'] || 'https'
     
     // Determine if this is an image request or HTML request
     // Check query parameter, Accept header, or path
@@ -219,7 +240,26 @@ export const handler = async (event, context) => {
     const isDefaultImage = event.queryStringParameters?.default === 'true'
     
     // Initialize base URL (needed for both default and scoreboard images)
-    const baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL || 'http://localhost:5173'
+    // Priority: process.env.URL > process.env.DEPLOY_PRIME_URL > host header > localhost
+    let baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL
+    if (!baseUrl && host) {
+      baseUrl = `${protocol}://${host}`
+    }
+    if (!baseUrl) {
+      baseUrl = 'http://localhost:5173'
+    }
+    
+    // Ensure baseUrl doesn't have trailing slash
+    baseUrl = baseUrl.replace(/\/$/, '')
+    
+    console.log('Request details:', {
+      path,
+      userAgent: userAgent.substring(0, 100),
+      isImageRequest,
+      isDefaultImage,
+      baseUrl,
+      scoreboardId: event.queryStringParameters?.id,
+    })
     
     // Handle default image request (no scoreboard ID needed)
     if (isImageRequest && isDefaultImage) {
@@ -341,12 +381,14 @@ export const handler = async (event, context) => {
     scoreboard.teams = teams || []
     scoreboard.quarters = quarters
     
-    // Generate image URL (pointing back to this same function)
+    // Generate absolute URLs (pointing back to this same function)
     const url = `${baseUrl}/scoreboard/${scoreboardId}/view`
-    const imageUrl = `${baseUrl}/.netlify/functions/scoreboard-preview?id=${scoreboardId}&image=true`
+    const imageUrl = `${baseUrl}/.netlify/functions/scoreboard-preview?id=${encodeURIComponent(scoreboardId)}&image=true`
     
     // Fix isCrawler check (can't use window in server context)
     const isCrawlerBot = isCrawler(userAgent)
+    
+    console.log('Generated URLs:', { url, imageUrl, isCrawlerBot })
     
     const html = generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot)
     
@@ -360,10 +402,11 @@ export const handler = async (event, context) => {
     }
   } catch (error) {
     console.error('Error in scoreboard-preview:', error)
+    console.error('Error stack:', error.stack)
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: error.message }),
+      headers: { 'Content-Type': 'text/html' },
+      body: `<!DOCTYPE html><html><head><title>Error</title></head><body><h1>Server Error</h1><p>${error.message}</p></body></html>`,
     }
   }
 }
