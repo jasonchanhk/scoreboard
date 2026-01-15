@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { TeamScore } from '../components/TeamScore'
 import { AppNav } from '../components/AppNav'
 import { Button } from '../components/button'
-import { HiPencil, HiClock, HiEye } from 'react-icons/hi'
+import { HiPencil, HiClock, HiEye, HiMenu, HiX, HiShare } from 'react-icons/hi'
 import { useAuth } from '../contexts/AuthContext'
 import { Timer } from '../components/Timer'
 import { AlertDialog, ScoreboardFormDialog, ShareDialog, QuarterHistoryDialog } from '../components/dialog'
@@ -28,6 +28,8 @@ export const ScoreboardController: React.FC = () => {
   const [shareOpen, setShareOpen] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
   const [quarterHistoryOpen, setQuarterHistoryOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   
   const { scoreboard, allQuarters, loading, error, isOwner, setScoreboard, setAllQuarters } = useScoreboardData({
     scoreboardId: id,
@@ -66,6 +68,43 @@ export const ScoreboardController: React.FC = () => {
     if (!id) return
     navigate(`/scoreboard/${id}/view`)
   }, [id, navigate])
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [menuOpen])
+
+  // Close menu when pressing Escape
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    if (menuOpen) {
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [menuOpen])
+
+  const handleMenuAction = (action: () => void) => {
+    action()
+    setMenuOpen(false)
+  }
 
   // Wrapper for handleGenerateShareCode to handle errors
   const handleGenerateShareCodeWithError = useCallback(async () => {
@@ -190,7 +229,61 @@ export const ScoreboardController: React.FC = () => {
       {/* Navbar */}
       <AppNav
         rightContent={
-              <div className="flex items-center space-x-3">
+          <div className="relative" ref={menuRef}>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? (
+                <HiX className="w-5 h-5" />
+              ) : (
+                <HiMenu className="w-5 h-5" />
+              )}
+            </button>
+
+            {/* Mobile Menu Dropdown */}
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 sm:hidden">
+                <div className="py-1">
+                  {isOwner && (
+                    <button
+                      onClick={() => handleMenuAction(() => setShowEditForm(true))}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <HiPencil className="mr-3 w-5 h-5" />
+                      Edit
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleMenuAction(() => setQuarterHistoryOpen(true))}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <HiClock className="mr-3 w-5 h-5" />
+                    History
+                  </button>
+                  <button
+                    onClick={() => handleMenuAction(() => setShareOpen(true))}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <HiShare className="mr-3 w-5 h-5" />
+                    Share
+                  </button>
+                  <button
+                    onClick={() => handleMenuAction(handleViewPublic)}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    <HiEye className="mr-3 w-5 h-5" />
+                    View Public
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Desktop Buttons */}
+            <div className="hidden sm:flex items-center space-x-3">
               {isOwner && (
                 <Button
                   onClick={() => setShowEditForm(true)}
@@ -200,7 +293,7 @@ export const ScoreboardController: React.FC = () => {
                   <HiPencil className="mr-2" />
                   Edit
                 </Button>
-                  )}
+              )}
               <Button
                 onClick={() => setQuarterHistoryOpen(true)}
                 variant="secondary"
@@ -214,6 +307,7 @@ export const ScoreboardController: React.FC = () => {
                 variant="primary"
                 size="sm"
               >
+                <HiShare className="mr-2" />
                 Share
               </Button>
               <Button
@@ -224,6 +318,7 @@ export const ScoreboardController: React.FC = () => {
                 <HiEye className="w-5 h-5" />
               </Button>
             </div>
+          </div>
         }
       />
 
