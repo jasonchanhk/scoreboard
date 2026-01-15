@@ -5,8 +5,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import chromium from '@sparticuz/chromium'
-import puppeteer from 'puppeteer-core'
+// Chromium and Puppeteer are imported dynamically only when needed for image generation
 
 // Common crawler user agents
 const CRAWLER_USER_AGENTS = [
@@ -175,6 +174,10 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 }
 
 async function generateOGImage(scoreboardId, baseUrl) {
+  // Dynamically import Chromium and Puppeteer only when needed
+  const chromium = await import('@sparticuz/chromium').then(m => m.default)
+  const puppeteer = await import('puppeteer-core')
+  
   // Use Puppeteer with @sparticuz/chromium for Netlify
   let executablePath
   try {
@@ -272,6 +275,10 @@ export const handler = async (event, context) => {
     
     // Handle default image request (no scoreboard ID needed)
     if (isImageRequest && isDefaultImage) {
+      // Dynamically import Chromium and Puppeteer only when needed
+      const chromium = await import('@sparticuz/chromium').then(m => m.default)
+      const puppeteer = await import('puppeteer-core')
+      
       const defaultImageUrl = `${baseUrl}/og-image/default`
       
       let executablePath
