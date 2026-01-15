@@ -7,8 +7,7 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: any }>
-  signUp: (email: string, password: string) => Promise<{ error: any }>
+  signInWithMagicLink: (email: string) => Promise<{ error: any }>
   signInWithGoogle: () => Promise<{ error: any }>
   signOut: () => Promise<void>
   deleteAccount: () => Promise<{ error: any }>
@@ -75,27 +74,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe()
   }, [])
 
-  const signIn = async (email: string, password: string) => {
-    console.log('Attempting to sign in with:', email)
-    const { data, error } = await supabase.auth.signInWithPassword({
+  const signInWithMagicLink = async (email: string) => {
+    console.log('Attempting to send magic link to:', email)
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
     })
     
     if (error) {
-      console.error('Sign in error:', error)
+      console.error('Magic link error:', error)
     } else {
-      console.log('Sign in successful:', data)
+      console.log('Magic link sent successfully')
     }
     
-    return { error }
-  }
-
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
     return { error }
   }
 
@@ -159,8 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     loading,
-    signIn,
-    signUp,
+    signInWithMagicLink,
     signInWithGoogle,
     signOut,
     deleteAccount,
