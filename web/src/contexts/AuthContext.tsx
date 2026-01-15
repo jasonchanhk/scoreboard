@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { identifyUser } from '../lib/logrocket'
@@ -27,13 +27,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const sessionRef = useRef<Session | null>(null)
 
   useEffect(() => {
+    let mounted = true
+    let initialSessionSet = false
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return
+      
+      sessionRef.current = session
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      initialSessionSet = true
 
       // Identify user in LogRocket if already logged in
       if (session?.user) {
@@ -48,30 +56,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes (includes OAuth callbacks)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email)
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      if (!mounted) return
 
-      // Identify user in LogRocket when they sign in
-      if (session?.user) {
-        identifyUser(
-          session.user.id,
-          session.user.email,
-          session.user.user_metadata?.full_name || session.user.user_metadata?.name
-        )
+      const currentSession = sessionRef.current
+      // Only update if the session actually changed (different user ID or null state)
+      const currentUserId = currentSession?.user?.id ?? null
+      const newUserId = newSession?.user?.id ?? null
+      const sessionChanged = currentUserId !== newUserId || 
+                            currentSession?.access_token !== newSession?.access_token
+
+      // Only log and update for meaningful state changes
+      // Skip TOKEN_REFRESHED events if user hasn't changed
+      if (event === 'TOKEN_REFRESHED' && !sessionChanged && initialSessionSet) {
+        // Silently update session for token refresh without logging
+        sessionRef.current = newSession
+        setSession(newSession)
+        return
       }
 
-      // Clean up hash fragment after OAuth callback
-      // Supabase adds a hash fragment with auth data that we need to remove after processing
-      if (event === 'SIGNED_IN' && window.location.hash) {
-        // Remove the hash fragment from URL without causing a page reload
-        window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      if (sessionChanged || !initialSessionSet) {
+        console.log('Auth state changed:', event, newSession?.user?.email)
+        sessionRef.current = newSession
+        setSession(newSession)
+        setUser(newSession?.user ?? null)
+        setLoading(false)
+
+        // Identify user in LogRocket when they sign in
+        if (newSession?.user) {
+          identifyUser(
+            newSession.user.id,
+            newSession.user.email,
+            newSession.user.user_metadata?.full_name || newSession.user.user_metadata?.name
+          )
+        }
+
+        // Clean up hash fragment after OAuth callback
+        // Supabase adds a hash fragment with auth data that we need to remove after processing
+        if (event === 'SIGNED_IN' && window.location.hash) {
+          // Remove the hash fragment from URL without causing a page reload
+          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+        }
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signInWithMagicLink = async (email: string) => {
