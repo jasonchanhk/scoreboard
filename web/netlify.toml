@@ -14,13 +14,13 @@
 # This must come BEFORE the catch-all redirect
 [[redirects]]
   from = "/scoreboard/:id/view"
-  to = "/.netlify/functions/scoreboard-preview?id=:id"
+  to = "/.netlify/functions/scoreboard-meta?id=:id"
   status = 200
   force = true
 
 [[redirects]]
   from = "/scoreboard/:id"
-  to = "/.netlify/functions/scoreboard-preview?id=:id"
+  to = "/.netlify/functions/scoreboard-meta?id=:id"
   status = 200
   force = true
 

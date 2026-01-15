@@ -1,11 +1,10 @@
 /**
- * Unified function for scoreboard previews
- * Handles both HTML (meta tags) and OG images in one function
- * More efficient than having two separate functions
+ * Function for scoreboard HTML meta tags only
+ * This function NEVER touches Chromium/Puppeteer
+ * Used for link previews on social media platforms
  */
 
 import { createClient } from '@supabase/supabase-js'
-// Chromium and Puppeteer are imported dynamically only when needed for image generation
 
 // Common crawler user agents
 const CRAWLER_USER_AGENTS = [
@@ -173,174 +172,14 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 </html>`
 }
 
-async function generateOGImage(scoreboardId, baseUrl) {
-  // Dynamically import Chromium and Puppeteer only when generating images
-  // This function is ONLY called when isImageRequest is true
-  let chromium, puppeteer
-  try {
-    chromium = (await import('@sparticuz/chromium')).default
-    puppeteer = await import('puppeteer-core')
-  } catch (importError) {
-    console.error('Error importing Chromium/Puppeteer:', importError)
-    throw new Error(`Failed to import Chromium/Puppeteer: ${importError.message}`)
-  }
-  
-  // Use Puppeteer with @sparticuz/chromium for Netlify
-  let executablePath
-  try {
-    executablePath = await chromium.executablePath()
-    console.log('Chromium executable path:', executablePath)
-  } catch (error) {
-    console.error('Error getting Chromium executable path:', error)
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    })
-    throw new Error(`Failed to get Chromium executable: ${error.message}`)
-  }
-  
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: executablePath,
-    headless: chromium.headless,
-  })
-
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1200, height: 630 })
-  
-  // Navigate to React app's OG image page for scoreboard
-  const ogImageUrl = `${baseUrl}/og-image?id=${encodeURIComponent(scoreboardId)}`
-  
-  await page.goto(ogImageUrl, { 
-    waitUntil: 'networkidle0',
-    timeout: 30000,
-  })
-  
-  // Wait for React to fetch data and render
-  await page.waitForFunction(
-    () => {
-      const teamNames = document.querySelectorAll('[style*="font-size"]')
-      return teamNames.length >= 2 && 
-             teamNames[0].textContent && 
-             teamNames[0].textContent.trim() !== 'Team 1' &&
-             teamNames[1].textContent && 
-             teamNames[1].textContent.trim() !== 'Team 2'
-    },
-    { timeout: 10000 }
-  ).catch(() => {
-    console.log('Waiting for teams to load...')
-  })
-  
-  // Wait for font size adjustment to complete
-  await page.waitForTimeout(1500)
-  
-  const screenshot = await page.screenshot({
-    type: 'png',
-    clip: { x: 0, y: 0, width: 1200, height: 630 },
-  })
-
-  await browser.close()
-  return screenshot
-}
-
 export const handler = async (event, context) => {
   try {
     const userAgent = event.headers['user-agent'] || event.headers['User-Agent'] || ''
     const path = event.path || event.rawPath || ''
-    const acceptHeader = event.headers['accept'] || event.headers['Accept'] || ''
     const host = event.headers['host'] || event.headers['Host'] || ''
     const protocol = event.headers['x-forwarded-proto'] || 'https'
     
-    // Determine if this is an image request or HTML request
-    // Check query parameter, Accept header, or path
-    const isImageRequest = 
-      event.queryStringParameters?.image === 'true' ||
-      acceptHeader.includes('image/') || 
-      path.includes('/og-image') ||
-      path.includes('og-image')
-    
-    const isDefaultImage = event.queryStringParameters?.default === 'true'
-    
-    // Initialize base URL (needed for both default and scoreboard images)
-    // Priority: process.env.URL > process.env.DEPLOY_PRIME_URL > host header > localhost
-    let baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL
-    if (!baseUrl && host) {
-      baseUrl = `${protocol}://${host}`
-    }
-    if (!baseUrl) {
-      baseUrl = 'http://localhost:5173'
-    }
-    
-    // Ensure baseUrl doesn't have trailing slash
-    baseUrl = baseUrl.replace(/\/$/, '')
-    
-    console.log('Request details:', {
-      path,
-      userAgent: userAgent.substring(0, 100),
-      isImageRequest,
-      isDefaultImage,
-      baseUrl,
-      scoreboardId: event.queryStringParameters?.id,
-      queryParams: event.queryStringParameters,
-    })
-    
-    // Early return for HTML requests - no Chromium needed
-    if (!isImageRequest) {
-      console.log('HTML request detected - skipping Chromium initialization')
-    }
-    
-    // Handle default image request (no scoreboard ID needed)
-    if (isImageRequest && isDefaultImage) {
-      // Dynamically import Chromium and Puppeteer only when generating images
-      let chromium, puppeteer
-      try {
-        chromium = (await import('@sparticuz/chromium')).default
-        puppeteer = await import('puppeteer-core')
-      } catch (importError) {
-        console.error('Error importing Chromium/Puppeteer (default):', importError)
-        throw new Error(`Failed to import Chromium/Puppeteer: ${importError.message}`)
-      }
-      
-      const defaultImageUrl = `${baseUrl}/og-image/default`
-      
-      let executablePath
-      try {
-        executablePath = await chromium.executablePath()
-        console.log('Chromium executable path (default):', executablePath)
-      } catch (error) {
-        console.error('Error getting Chromium executable path:', error)
-        throw new Error(`Failed to get Chromium executable: ${error.message}`)
-      }
-      
-      const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: executablePath,
-        headless: chromium.headless,
-      })
-      const page = await browser.newPage()
-      await page.setViewport({ width: 1200, height: 630 })
-      await page.goto(defaultImageUrl, { waitUntil: 'networkidle0', timeout: 30000 })
-      await page.waitForTimeout(500)
-      const screenshot = await page.screenshot({
-        type: 'png',
-        clip: { x: 0, y: 0, width: 1200, height: 630 },
-      })
-      await browser.close()
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'image/png',
-          'Cache-Control': 'public, max-age=3600',
-        },
-        body: screenshot.toString('base64'),
-        isBase64Encoded: true,
-      }
-    }
-    
-    // Extract scoreboard ID (needed for scoreboard-specific requests)
+    // Extract scoreboard ID
     let scoreboardId = null
     if (event.queryStringParameters && event.queryStringParameters.id) {
       scoreboardId = event.queryStringParameters.id
@@ -349,17 +188,7 @@ export const handler = async (event, context) => {
       scoreboardId = pathMatch ? pathMatch[1] : null
     }
     
-    if (isImageRequest && !scoreboardId) {
-      // Image request but no scoreboard ID and not default
-      return {
-        statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Missing scoreboard ID' }),
-      }
-    }
-    
-    if (!scoreboardId && !isImageRequest) {
-      // HTML request but no scoreboard ID
+    if (!scoreboardId) {
       return {
         statusCode: 404,
         headers: { 'Content-Type': 'text/html' },
@@ -367,7 +196,17 @@ export const handler = async (event, context) => {
       }
     }
     
-    // Initialize Supabase (needed for scoreboard data)
+    // Initialize base URL
+    let baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL
+    if (!baseUrl && host) {
+      baseUrl = `${protocol}://${host}`
+    }
+    if (!baseUrl) {
+      baseUrl = 'http://localhost:5173'
+    }
+    baseUrl = baseUrl.replace(/\/$/, '')
+    
+    // Initialize Supabase
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
     
@@ -381,21 +220,6 @@ export const handler = async (event, context) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    if (isImageRequest && scoreboardId) {
-      // Generate scoreboard-specific OG image
-      const screenshot = await generateOGImage(scoreboardId, baseUrl)
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'image/png',
-          'Cache-Control': 'public, max-age=3600',
-        },
-        body: screenshot.toString('base64'),
-        isBase64Encoded: true,
-      }
-    }
-    
-    // Otherwise, return HTML with meta tags
     // Fetch scoreboard data
     const { data: scoreboard, error: scoreboardError } = await supabase
       .from('scoreboards')
@@ -431,14 +255,12 @@ export const handler = async (event, context) => {
     scoreboard.teams = teams || []
     scoreboard.quarters = quarters
     
-    // Generate absolute URLs (pointing back to this same function)
+    // Generate absolute URLs
     const url = `${baseUrl}/scoreboard/${scoreboardId}/view`
+    // Point to the image function (scoreboard-preview handles images)
     const imageUrl = `${baseUrl}/.netlify/functions/scoreboard-preview?id=${encodeURIComponent(scoreboardId)}&image=true`
     
-    // Fix isCrawler check (can't use window in server context)
     const isCrawlerBot = isCrawler(userAgent)
-    
-    console.log('Generated URLs:', { url, imageUrl, isCrawlerBot })
     
     const html = generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot)
     
@@ -451,8 +273,7 @@ export const handler = async (event, context) => {
       body: html,
     }
   } catch (error) {
-    console.error('Error in scoreboard-preview:', error)
-    console.error('Error stack:', error.stack)
+    console.error('Error in scoreboard-meta:', error)
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'text/html' },
