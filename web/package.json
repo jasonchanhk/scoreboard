@@ -8,9 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "dev:netlify": "netlify dev",
-    "dev:og": "netlify dev --live",
-    "build:og": "node scripts/build-og-function.mjs"
+    "dev:netlify": "netlify dev"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.6.0",
