@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaExpand } from 'react-icons/fa'
-import { HiClock } from 'react-icons/hi'
+import { HiClock, HiMenu, HiX } from 'react-icons/hi'
 import { useScoreboardData } from '../hooks/useScoreboardData'
 import { useTeamTotalScore } from '../hooks/useTeamTotalScore'
 import { useCurrentQuarterData } from '../hooks/useCurrentQuarterData'
@@ -22,6 +22,8 @@ export const ScoreboardDisplay: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [quarterHistoryOpen, setQuarterHistoryOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   // Fetch scoreboard data
   const { scoreboard, allQuarters, loading, error } = useScoreboardData({
@@ -73,6 +75,35 @@ export const ScoreboardDisplay: React.FC = () => {
   // Set meta tags
   useMetaTags(metaTagsData)
 
+  // Close menu when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+      }
+    }
+
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [menuOpen])
+
+  const handleMenuAction = (action: () => void) => {
+    action()
+    setMenuOpen(false)
+  }
+
   // Early returns AFTER all hooks
   if (loading) {
     return <LoadingSpinner />
@@ -92,24 +123,63 @@ export const ScoreboardDisplay: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 flex flex-col relative">
+    <div className="h-screen bg-white text-gray-900 flex flex-col relative overflow-hidden">
       {/* Navbar - Hidden in fullscreen */}
       {!isFullscreen && (
         <AppNav
           rightContent={
-            <div className="flex items-center space-x-3">
-              <Button
-                onClick={() => setQuarterHistoryOpen(true)}
-                variant="secondary"
-                size="sm"
+            <div className="relative" ref={menuRef}>
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                aria-label="Menu"
+                aria-expanded={menuOpen}
               >
-                <HiClock className="mr-2" />
-                History
-              </Button>
-              <Button onClick={toggleFullscreen} variant="primary" size="sm">
-                <FaExpand className="inline mr-2" />
-                Fullscreen
-              </Button>
+                {menuOpen ? (
+                  <HiX className="w-5 h-5" />
+                ) : (
+                  <HiMenu className="w-5 h-5" />
+                )}
+              </button>
+
+              {/* Mobile Menu Dropdown */}
+              {menuOpen && (
+                <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-md shadow-lg bg-white border border-gray-200 sm:hidden">
+                  <div className="py-2">
+                    <button
+                      onClick={() => handleMenuAction(() => setQuarterHistoryOpen(true))}
+                      className="flex items-center w-full text-left px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <HiClock className="mr-3 w-5 h-5" />
+                      History
+                    </button>
+                    <button
+                      onClick={() => handleMenuAction(toggleFullscreen)}
+                      className="flex items-center w-full text-left px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <FaExpand className="mr-3 w-5 h-5" />
+                      Fullscreen
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Desktop Buttons */}
+              <div className="hidden sm:flex items-center space-x-3">
+                <Button
+                  onClick={() => setQuarterHistoryOpen(true)}
+                  variant="secondary"
+                  size="sm"
+                >
+                  <HiClock className="mr-2" />
+                  History
+                </Button>
+                <Button onClick={toggleFullscreen} variant="primary" size="sm">
+                  <FaExpand className="inline mr-2" />
+                  Fullscreen
+                </Button>
+              </div>
             </div>
           }
         />
@@ -126,39 +196,43 @@ export const ScoreboardDisplay: React.FC = () => {
       />
 
       {/* Main Scoreboard */}
-      <div className="flex-1 flex flex-col py-10 px-20 min-h-0">
-        <div className="flex-1 flex items-stretch min-h-0">
-          <div className="grid grid-cols-2 gap-8 w-full">
-            <TeamScore
-              teamName={teamData.team0.name}
-              score={teamData.team0.score}
-              color={teamData.team0.color}
-            />
-            <TeamScore
-              teamName={teamData.team1.name}
-              score={teamData.team1.score}
-              color={teamData.team1.color}
-            />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Section: Score Container */}
+        <div className="flex-1 min-h-0 py-4 md:py-10 flex items-center justify-center">
+          <div className="flex items-center justify-center h-full w-full px-4 md:px-6 lg:px-8">
+            {/* Team Containers - Stack on mobile portrait, side-by-side on landscape/desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 h-full w-full max-w-[95vw] md:max-w-[70vw]">
+              <TeamScore
+                teamName={teamData.team0.name}
+                score={teamData.team0.score}
+                color={teamData.team0.color}
+              />
+              <TeamScore
+                teamName={teamData.team1.name}
+                score={teamData.team1.score}
+                color={teamData.team1.color}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Section: Timer */}
-      <div className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900" style={{ height: '20vh' }}>
-        <div className="flex-1 rounded-2xl p-3 flex flex-row items-stretch gap-6 min-w-0">
-          <Timer
-            duration={scoreboard.timer_duration || 0}
-            startedAt={scoreboard.timer_started_at || null}
-            state={scoreboard.timer_state || 'stopped'}
-            pausedDuration={scoreboard.timer_paused_duration || 0}
-            isOwner={false}
-            onStart={() => {}}
-            onPause={() => {}}
-            onReset={() => {}}
-            currentQuarter={teamData.currentQuarter}
-            onQuarterChange={() => {}}
-            className="w-full h-full"
-          />
+        {/* Bottom Section: Timer */}
+        <div className="flex flex-shrink-0 bg-gray-100 p-4 text-gray-900" style={{ height: '20vh' }}>
+          <div className="flex-1 rounded-2xl p-3 flex flex-row items-stretch gap-6 min-w-0">
+            <Timer
+              duration={scoreboard.timer_duration || 0}
+              startedAt={scoreboard.timer_started_at || null}
+              state={scoreboard.timer_state || 'stopped'}
+              pausedDuration={scoreboard.timer_paused_duration || 0}
+              isOwner={false}
+              onStart={() => {}}
+              onPause={() => {}}
+              onReset={() => {}}
+              currentQuarter={teamData.currentQuarter}
+              onQuarterChange={() => {}}
+              className="w-full h-full"
+            />
+          </div>
         </div>
       </div>
 
