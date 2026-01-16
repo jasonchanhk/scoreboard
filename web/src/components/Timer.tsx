@@ -89,10 +89,10 @@ export const Timer: React.FC<TimerProps> = ({
 
   return (
     <div className={`bg-transparent p-0 flex flex-col h-full justify-center ${className}`}>
-      {/* Row: Quarter controls (left) - Time (center) - Status/Buttons (right) */}
-      <div className="flex items-center justify-center w-full text-gray-900 gap-10 py-2">
-        {/* Quarter controls */}
-        <div className="flex items-center gap-3">
+      {/* Portrait: Quarter on top, Time+Controls below. Landscape: Quarter left, Time+Controls right */}
+      <div className="flex flex-col md:flex-row items-center justify-center w-full text-gray-900 gap-4 md:gap-8 py-2">
+        {/* Quarter controls - Top in portrait, Left in landscape */}
+        <div className="flex items-center gap-3 md:gap-4">
           {isOwner && (
             <CircleButton
               onClick={() => onQuarterChange(-1)}
@@ -101,10 +101,10 @@ export const Timer: React.FC<TimerProps> = ({
               ariaLabel="Previous Quarter"
               type="button"
             >
-              <IoChevronBack className="text-white text-2xl" />
+              <IoChevronBack className="text-white text-xl" />
             </CircleButton>
           )}
-          <span className={`${isOwner ? 'text-xl w-8' : 'text-8xl'} font-mono font-extrabold text-black text-center`}>Q{currentQuarter}</span>
+          <span className={`${isOwner ? 'text-xl md:text-2xl' : 'text-3xl md:text-4xl'} font-mono font-extrabold text-black text-center`}>Q{currentQuarter}</span>
           {isOwner && (
             <CircleButton
               onClick={() => onQuarterChange(1)}
@@ -113,83 +113,86 @@ export const Timer: React.FC<TimerProps> = ({
               ariaLabel="Next Quarter"
               type="button"
             >
-              <IoChevronForward className="text-white text-2xl" />
+              <IoChevronForward className="text-white text-xl" />
             </CircleButton>
           )}
         </div>
 
-        {/* Divider Line - Only show for non-owner view */}
+        {/* Divider Line - Only show for non-owner view in landscape */}
         {!isOwner && (
-          <div className="h-16 border-l-4 border-gray-300"></div>
+          <div className="hidden md:block h-20 border-l-4 border-gray-300"></div>
         )}
 
-        {/* Time display */}
-        <div className={`${isOwner ? 'text-8xl' : 'text-8xl'} font-mono font-extrabold text-black`}>{displayTime}</div>
+        {/* Time display and controls on same row */}
+        <div className="flex items-center gap-5 md:gap-8">
+          {/* Time display */}
+          <div className={`${isOwner ? 'text-6xl md:text-9xl' : 'text-6xl md:text-9xl'} font-mono font-extrabold text-black`}>{displayTime}</div>
 
-        {/* Status and controls */}
-        <div className="flex items-center gap-4">
-          {/* Timer state */}
-          {/* <div className="flex items-center gap-2 w-24">
-            <span
-              className={`w-3 h-3 rounded-full inline-block flex-shrink-0 ${
-                state === 'running' ? 'bg-green-600' : state === 'paused' ? 'bg-yellow-500' : 'bg-gray-400'
-              }`}
-            />
-            <span className="text-lg whitespace-nowrap font-semibold">
-              {state === 'running' ? 'Running' : state === 'paused' ? 'Paused' : 'Stopped'}
-            </span>
-          </div> */}
+          {/* Status and controls */}
+          <div className="flex items-center gap-5">
+            {/* Timer state - Keep commented out as requested */}
+            {/* <div className="flex items-center gap-2 w-24">
+              <span
+                className={`w-3 h-3 rounded-full inline-block flex-shrink-0 ${
+                  state === 'running' ? 'bg-green-600' : state === 'paused' ? 'bg-yellow-500' : 'bg-gray-400'
+                }`}
+              />
+              <span className="text-lg whitespace-nowrap font-semibold">
+                {state === 'running' ? 'Running' : state === 'paused' ? 'Paused' : 'Stopped'}
+              </span>
+            </div> */}
 
-          {/* Start/Pause button */}
-          {isOwner && (
-            <>
-              {state === 'stopped' && (
+            {/* Start/Pause button */}
+            {isOwner && (
+              <>
+                {state === 'stopped' && (
+                  <CircleButton
+                    onClick={onStart}
+                    variant="white"
+                    size="lg"
+                    ariaLabel="Start Timer"
+                    type="button"
+                  >
+                    <IoPlay className="text-indigo-600 text-3xl" />
+                  </CircleButton>
+                )}
+                {state === 'running' && (
+                  <CircleButton
+                    onClick={onPause}
+                    variant="white"
+                    size="lg"
+                    ariaLabel="Pause Timer"
+                    type="button"
+                  >
+                    <IoPause className="text-indigo-600 text-3xl" />
+                  </CircleButton>
+                )}
+                {state === 'paused' && (
+                  <CircleButton
+                    onClick={onStart}
+                    variant="white"
+                    size="lg"
+                    ariaLabel="Resume Timer"
+                    type="button"
+                  >
+                    <IoPlay className="text-indigo-600 text-3xl" />
+                  </CircleButton>
+                )}
+
+                {/* Reset */}
                 <CircleButton
-                  onClick={onStart}
-                  variant="white"
-                  size="md"
-                  ariaLabel="Start Timer"
+                  onClick={onReset}
+                  disabled={isResetDisabled}
+                  variant="primary"
+                  size="lg"
+                  ariaLabel="Reset Timer"
                   type="button"
                 >
-                  <IoPlay className="text-indigo-600 text-2xl" />
+                  <IoRefresh className="text-white text-3xl" />
                 </CircleButton>
-              )}
-              {state === 'running' && (
-                <CircleButton
-                  onClick={onPause}
-                  variant="white"
-                  size="md"
-                  ariaLabel="Pause Timer"
-                  type="button"
-                >
-                  <IoPause className="text-indigo-600 text-2xl" />
-                </CircleButton>
-              )}
-              {state === 'paused' && (
-                <CircleButton
-                  onClick={onStart}
-                  variant="white"
-                  size="md"
-                  ariaLabel="Resume Timer"
-                  type="button"
-                >
-                  <IoPlay className="text-indigo-600 text-2xl" />
-                </CircleButton>
-              )}
-
-              {/* Reset */}
-              <CircleButton
-                onClick={onReset}
-                disabled={isResetDisabled}
-                variant="primary"
-                size="md"
-                ariaLabel="Reset Timer"
-                type="button"
-              >
-                <IoRefresh className="text-white text-2xl" />
-              </CircleButton>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

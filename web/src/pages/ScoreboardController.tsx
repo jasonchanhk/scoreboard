@@ -384,10 +384,10 @@ export const ScoreboardController: React.FC = () => {
       {/* Main Scoreboard */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Section: Score Container */}
-        <div className="flex-1 min-h-0 py-10 flex items-center justify-center">
-          <div className="flex items-center gap-6 h-full">
-            {/* Team Containers */}
-            <div className="grid grid-cols-2 gap-8 h-full" style={{ width: '70vw' }}>
+        <div className="flex-1 min-h-0 py-4 md:py-10 flex items-center justify-center">
+          <div className="flex items-center justify-center h-full w-full px-4 md:px-6 lg:px-8">
+            {/* Team Containers - Stack on mobile portrait, side-by-side on landscape/desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 h-full w-full max-w-[95vw] md:max-w-[70vw]">
               {/* Left Team */}
               <TeamScore
                 teamName={team0?.name || 'Team 1'}
@@ -430,11 +430,6 @@ export const ScoreboardController: React.FC = () => {
               className="w-full h-full"
             />
           </div>
-          {/* The original Quarter History and Share sections are commented out for now */}
-          {/*
-          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0"> ... </div>
-          <div className="flex-1 border-4 border-white rounded-2xl p-3 flex flex-col min-w-0"> ... </div>
-          */}
         </div>
       </div>
     </div>
