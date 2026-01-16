@@ -246,12 +246,12 @@ export const ScoreboardController: React.FC = () => {
 
             {/* Mobile Menu Dropdown */}
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 sm:hidden">
-                <div className="py-1">
+              <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-md shadow-lg bg-white border border-gray-200 sm:hidden">
+                <div className="py-2">
                   {isOwner && (
                     <button
                       onClick={() => handleMenuAction(() => setShowEditForm(true))}
-                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center w-full text-left px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
                     >
                       <HiPencil className="mr-3 w-5 h-5" />
                       Edit
@@ -259,21 +259,21 @@ export const ScoreboardController: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleMenuAction(() => setQuarterHistoryOpen(true))}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full text-left px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <HiClock className="mr-3 w-5 h-5" />
                     History
                   </button>
                   <button
                     onClick={() => handleMenuAction(() => setShareOpen(true))}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full text-left px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <HiShare className="mr-3 w-5 h-5" />
                     Share
                   </button>
                   <button
                     onClick={() => handleMenuAction(handleViewPublic)}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center w-full text-left px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <HiEye className="mr-3 w-5 h-5" />
                     View Public

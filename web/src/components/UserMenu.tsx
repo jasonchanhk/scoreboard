@@ -76,59 +76,57 @@ export const UserMenu: React.FC = () => {
   }
 
   return (
-    <div className="relative group" ref={menuRef}>
+    <div className="relative" ref={menuRef}>
       <button
         onClick={toggleMenu}
-        className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-full bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 text-sm font-semibold focus:outline-none focus:ring-2"
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
         <span className="sr-only">Open user menu</span>
         {initials}
       </button>
-      {/* Invisible bridge to maintain hover state when moving from button to menu */}
-      <div className="absolute right-0 top-full h-2 w-56" />
-      <div className={`absolute right-0 top-full mt-2 z-50 w-56 rounded-md shadow-lg bg-white border border-gray-200 ${
-        isOpen ? 'block' : 'hidden group-hover:block'
-      }`}>
-        <div className="py-2">
-          {user?.email && (
-            <div className="px-4 py-2 border-b border-gray-100">
-              <div className="text-sm font-medium text-gray-900 cursor-default select-text">
-                {displayName}
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-md shadow-lg bg-white border border-gray-200">
+          <div className="py-2">
+            {user?.email && (
+              <div className="px-4 py-2 border-b border-gray-100">
+                <div className="text-sm font-medium text-gray-900 cursor-default select-text">
+                  {displayName}
+                </div>
+                <div className="text-xs text-gray-500 cursor-default select-text mt-0.5">
+                  {user.email}
+                </div>
+                <div className="text-xs text-gray-600 cursor-default select-text mt-1 font-medium border py-0.5 px-1 rounded-md inline-block">
+                  {planDisplayName}
+                </div>
               </div>
-              <div className="text-xs text-gray-500 cursor-default select-text mt-0.5">
-                {user.email}
-              </div>
-              <div className="text-xs text-gray-600 cursor-default select-text mt-1 font-medium border py-0.5 px-1 rounded-md inline-block">
-                {planDisplayName}
-              </div>
+            )}
+            <div className="py-1">
+              <button
+                onClick={() => handleMenuItemClick(() => navigate('/settings'))}
+                className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => handleMenuItemClick(() => navigate('/subscription'))}
+                className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Subscription
+              </button>
             </div>
-          )}
-          <div className="py-1">
-            <button
-              onClick={() => handleMenuItemClick(() => navigate('/settings'))}
-              className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Settings
-            </button>
-            <button
-              onClick={() => handleMenuItemClick(() => navigate('/subscription'))}
-              className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Subscription
-            </button>
-          </div>
-          <div className="border-t border-gray-100 pt-1">
-          <button
-            onClick={() => handleMenuItemClick(signOut)}
-              className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-red-600 hover:bg-red-50"
-          >
-            Sign out
-          </button>
+            <div className="border-t border-gray-100 pt-1">
+              <button
+                onClick={() => handleMenuItemClick(signOut)}
+                className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-red-600 hover:bg-red-50"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
