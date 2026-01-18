@@ -104,7 +104,7 @@ export const Timer: React.FC<TimerProps> = ({
               <IoChevronBack className="text-white text-xl" />
             </CircleButton>
           )}
-          <span className={`${isOwner ? 'text-xl md:text-2xl' : 'text-3xl md:text-4xl'} font-mono font-extrabold text-black text-center`}>Q{currentQuarter}</span>
+          <span className={`${isOwner ? 'text-2xl md:text-2xl' : 'text-4xl md:text-4xl'} font-mono font-extrabold text-black text-center`}>Q{currentQuarter}</span>
           {isOwner && (
             <CircleButton
               onClick={() => onQuarterChange(1)}
@@ -120,13 +120,13 @@ export const Timer: React.FC<TimerProps> = ({
 
         {/* Divider Line - Only show for non-owner view in landscape */}
         {!isOwner && (
-          <div className="hidden md:block h-20 border-l-4 border-gray-300"></div>
+          <div className="hidden md:block h-12 border-l-2 border-gray-300"></div>
         )}
 
         {/* Time display and controls on same row */}
         <div className="flex items-center gap-5 md:gap-8">
           {/* Time display */}
-          <div className={`${isOwner ? 'text-6xl md:text-9xl' : 'text-6xl md:text-9xl'} font-mono font-extrabold text-black`}>{displayTime}</div>
+          <div className={`${isOwner ? 'text-6xl md:text-6xl lg:text-9xl' : 'text-6xl md:text-6xl lg:text-9xl'} font-mono font-extrabold text-black`}>{displayTime}</div>
 
           {/* Status and controls */}
           <div className="flex items-center gap-5">
