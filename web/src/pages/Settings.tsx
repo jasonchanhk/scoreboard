@@ -128,6 +128,19 @@ export const Settings: React.FC = () => {
     })
   }
 
+  const getSignInMethod = (): string => {
+    if (!user) return 'N/A'
+    // Check app_metadata for provider information
+    const provider = user.app_metadata?.provider
+    if (provider === 'google') {
+      return 'Google'
+    } else if (provider === 'email') {
+      return 'Email'
+    }
+    // Fallback: check if user has password or just email
+    return user.app_metadata?.providers?.includes('google') ? 'Google' : 'Email'
+  }
+
   const getPlanDisplayName = (tier: string) => {
     return tier.charAt(0).toUpperCase() + tier.slice(1)
   }
@@ -185,6 +198,14 @@ export const Settings: React.FC = () => {
               <div>
                 <dt className="text-sm font-medium text-gray-500">Email Address</dt>
                 <dd className="mt-1 text-sm text-gray-900">{user?.email || 'Not available'}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Account Created</dt>
+                <dd className="mt-1 text-sm text-gray-900">{formatDate(user?.created_at || null)}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Sign In Method</dt>
+                <dd className="mt-1 text-sm text-gray-900">{getSignInMethod()}</dd>
               </div>
             </dl>
           </div>
