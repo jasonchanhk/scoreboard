@@ -6,7 +6,7 @@ interface Team {
   id: string
   name: string
   scoreboard_id: string
-  position: 'home' | 'away'
+  position: 'home' | 'away' | null
   color: string | null
   created_at: string
 }

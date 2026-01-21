@@ -16,6 +16,6 @@ export const AuthPage: React.FC = () => {
     return <LoadingSpinner />
   }
 
-  return <LoginForm onToggleMode={() => {}} />
+  return <LoginForm />
 }
 

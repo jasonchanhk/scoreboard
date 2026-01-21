@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { ScoreboardCard } from '../components/ScoreboardCard'
 import { CreateScoreboardCTA, JoinScoreboardCTA } from '../components/cta/'
@@ -9,12 +8,16 @@ import { AlertDialog, ScoreboardFormDialog, ConfirmDialog } from '../components/
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { sortTeams } from '../utils/teamUtils'
 import { useAlertDialog, useConfirmDialog } from '../hooks/dialog'
+import { useSubscription } from '../hooks/useSubscription'
+import { getByOwner, remove as removeScoreboard } from '../data/scoreboardsRepo'
+import { getByTeamIds } from '../data/quartersRepo'
+import { getScoreboardLimit, getScoreboardLimitDescription } from '../utils/subscriptionLimits'
 
 interface Team {
   id: string
   name: string
   scoreboard_id: string
-  position: 'home' | 'away'
+  position: 'home' | 'away' | null
   color: string | null
   created_at: string
 }
@@ -41,6 +44,7 @@ export const Dashboard: React.FC = () => {
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingScoreboard, setEditingScoreboard] = useState<Scoreboard | null>(null)
   const { user } = useAuth()
+  const { subscription } = useSubscription()
   
   // Custom hooks
   const { alert, showError, hideAlert } = useAlertDialog()
@@ -54,27 +58,18 @@ export const Dashboard: React.FC = () => {
     if (!user) return
 
     try {
-      const { data, error } = await supabase
-        .from('scoreboards')
-        .select(`
-          *,
-          teams (*)
-        `)
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
+      const list = await getByOwner(user.id)
+      const normalized = list.map((scoreboard) => ({
+        ...scoreboard,
+        venue: scoreboard.venue ?? null,
+        game_date: scoreboard.game_date ?? null,
+        game_start_time: scoreboard.game_start_time ?? null,
+        game_end_time: scoreboard.game_end_time ?? null,
+        teams: scoreboard.teams ? sortTeams(scoreboard.teams) : [],
+      }))
 
-      if (error) throw error
-      const list = data || []
-      
-      // Ensure teams are ordered consistently (home first, away second)
-      list.forEach(scoreboard => {
-        if (scoreboard.teams) {
-          scoreboard.teams = sortTeams(scoreboard.teams)
-        }
-      })
-
-      setScoreboards(list)
-      await computeAndSetScores(list)
+      setScoreboards(normalized)
+      await computeAndSetScores(normalized)
     } catch (error) {
       console.error('Error fetching scoreboards:', error)
     } finally {
@@ -98,15 +93,7 @@ export const Dashboard: React.FC = () => {
     const teamIds = Object.keys(teamIdToScoreboard)
     if (teamIds.length === 0) return
 
-    const { data: quarters, error } = await supabase
-      .from('quarters')
-      .select('team_id, quarter_number, points')
-      .in('team_id', teamIds)
-
-    if (error) {
-      console.error('Error fetching quarters for dashboard:', error)
-      return
-    }
+    const quarters = await getByTeamIds(teamIds)
 
     const next: Record<string, { a: number; b: number }> = {}
     for (const sb of list) {
@@ -130,6 +117,24 @@ export const Dashboard: React.FC = () => {
     // Refresh the scoreboards list after creation
     await fetchScoreboards()
     setShowCreateForm(false)
+  }
+
+  const handleCreateClick = () => {
+    const planTier = subscription?.plan_tier || 'basic'
+    const limit = getScoreboardLimit(planTier)
+    
+    // Check if user has reached their limit
+    if (scoreboards.length >= limit && limit !== Infinity) {
+      const planName = planTier.charAt(0).toUpperCase() + planTier.slice(1)
+      showError(
+        'Scoreboard Limit Reached',
+        `You've reached your ${planName} plan limit of ${limit} scoreboards. ` +
+        `Please delete an existing scoreboard or upgrade your plan to create more.`
+      )
+      return
+    }
+    
+    setShowCreateForm(true)
   }
 
   const handleUpdateSuccess = async () => {
@@ -162,13 +167,7 @@ export const Dashboard: React.FC = () => {
   const performDelete = async (scoreboardId: string) => {
     try {
       // Delete scoreboard (this will cascade delete teams and quarters due to foreign key constraints)
-      const { error } = await supabase
-        .from('scoreboards')
-        .delete()
-        .eq('id', scoreboardId)
-        .eq('owner_id', user!.id) // Ensure user can only delete their own scoreboards
-
-      if (error) throw error
+      await removeScoreboard(scoreboardId, user!.id) // Ensure user can only delete their own scoreboards
 
       // Remove from local state
       const updatedScoreboards = scoreboards.filter(sb => sb.id !== scoreboardId)
@@ -221,11 +220,18 @@ export const Dashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="grid gap-4 lg:grid-cols-2 mb-10">
-            <CreateScoreboardCTA onCreateClick={() => setShowCreateForm(true)} />
+            <CreateScoreboardCTA onCreateClick={handleCreateClick} />
             <JoinScoreboardCTA />
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Scoreboards</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Your Scoreboards</h2>
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">{scoreboards.length}</span>
+              {' / '}
+              <span>{getScoreboardLimitDescription(subscription?.plan_tier || 'basic')}</span>
+            </div>
+          </div>
 
           {showCreateForm && (
             <ScoreboardFormDialog

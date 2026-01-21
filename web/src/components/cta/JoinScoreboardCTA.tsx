@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase } from '../../lib/supabase'
 import { AlertDialog } from '../dialog'
 import { Button } from '../button'
+import { findByShareCode } from '../../data/scoreboardsRepo'
 
 export const JoinScoreboardCTA: React.FC = () => {
   const [joinCode, setJoinCode] = useState('')
@@ -21,13 +21,7 @@ export const JoinScoreboardCTA: React.FC = () => {
     if (/^[A-Z0-9]{6}$/.test(code)) {
       setJoining(true)
       try {
-        const { data, error } = await supabase
-          .from('scoreboards')
-          .select('id')
-          .eq('share_code', code)
-          .single()
-
-        if (error) throw error
+        const data = await findByShareCode(code)
         if (!data) {
           setAlert({
             isOpen: true,
@@ -62,41 +56,42 @@ export const JoinScoreboardCTA: React.FC = () => {
         variant={alert.variant}
         onClose={() => setAlert({ ...alert, isOpen: false })}
       />
-      <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-8 shadow-sm">
-      <div className="space-y-4">
-        <h3 className="text-2xl font-semibold text-indigo-900">Join with a code</h3>
-        <p className="text-sm text-indigo-700">
-          Enter the 6-character share code from another host to follow their live scoreboard.
-        </p>
-      </div>
-      <form onSubmit={handleJoinSubmit} className="mt-8 space-y-3">
-        <label className="block text-xs font-semibold uppercase tracking-wide text-indigo-700">
-          Share code
-        </label>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <input
-            type="text"
-            inputMode="text"
-            maxLength={6}
-            placeholder="ABC123"
-            value={joinCode}
-            onChange={(e) => {
-              const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-              setJoinCode(cleaned)
-            }}
-            className="flex-1 rounded-lg border border-indigo-200 bg-white px-4 py-3 text-base tracking-[0.3em] text-indigo-900 shadow-sm focus:border-indigo-400 focus:ring-indigo-400"
-          />
-          <Button
-            type="submit"
-            disabled={!/^[A-Z0-9]{6}$/.test(joinCode) || joining}
-            variant="primary"
-            size="md"
-          >
-            {joining ? 'Joining...' : 'Join scoreboard'}
-          </Button>
+      <div className="flex flex-col h-full rounded-2xl border border-indigo-100 bg-indigo-50 p-6 sm:p-8 shadow-sm">
+        <div className="space-y-3 sm:space-y-4 flex-grow">
+          <h3 className="text-xl font-semibold text-indigo-900 sm:text-2xl">Join with a code</h3>
+          <p className="text-sm text-indigo-700">
+            Enter the 6-character share code from another host to follow their live scoreboard.
+          </p>
         </div>
-      </form>
-    </div>
+        <form onSubmit={handleJoinSubmit} className="mt-6 sm:mt-8 space-y-3">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-indigo-700">
+            Share code
+          </label>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <input
+              type="text"
+              inputMode="text"
+              maxLength={6}
+              placeholder="ABC123"
+              value={joinCode}
+              onChange={(e) => {
+                const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                setJoinCode(cleaned)
+              }}
+              className="flex-1 rounded-lg border border-indigo-200 bg-white px-4 py-3 text-base tracking-[0.3em] text-indigo-900 shadow-sm focus:border-indigo-400 focus:ring-indigo-400"
+            />
+            <Button
+              type="submit"
+              disabled={!/^[A-Z0-9]{6}$/.test(joinCode) || joining}
+              variant="primary"
+              size="md"
+              className="w-full sm:w-auto"
+            >
+              {joining ? 'Joining...' : 'Join scoreboard'}
+            </Button>
+          </div>
+        </form>
+      </div>
     </>
   )
 }

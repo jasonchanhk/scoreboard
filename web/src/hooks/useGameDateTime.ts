@@ -8,25 +8,6 @@ type ScoreboardWithDateTime = {
 }
 
 export const useGameDateTime = (scoreboard: ScoreboardWithDateTime | null) => {
-  const formattedDate = useMemo(() => {
-    if (!scoreboard?.game_date) return null
-    return new Date(scoreboard.game_date).toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }, [scoreboard?.game_date])
-
-  const timeDisplay = useMemo(() => {
-    const startTime = scoreboard?.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
-    const endTime = scoreboard?.game_end_time ? scoreboard.game_end_time.substring(0, 5) : ''
-    
-    if (startTime && endTime) return `${startTime} – ${endTime}`
-    if (startTime) return startTime
-    if (endTime) return endTime
-    return null
-  }, [scoreboard?.game_start_time, scoreboard?.game_end_time])
-
   // For ScoreboardCard component which has slightly different formatting
   const timeDisplayForCard = useMemo(() => {
     const startTime = scoreboard?.game_start_time ? scoreboard.game_start_time.substring(0, 5) : ''
@@ -48,8 +29,6 @@ export const useGameDateTime = (scoreboard: ScoreboardWithDateTime | null) => {
   }, [scoreboard?.game_date])
 
   return {
-    formattedDate,
-    timeDisplay,
     timeDisplayForCard,
     dateDisplayForCard,
   }

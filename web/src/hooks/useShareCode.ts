@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { update } from '../data/scoreboardsRepo'
 import type { ScoreboardData } from '../types/scoreboard'
 
 export const useShareCode = (
@@ -40,13 +40,11 @@ export const useShareCode = (
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           const shareCode = generateCode()
-          const { error } = await supabase
-            .from('scoreboards')
-            .update({ share_code: shareCode })
-            .eq('id', scoreboardId)
-          if (error) {
+          try {
+            await update(scoreboardId, { share_code: shareCode })
+          } catch (error: any) {
             // @ts-ignore - Supabase error code
-            if (error.code === '23505') continue // Unique constraint violation
+            if (error?.code === '23505') continue // Unique constraint violation
             throw error
           }
           setScoreboard(prev => (prev ? { ...prev, share_code: shareCode } : prev))

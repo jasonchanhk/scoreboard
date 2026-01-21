@@ -7,6 +7,7 @@ interface QuarterHistoryProps {
   currentQuarter: number
   quarters?: Quarter[] // Optional current quarter data for highlighting
   showCurrentQuarterScores?: boolean
+  largeText?: boolean // If true, use text-5xl for text sizes
 }
 
 export const QuarterHistory: React.FC<QuarterHistoryProps> = ({
@@ -14,7 +15,8 @@ export const QuarterHistory: React.FC<QuarterHistoryProps> = ({
   allQuarters,
   currentQuarter,
   quarters = [],
-  showCurrentQuarterScores = false
+  showCurrentQuarterScores = false,
+  largeText = false
 }) => {
   // Helper function to get team by index
   const getTeam = (index: number) => {
@@ -58,41 +60,60 @@ export const QuarterHistory: React.FC<QuarterHistoryProps> = ({
     return null
   }
 
+  const headerTextSize = largeText ? 'text-5xl' : 'text-xs'
+  const rowTextSize = largeText ? 'text-5xl' : 'text-sm'
+  const quarterLabelSize = largeText ? 'text-5xl' : 'text-sm'
+  const scoreTextSize = largeText ? 'text-5xl' : 'text-base'
+  const paddingY = largeText ? 'py-6' : 'py-2.5'
+  const paddingX = largeText ? 'px-6' : 'px-3'
+  const headerPaddingY = largeText ? 'py-4' : 'py-2'
+  const headerPaddingX = largeText ? 'px-6' : 'px-3'
+  const quarterWidth = largeText ? 'w-20' : 'w-10'
+
   return (
     <div className="w-full">
       {/* Header */}
-      <div className="flex gap-2 mb-2 py-1.5 px-2 text-xs font-medium text-gray-300">
-        <div className="w-8 flex-shrink-0"></div>
-        <div className="flex-1 text-center truncate">{getTeam(0)?.name}</div>
-        <div className="flex-1 text-center truncate">{getTeam(1)?.name}</div>
+      <div className={`flex gap-2 mb-2 ${headerPaddingY} ${headerPaddingX} ${headerTextSize} font-medium text-gray-700 bg-gray-50 rounded-t-lg border-b border-gray-200`}>
+        <div className={`${quarterWidth} flex-shrink-0`}></div>
+        <div className="flex-1 text-center truncate font-semibold">{getTeam(0)?.name}</div>
+        <div className="flex-1 text-center truncate font-semibold">{getTeam(1)?.name}</div>
       </div>
 
       {/* Quarter rows */}
-      {getQuarterHistory().map((q) => (
-        <div key={q.quarter} className={`flex gap-2 py-1.5 px-2 text-xs rounded ${
-          q.quarter === currentQuarter ? 'bg-gray-700' : ''
-        }`}>
-          <div className="w-8 flex-shrink-0 font-medium">Q{q.quarter}</div>
-          <div className="flex-1 text-center">
-            {q.quarter === currentQuarter && showCurrentQuarterScores ? (
-              <span className="text-green-400 font-bold text-sm">
-                {getTeam(0) ? getTeamScore(getTeam(0)!.id) : 0}
-              </span>
-            ) : (
-              <span className="text-sm">{q.teamAScore}</span>
-            )}
+      <div className="border border-gray-200 rounded-b-lg overflow-hidden">
+        {getQuarterHistory().map((q, index) => (
+          <div
+            key={q.quarter}
+            className={`flex gap-2 ${paddingY} ${paddingX} ${rowTextSize} ${
+              q.quarter === currentQuarter
+                ? 'bg-indigo-50 border-l-4 border-indigo-600'
+                : index < getQuarterHistory().length - 1
+                ? 'border-b border-gray-200'
+                : ''
+            }`}
+          >
+            <div className={`${quarterWidth} flex-shrink-0 font-medium text-gray-600 ${quarterLabelSize}`}>Q{q.quarter}</div>
+            <div className="flex-1 text-center">
+              {q.quarter === currentQuarter && showCurrentQuarterScores ? (
+                <span className={`text-indigo-600 font-bold ${scoreTextSize}`}>
+                  {getTeam(0) ? getTeamScore(getTeam(0)!.id) : 0}
+                </span>
+              ) : (
+                <span className={`text-gray-900 font-medium ${scoreTextSize}`}>{q.teamAScore}</span>
+              )}
+            </div>
+            <div className="flex-1 text-center">
+              {q.quarter === currentQuarter && showCurrentQuarterScores ? (
+                <span className={`text-indigo-600 font-bold ${scoreTextSize}`}>
+                  {getTeam(1) ? getTeamScore(getTeam(1)!.id) : 0}
+                </span>
+              ) : (
+                <span className={`text-gray-900 font-medium ${scoreTextSize}`}>{q.teamBScore}</span>
+              )}
+            </div>
           </div>
-          <div className="flex-1 text-center">
-            {q.quarter === currentQuarter && showCurrentQuarterScores ? (
-              <span className="text-green-400 font-bold text-sm">
-                {getTeam(1) ? getTeamScore(getTeam(1)!.id) : 0}
-              </span>
-            ) : (
-              <span className="text-sm">{q.teamBScore}</span>
-            )}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }

@@ -49,11 +49,11 @@ export const BaseDialog: React.FC<DialogProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center ${className}`}
+      className={`fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start sm:items-center justify-center ${className}`}
       onClick={handleBackdropClick}
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
     >
-      <div className={`mx-auto p-6 w-11/12 md:w-2/3 lg:w-1/3 shadow-2xl rounded-lg bg-white ${contentClassName}`}>
+      <div className={`mx-auto p-4 sm:p-6 w-11/12 md:w-2/3 lg:w-1/3 shadow-2xl rounded-lg bg-white my-4 sm:my-0 max-h-[calc(100vh-2rem)] sm:max-h-none overflow-y-auto ${contentClassName}`}>
         {children}
         <div className={`flex gap-3 ${
           buttonAlignment === 'left' ? 'justify-start' :

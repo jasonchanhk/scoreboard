@@ -77,8 +77,31 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
       </div>
       <div 
         ref={scoreContainerRef}
-        className="flex-1 flex items-center justify-center px-2 bg-white min-w-0"
+        className="flex-1 flex items-center justify-center px-2 bg-white min-w-0 relative"
       >
+        {/* Buttons on sides - only on mobile landscape (md to lg) */}
+        {isOwner && onScoreUpdate && (
+          <>
+            <CircleButton
+              onClick={() => onScoreUpdate(1)}
+              variant="secondary"
+              size="md"
+              ariaLabel="Add 1 point"
+              className="hidden md:flex lg:hidden absolute left-2 z-10"
+            >
+              <IoAdd className="text-gray-900 text-xl" />
+            </CircleButton>
+            <CircleButton
+              onClick={() => onScoreUpdate(-1)}
+              variant="secondary"
+              size="md"
+              ariaLabel="Subtract 1 point"
+              className="hidden md:flex lg:hidden absolute right-2 z-10"
+            >
+              <IoRemove className="text-gray-900 text-xl" />
+            </CircleButton>
+          </>
+        )}
         <div 
           className="font-extrabold leading-none whitespace-nowrap" 
           style={{ 
@@ -89,8 +112,9 @@ export const TeamScore: React.FC<TeamScoreProps> = ({
           {score}
         </div>
       </div>
+      {/* Buttons below - on mobile portrait and desktop (below md and above lg) */}
       {isOwner && onScoreUpdate && (
-        <div className="bg-white py-4 flex items-center justify-center gap-4">
+        <div className="bg-white py-4 flex items-center justify-center gap-4 md:hidden lg:flex">
           <CircleButton
             onClick={() => onScoreUpdate(1)}
             variant="secondary"

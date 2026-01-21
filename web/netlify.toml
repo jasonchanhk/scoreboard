@@ -3,6 +3,28 @@
   command = "npm run build"
   publish = "dist"
 
+# Netlify Functions:
+# - Regular Functions: netlify/functions/ (Node.js runtime)
+#   - scoreboard-preview.mjs: Unified function that handles both HTML (meta tags) and OG images
+#     - Returns HTML with meta tags when requested normally
+#     - Returns PNG image when ?image=true query parameter is present
+
+# Route scoreboard URLs to the function for crawler detection
+# The function will serve HTML with meta tags for crawlers, or let browsers through to SPA
+# This must come BEFORE the catch-all redirect
+[[redirects]]
+  from = "/scoreboard/:id/view"
+  to = "/.netlify/functions/scoreboard-meta?id=:id"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/scoreboard/:id"
+  to = "/.netlify/functions/scoreboard-meta?id=:id"
+  status = 200
+  force = true
+
+# All other routes go to SPA (this must come AFTER the scoreboard redirect)
 [[redirects]]
   from = "/*"
   to = "/index.html"
