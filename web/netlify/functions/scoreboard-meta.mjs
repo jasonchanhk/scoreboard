@@ -257,8 +257,8 @@ export const handler = async (event, context) => {
     
     // Generate absolute URLs
     const url = `${baseUrl}/scoreboard/${scoreboardId}/view`
-    // Point to the image function (scoreboard-preview handles images)
-    const imageUrl = `${baseUrl}/.netlify/functions/scoreboard-preview?id=${encodeURIComponent(scoreboardId)}&image=true`
+    // Use default OG image for all endpoints - simple and reliable
+    const imageUrl = `${baseUrl}/og-background-default.png`
     
     const isCrawlerBot = isCrawler(userAgent)
     
