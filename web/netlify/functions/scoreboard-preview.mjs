@@ -213,10 +213,10 @@ export const handler = async (event, context) => {
     const protocol = event.headers['x-forwarded-proto'] || 'https'
     
     // Determine if this is an image request or HTML request
-    // Check query parameter or Accept header
-    const isImageRequest = 
-      event.queryStringParameters?.image === 'true' ||
-      acceptHeader.includes('image/')
+    // Only treat as image request if query parameter explicitly says image=true
+    // Browsers send Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/*;q=0.8
+    // So we can't rely on Accept header alone - must check query param
+    const isImageRequest = event.queryStringParameters?.image === 'true'
     
     // Initialize base URL
     // Priority: process.env.URL > process.env.DEPLOY_PRIME_URL > host header > localhost
