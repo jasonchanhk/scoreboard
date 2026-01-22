@@ -13,7 +13,7 @@
 #     - Returns PNG image when ?image=true query parameter is present
 
 # Route scoreboard URLs to the function for crawler detection
-# The function will serve HTML with meta tags for crawlers, or let browsers through to SPA
+# Function serves HTML with meta tags for crawlers, redirects browsers to SPA
 # This must come BEFORE the catch-all redirect
 [[redirects]]
   from = "/scoreboard/:id/view"

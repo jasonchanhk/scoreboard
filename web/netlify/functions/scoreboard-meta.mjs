@@ -105,7 +105,8 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 </html>`
   }
   
-  // For browsers, return HTML with meta tags and SPA script
+  // For browsers, return HTML with meta tags and redirect to SPA
+  // Use a meta refresh to redirect to the SPA route so React Router can handle it
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,44 +131,19 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
   <meta property="twitter:image" content="${escapedImageUrl}">
   <link rel="canonical" href="${escapedUrl}">
   <script>
-    if (typeof window !== 'undefined' && window.document) {
-      fetch('/index.html?spa=true')
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const scripts = doc.querySelectorAll('script[type="module"]');
-          const links = doc.querySelectorAll('link[rel="stylesheet"]');
-          scripts.forEach(script => {
-            const newScript = document.createElement('script');
-            newScript.type = 'module';
-            newScript.src = script.src;
-            document.head.appendChild(newScript);
-          });
-          links.forEach(link => {
-            const newLink = document.createElement('link');
-            newLink.rel = 'stylesheet';
-            newLink.href = link.href;
-            document.head.appendChild(newLink);
-          });
-          if (!document.getElementById('root')) {
-            const root = document.createElement('div');
-            root.id = 'root';
-            document.body.appendChild(root);
-          }
-        })
-        .catch(() => {
-          window.location.href = '/index.html';
-        });
+    // Immediately redirect to the SPA route - React Router will handle it
+    // Use replace to avoid adding to history
+    if (window.location.pathname !== '${escapedUrl.replace(baseUrl, '')}') {
+      window.location.replace('${escapedUrl}');
+    } else {
+      // Already at the right URL, load the SPA
+      window.location.href = '/index.html';
     }
   </script>
 </head>
 <body>
-  <div id="root"></div>
-  <noscript>
-    <p>Please enable JavaScript to view this scoreboard.</p>
-    <p><a href="${escapedUrl}">View Scoreboard</a></p>
-  </noscript>
+  <p>Loading scoreboard...</p>
+  <p><a href="${escapedUrl}">Click here if you are not redirected</a></p>
 </body>
 </html>`
 }
@@ -262,6 +238,20 @@ export const handler = async (event, context) => {
     
     const isCrawlerBot = isCrawler(userAgent)
     
+    // For regular browsers, redirect to the SPA route so React Router can handle it
+    // For crawlers, serve HTML with meta tags
+    if (!isCrawlerBot) {
+      return {
+        statusCode: 302,
+        headers: {
+          'Location': url,
+          'Cache-Control': 'public, max-age=300',
+        },
+        body: '',
+      }
+    }
+    
+    // For crawlers, serve HTML with meta tags
     const html = generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot)
     
     return {
