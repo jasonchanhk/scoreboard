@@ -1,11 +1,13 @@
 /**
- * Unified function for scoreboard previews
- * Handles both HTML (meta tags) and OG images in one function
- * More efficient than having two separate functions
+ * Function for scoreboard link previews
+ * Handles HTML meta tags for crawlers and serves static OG images
+ * Uses static PNG files - simple and reliable
  */
 
 import { createClient } from '@supabase/supabase-js'
-// Chromium and Puppeteer are imported dynamically only when needed for image generation
+import { readFileSync } from 'fs'
+import { join } from 'path'
+// Static PNG serving - reads from public folder
 
 // Common crawler user agents
 const CRAWLER_USER_AGENTS = [
@@ -173,70 +175,33 @@ function generateMetaHTML(scoreboard, url, imageUrl, isCrawlerBot) {
 </html>`
 }
 
-async function generateOGImage(scoreboardId, baseUrl) {
-  // Dynamically import Chromium and Puppeteer only when generating images
-  // This function is ONLY called when isImageRequest is true
-  let chromium, puppeteer
+// Serve static PNG files from public folder
+function serveStaticPNG(imageName) {
   try {
-    chromium = (await import('@sparticuz/chromium')).default
-    puppeteer = await import('puppeteer-core')
-  } catch (importError) {
-    console.error('Error importing Chromium/Puppeteer:', importError)
-    throw new Error(`Failed to import Chromium/Puppeteer: ${importError.message}`)
+    // Try multiple possible paths for the public folder
+    // In Netlify Functions, the structure might vary
+    const possiblePaths = [
+      join(process.cwd(), '..', '..', 'public', imageName), // netlify/functions -> web/public
+      join(process.cwd(), '..', '..', '..', 'public', imageName), // if nested deeper
+      join(process.cwd(), 'public', imageName), // if public is in function dir
+      join('/var/task', 'public', imageName), // Netlify deployment path
+    ]
+    
+    for (const imagePath of possiblePaths) {
+      try {
+        const imageBuffer = readFileSync(imagePath)
+        return imageBuffer
+      } catch (err) {
+        // Try next path
+        continue
+      }
+    }
+    
+    throw new Error(`Could not find ${imageName} in any expected location`)
+  } catch (error) {
+    console.error(`Error reading static image ${imageName}:`, error)
+    throw new Error(`Failed to load image: ${error.message}`)
   }
-  
-  // Configure Chromium for Netlify Functions
-  // Disable graphics mode for faster startup (no WebGL/SwiftShader needed for screenshots)
-  chromium.setGraphicsMode = false
-  
-  // Get Chromium executable path
-  // This must be awaited and called correctly
-  const executablePath = await chromium.executablePath()
-  console.log('Chromium executable path:', executablePath)
-  
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: executablePath,
-    headless: chromium.headless,
-  })
-
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1200, height: 630 })
-  
-  // Navigate to React app's OG image page for scoreboard
-  const ogImageUrl = `${baseUrl}/og-image?id=${encodeURIComponent(scoreboardId)}`
-  
-  await page.goto(ogImageUrl, { 
-    waitUntil: 'networkidle0',
-    timeout: 30000,
-  })
-  
-  // Wait for React to fetch data and render
-  await page.waitForFunction(
-    () => {
-      const teamNames = document.querySelectorAll('[style*="font-size"]')
-      return teamNames.length >= 2 && 
-             teamNames[0].textContent && 
-             teamNames[0].textContent.trim() !== 'Team 1' &&
-             teamNames[1].textContent && 
-             teamNames[1].textContent.trim() !== 'Team 2'
-    },
-    { timeout: 10000 }
-  ).catch(() => {
-    console.log('Waiting for teams to load...')
-  })
-  
-  // Wait for font size adjustment to complete
-  await page.waitForTimeout(1500)
-  
-  const screenshot = await page.screenshot({
-    type: 'png',
-    clip: { x: 0, y: 0, width: 1200, height: 630 },
-  })
-
-  await browser.close()
-  return screenshot
 }
 
 export const handler = async (event, context) => {
@@ -248,16 +213,12 @@ export const handler = async (event, context) => {
     const protocol = event.headers['x-forwarded-proto'] || 'https'
     
     // Determine if this is an image request or HTML request
-    // Check query parameter, Accept header, or path
+    // Check query parameter or Accept header
     const isImageRequest = 
       event.queryStringParameters?.image === 'true' ||
-      acceptHeader.includes('image/') || 
-      path.includes('/og-image') ||
-      path.includes('og-image')
+      acceptHeader.includes('image/')
     
-    const isDefaultImage = event.queryStringParameters?.default === 'true'
-    
-    // Initialize base URL (needed for both default and scoreboard images)
+    // Initialize base URL
     // Priority: process.env.URL > process.env.DEPLOY_PRIME_URL > host header > localhost
     let baseUrl = process.env.URL || process.env.DEPLOY_PRIME_URL
     if (!baseUrl && host) {
@@ -270,70 +231,7 @@ export const handler = async (event, context) => {
     // Ensure baseUrl doesn't have trailing slash
     baseUrl = baseUrl.replace(/\/$/, '')
     
-    console.log('Request details:', {
-      path,
-      userAgent: userAgent.substring(0, 100),
-      isImageRequest,
-      isDefaultImage,
-      baseUrl,
-      scoreboardId: event.queryStringParameters?.id,
-      queryParams: event.queryStringParameters,
-    })
-    
-    // Early return for HTML requests - no Chromium needed
-    if (!isImageRequest) {
-      console.log('HTML request detected - skipping Chromium initialization')
-    }
-    
-    // Handle default image request (no scoreboard ID needed)
-    if (isImageRequest && isDefaultImage) {
-      // Dynamically import Chromium and Puppeteer only when generating images
-      let chromium, puppeteer
-      try {
-        chromium = (await import('@sparticuz/chromium')).default
-        puppeteer = await import('puppeteer-core')
-      } catch (importError) {
-        console.error('Error importing Chromium/Puppeteer (default):', importError)
-        throw new Error(`Failed to import Chromium/Puppeteer: ${importError.message}`)
-      }
-      
-      const defaultImageUrl = `${baseUrl}/og-image/default`
-      
-      // Configure Chromium for Netlify Functions
-      // Disable graphics mode for faster startup (no WebGL/SwiftShader needed for screenshots)
-      chromium.setGraphicsMode = false
-      
-      // Get Chromium executable path
-      const executablePath = await chromium.executablePath()
-      console.log('Chromium executable path (default):', executablePath)
-      
-      const browser = await puppeteer.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: executablePath,
-        headless: chromium.headless,
-      })
-      const page = await browser.newPage()
-      await page.setViewport({ width: 1200, height: 630 })
-      await page.goto(defaultImageUrl, { waitUntil: 'networkidle0', timeout: 30000 })
-      await page.waitForTimeout(500)
-      const screenshot = await page.screenshot({
-        type: 'png',
-        clip: { x: 0, y: 0, width: 1200, height: 630 },
-      })
-      await browser.close()
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'image/png',
-          'Cache-Control': 'public, max-age=3600',
-        },
-        body: screenshot.toString('base64'),
-        isBase64Encoded: true,
-      }
-    }
-    
-    // Extract scoreboard ID (needed for scoreboard-specific requests)
+    // Extract scoreboard ID (needed for HTML requests)
     let scoreboardId = null
     if (event.queryStringParameters && event.queryStringParameters.id) {
       scoreboardId = event.queryStringParameters.id
@@ -342,17 +240,34 @@ export const handler = async (event, context) => {
       scoreboardId = pathMatch ? pathMatch[1] : null
     }
     
-    if (isImageRequest && !scoreboardId) {
-      // Image request but no scoreboard ID and not default
-      return {
-        statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Missing scoreboard ID' }),
+    // Handle image requests - serve static default image for all
+    if (isImageRequest) {
+      try {
+        const pngBuffer = serveStaticPNG('og-background-default.png')
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
+          },
+          body: pngBuffer.toString('base64'),
+          isBase64Encoded: true,
+        }
+      } catch (error) {
+        console.error('Error serving image:', error)
+        // Fallback: redirect to static file
+        return {
+          statusCode: 302,
+          headers: {
+            'Location': `${baseUrl}/og-background-default.png`,
+          },
+          body: '',
+        }
       }
     }
     
-    if (!scoreboardId && !isImageRequest) {
-      // HTML request but no scoreboard ID
+    // HTML requests need a scoreboard ID
+    if (!scoreboardId) {
       return {
         statusCode: 404,
         headers: { 'Content-Type': 'text/html' },
@@ -374,38 +289,7 @@ export const handler = async (event, context) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    if (isImageRequest && scoreboardId) {
-      // Generate scoreboard-specific OG image
-      try {
-        const screenshot = await generateOGImage(scoreboardId, baseUrl)
-        return {
-          statusCode: 200,
-          headers: {
-            'Content-Type': 'image/png',
-            'Cache-Control': 'public, max-age=3600',
-          },
-          body: screenshot.toString('base64'),
-          isBase64Encoded: true,
-        }
-      } catch (imageError) {
-        console.error('Failed to generate OG image:', imageError)
-        // Return a 503 error so crawlers know to retry later
-        // Or return a default image if available
-        return {
-          statusCode: 503,
-          headers: {
-            'Content-Type': 'application/json',
-            'Retry-After': '60',
-          },
-          body: JSON.stringify({ 
-            error: 'Image generation temporarily unavailable',
-            message: imageError.message 
-          }),
-        }
-      }
-    }
-    
-    // Otherwise, return HTML with meta tags
+    // Return HTML with meta tags
     // Fetch scoreboard data
     const { data: scoreboard, error: scoreboardError } = await supabase
       .from('scoreboards')
@@ -441,9 +325,10 @@ export const handler = async (event, context) => {
     scoreboard.teams = teams || []
     scoreboard.quarters = quarters
     
-    // Generate absolute URLs (pointing back to this same function)
+    // Generate absolute URLs
     const url = `${baseUrl}/scoreboard/${scoreboardId}/view`
-    const imageUrl = `${baseUrl}/.netlify/functions/scoreboard-preview?id=${encodeURIComponent(scoreboardId)}&image=true`
+    // Use default OG image for all endpoints - simple and reliable
+    const imageUrl = `${baseUrl}/og-background-default.png`
     
     // Fix isCrawler check (can't use window in server context)
     const isCrawlerBot = isCrawler(userAgent)

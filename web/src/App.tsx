@@ -12,8 +12,6 @@ import { Settings } from './pages/Settings'
 import { Subscription } from './pages/Subscription'
 import { CheckoutSuccess } from './pages/CheckoutSuccess'
 import { CheckoutCancel } from './pages/CheckoutCancel'
-import { ScoreboardOGImage } from './pages/og/ScoreboardOGImage'
-import { DefaultOGImage } from './pages/og/DefaultOGImage'
 import { LoadingSpinner } from './components/LoadingSpinner'
 
 // Inner component that uses Router and auth context
@@ -98,9 +96,6 @@ const AppRoutes: React.FC = () => {
               }
             />
             <Route path="/scoreboard/:id/view" element={<ScoreboardDisplay />} />
-            {/* OG Image pages - uses actual React components */}
-            <Route path="/og-image" element={<ScoreboardOGImage />} />
-            <Route path="/og-image/default" element={<DefaultOGImage />} />
             {/* Catch-all route for invalid URLs */}
             <Route path="*" element={<InvalidUrlRedirect />} />
         </Routes>

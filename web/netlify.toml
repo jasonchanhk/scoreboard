@@ -5,7 +5,6 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@sparticuz/chromium", "puppeteer-core"]
 
 # Netlify Functions:
 # - Regular Functions: netlify/functions/ (Node.js runtime)
