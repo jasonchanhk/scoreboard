@@ -185,20 +185,13 @@ async function generateOGImage(scoreboardId, baseUrl) {
     throw new Error(`Failed to import Chromium/Puppeteer: ${importError.message}`)
   }
   
-  // Use Puppeteer with @sparticuz/chromium for Netlify
-  let executablePath
-  try {
-    executablePath = await chromium.executablePath()
-    console.log('Chromium executable path:', executablePath)
-  } catch (error) {
-    console.error('Error getting Chromium executable path:', error)
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    })
-    throw new Error(`Failed to get Chromium executable: ${error.message}`)
-  }
+  // Configure Chromium for Netlify Functions
+  chromium.setGraphicsMode(false)
+  
+  // Get Chromium executable path
+  // This must be awaited and called correctly
+  const executablePath = await chromium.executablePath()
+  console.log('Chromium executable path:', executablePath)
   
   const browser = await puppeteer.launch({
     args: chromium.args,
@@ -305,14 +298,12 @@ export const handler = async (event, context) => {
       
       const defaultImageUrl = `${baseUrl}/og-image/default`
       
-      let executablePath
-      try {
-        executablePath = await chromium.executablePath()
-        console.log('Chromium executable path (default):', executablePath)
-      } catch (error) {
-        console.error('Error getting Chromium executable path:', error)
-        throw new Error(`Failed to get Chromium executable: ${error.message}`)
-      }
+      // Configure Chromium for Netlify Functions
+      chromium.setGraphicsMode(false)
+      
+      // Get Chromium executable path
+      const executablePath = await chromium.executablePath()
+      console.log('Chromium executable path (default):', executablePath)
       
       const browser = await puppeteer.launch({
         args: chromium.args,
@@ -383,15 +374,32 @@ export const handler = async (event, context) => {
     
     if (isImageRequest && scoreboardId) {
       // Generate scoreboard-specific OG image
-      const screenshot = await generateOGImage(scoreboardId, baseUrl)
-      return {
-        statusCode: 200,
-        headers: {
-          'Content-Type': 'image/png',
-          'Cache-Control': 'public, max-age=3600',
-        },
-        body: screenshot.toString('base64'),
-        isBase64Encoded: true,
+      try {
+        const screenshot = await generateOGImage(scoreboardId, baseUrl)
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=3600',
+          },
+          body: screenshot.toString('base64'),
+          isBase64Encoded: true,
+        }
+      } catch (imageError) {
+        console.error('Failed to generate OG image:', imageError)
+        // Return a 503 error so crawlers know to retry later
+        // Or return a default image if available
+        return {
+          statusCode: 503,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '60',
+          },
+          body: JSON.stringify({ 
+            error: 'Image generation temporarily unavailable',
+            message: imageError.message 
+          }),
+        }
       }
     }
     
