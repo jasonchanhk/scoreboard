@@ -3,6 +3,10 @@
   command = "npm run build"
   publish = "dist"
 
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@sparticuz/chromium", "puppeteer-core"]
+
 # Netlify Functions:
 # - Regular Functions: netlify/functions/ (Node.js runtime)
 #   - scoreboard-preview.mjs: Unified function that handles both HTML (meta tags) and OG images
