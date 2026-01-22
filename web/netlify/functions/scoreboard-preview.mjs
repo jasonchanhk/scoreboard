@@ -186,7 +186,8 @@ async function generateOGImage(scoreboardId, baseUrl) {
   }
   
   // Configure Chromium for Netlify Functions
-  chromium.setGraphicsMode(false)
+  // Disable graphics mode for faster startup (no WebGL/SwiftShader needed for screenshots)
+  chromium.setGraphicsMode = false
   
   // Get Chromium executable path
   // This must be awaited and called correctly
@@ -299,7 +300,8 @@ export const handler = async (event, context) => {
       const defaultImageUrl = `${baseUrl}/og-image/default`
       
       // Configure Chromium for Netlify Functions
-      chromium.setGraphicsMode(false)
+      // Disable graphics mode for faster startup (no WebGL/SwiftShader needed for screenshots)
+      chromium.setGraphicsMode = false
       
       // Get Chromium executable path
       const executablePath = await chromium.executablePath()
