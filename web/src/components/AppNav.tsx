@@ -4,10 +4,11 @@ import { FaBasketballBall } from 'react-icons/fa'
 import { useAuth } from '../contexts/AuthContext'
 
 interface AppNavProps {
+  leftContent?: React.ReactNode
   rightContent?: React.ReactNode
 }
 
-export const AppNav: React.FC<AppNavProps> = ({ rightContent }) => {
+export const AppNav: React.FC<AppNavProps> = ({ leftContent, rightContent }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -27,7 +28,7 @@ export const AppNav: React.FC<AppNavProps> = ({ rightContent }) => {
     <nav className="bg-white shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center">
+          <div className="flex items-center gap-8">
             <div 
               className={`flex items-center space-x-3 ${!isDashboard ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
               onClick={handleClick}
@@ -37,6 +38,11 @@ export const AppNav: React.FC<AppNavProps> = ({ rightContent }) => {
               </div>
               <h1 className="text-xl font-bold text-gray-900">Pretty Scoreboard</h1>
             </div>
+            {leftContent && (
+              <div className="flex items-center">
+                {leftContent}
+              </div>
+            )}
           </div>
           {rightContent && (
             <div className="flex items-center">
