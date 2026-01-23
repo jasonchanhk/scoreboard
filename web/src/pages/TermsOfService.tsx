@@ -1,24 +1,9 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
-import { HiChevronLeft } from 'react-icons/hi'
 import { FaBasketballBall } from 'react-icons/fa'
 
 export const TermsOfService: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with back button */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link
-            to="/"
-            className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <HiChevronLeft className="w-5 h-5 mr-1" />
-            Back to Home
-          </Link>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
@@ -179,21 +164,6 @@ export const TermsOfService: React.FC = () => {
               <p><strong>Email:</strong> <a href="mailto:support@scoreboard.app" className="text-indigo-600 hover:text-indigo-700 underline">support@scoreboard.app</a></p>
             </div>
           </section>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-12 pt-8 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
-            <p>&copy; {new Date().getFullYear()} Pretty Scoreboard. All rights reserved.</p>
-            <div className="flex items-center gap-4">
-              <Link to="/privacy" className="text-indigo-600 hover:text-indigo-700 underline">
-                Privacy Policy
-              </Link>
-              <Link to="/" className="text-indigo-600 hover:text-indigo-700 underline">
-                Home
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </div>
