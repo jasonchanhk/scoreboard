@@ -8,11 +8,15 @@ import { LandingPage } from './pages/LandingPage'
 import { AuthPage } from './pages/AuthPage'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
 import { TermsOfService } from './pages/TermsOfService'
+import { About } from './pages/About'
+import { WhatsNew } from './pages/WhatsNew'
 import { Settings } from './pages/Settings'
 import { Subscription } from './pages/Subscription'
 import { CheckoutSuccess } from './pages/CheckoutSuccess'
 import { CheckoutCancel } from './pages/CheckoutCancel'
 import { LoadingSpinner } from './components/LoadingSpinner'
+import { ScrollToTop } from './components/ScrollToTop'
+import { PublicPageLayout } from './components/PublicPageLayout'
 
 // Inner component that uses Router and auth context
 const AppRoutes: React.FC = () => {
@@ -41,12 +45,37 @@ const AppRoutes: React.FC = () => {
   }
   return (
     <Router>
+      <ScrollToTop />
       <div className="App">
         <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/" element={
+              <PublicPageLayout showBreadcrumb={false}>
+                <LandingPage />
+              </PublicPageLayout>
+            } />
+            <Route path="/auth" element={
+                <AuthPage />
+            } />
+            <Route path="/about" element={
+              <PublicPageLayout>
+                <About />
+              </PublicPageLayout>
+            } />
+            <Route path="/whats-new" element={
+              <PublicPageLayout>
+                <WhatsNew />
+              </PublicPageLayout>
+            } />
+            <Route path="/privacy" element={
+              <PublicPageLayout>
+                <PrivacyPolicy />
+              </PublicPageLayout>
+            } />
+            <Route path="/terms" element={
+              <PublicPageLayout>
+                <TermsOfService />
+              </PublicPageLayout>
+            } />
             <Route
               path="/dashboard"
               element={
