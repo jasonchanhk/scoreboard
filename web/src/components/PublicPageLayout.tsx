@@ -2,17 +2,14 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { AppNav } from './AppNav'
 import { UserMenu } from './UserMenu'
-import { Breadcrumb } from './Breadcrumb'
 import { useAuth } from '../contexts/AuthContext'
 
 interface PublicPageLayoutProps {
   children: React.ReactNode
-  showBreadcrumb?: boolean
 }
 
 export const PublicPageLayout: React.FC<PublicPageLayoutProps> = ({ 
-  children, 
-  showBreadcrumb = true 
+  children
 }) => {
   const { user } = useAuth()
 
@@ -50,13 +47,6 @@ export const PublicPageLayout: React.FC<PublicPageLayoutProps> = ({
           )
         }
       />
-      {showBreadcrumb && (
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <Breadcrumb />
-          </div>
-        </div>
-      )}
       <main className="flex-1">
         {children}
       </main>

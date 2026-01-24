@@ -49,12 +49,12 @@ const AppRoutes: React.FC = () => {
       <div className="App">
         <Routes>
             <Route path="/" element={
-              <PublicPageLayout showBreadcrumb={false}>
+              <PublicPageLayout>
                 <LandingPage />
               </PublicPageLayout>
             } />
             <Route path="/auth" element={
-                <AuthPage />
+              <AuthPage />
             } />
             <Route path="/about" element={
               <PublicPageLayout>
