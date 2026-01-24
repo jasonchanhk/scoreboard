@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { AppNav } from './AppNav'
 import { UserMenu } from './UserMenu'
+import { Footer } from './Footer'
 import { useAuth } from '../contexts/AuthContext'
 
 interface PublicPageLayoutProps {
@@ -50,31 +51,7 @@ export const PublicPageLayout: React.FC<PublicPageLayoutProps> = ({
       <main className="flex-1">
         {children}
       </main>
-      <footer className="border-t border-gray-200 bg-white py-10">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-gray-600 sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} Scoreboard. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <Link to="/about" className="hover:text-gray-900">
-              About
-            </Link>
-            <Link to="/whats-new" className="hover:text-gray-900">
-              What's New
-            </Link>
-            <Link to="/privacy" className="hover:text-gray-900">
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className="hover:text-gray-900">
-              Terms of Service
-            </Link>
-            <a href="mailto:support@scoreboard.app" className="hover:text-gray-900">
-              Support
-            </a>
-            <Link to="/auth" className="hover:text-gray-900">
-              Log in
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
