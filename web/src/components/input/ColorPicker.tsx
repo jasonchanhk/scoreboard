@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 // Predefined color options for teams
 const TEAM_COLORS = [
@@ -19,21 +20,29 @@ const TEAM_COLORS = [
 interface ColorPickerProps {
   value: string
   onChange: (color: string) => void
-  label?: string
 }
 
 export const ColorPicker: React.FC<ColorPickerProps> = ({
   value,
-  onChange,
-  label = 'Color:'
+  onChange
 }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 })
 
   // Close menu when clicking outside or pressing Escape
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (
+        isOpen &&
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        menuRef.current &&
+        !menuRef.current.contains(target)
+      ) {
         setIsOpen(false)
       }
     }
@@ -55,6 +64,13 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   }, [isOpen])
 
   const toggleMenu = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setMenuPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right
+      })
+    }
     setIsOpen(!isOpen)
   }
 
@@ -67,14 +83,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
   const selectedColor = TEAM_COLORS.find(c => c.value === value) || TEAM_COLORS[0]
 
   return (
-    <div className="mt-2">
-      {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          {label}
-        </label>
-      )}
-      <div className="relative" ref={menuRef}>
+    <div>
+      <div className="relative" ref={containerRef}>
         <button
+          ref={buttonRef}
           type="button"
           onClick={toggleMenu}
           className="flex items-center justify-center w-10 h-10 cursor-pointer rounded-full border-2 border-gray-300 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
@@ -85,10 +97,18 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         >
           <span className="sr-only">Open color picker</span>
         </button>
-        {isOpen && (
-          <div className="absolute left-0 top-full mt-2 z-50 rounded-md shadow-lg bg-white border border-gray-200">
-            <div className="p-3">
-              <div className="grid grid-cols-6 gap-2">
+        {isOpen && createPortal(
+          <div 
+            className="fixed rounded-md shadow-lg bg-white border border-gray-200 w-64" 
+            style={{ 
+              zIndex: 9999,
+              top: `${menuPosition.top}px`,
+              right: `${menuPosition.right}px`
+            }}
+            ref={menuRef}
+          >
+            <div className="p-4">
+              <div className="grid grid-cols-6 gap-3">
                 {TEAM_COLORS.map((color) => (
                   <button
                     key={color.value}
@@ -106,7 +126,8 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                 ))}
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
