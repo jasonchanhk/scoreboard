@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Badge } from '../Badge'
+import { Hero } from './Hero'
 import { HiChevronDown } from 'react-icons/hi'
 
 interface FAQItem {
@@ -41,52 +41,48 @@ export const FAQ: React.FC<FAQProps> = ({ faqs = defaultFAQs }) => {
     <>
       {/* FAQ Section */}
       <section id="faq" className="bg-gray-200/50 py-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-12">
-              <Badge>FAQ</Badge>
-              <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
-                Common questions
-              </h2>
-              <p className="text-lg text-gray-600">
-                If your question isn't answered here, you can{' '}
-                <a href="mailto:support@scoreboard.app" className="text-indigo-600 hover:text-indigo-700 underline">
-                  email us
-                </a>
-                .
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <div
-                  key={index}
-                  className="border border-gray-200 rounded-lg bg-white overflow-hidden"
-                >
-                  <button
-                    onClick={() => toggleFAQ(index)}
-                    className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
-                    aria-expanded={openIndex === index}
+        <Hero
+          badge="FAQ"
+          headline={
+            <h2 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900 pb-8">
+              Common questions
+            </h2>
+          }
+          backgroundColor="bg-transparent"
+        >
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="max-w-3xl mx-auto">
+              <div className="space-y-4">
+                {faqs.map((faq, index) => (
+                  <div
+                    key={index}
+                    className="border border-gray-200 rounded-lg bg-white overflow-hidden"
                   >
-                    <span className="text-lg font-semibold text-gray-900 pr-4">
-                      {faq.question}
-                    </span>
-                    <HiChevronDown
-                      className={`flex-shrink-0 w-5 h-5 text-gray-500 transition-transform ${
-                        openIndex === index ? 'transform rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-                  {openIndex === index && (
-                    <div className="px-6 pb-6 text-gray-600 leading-relaxed">
-                      {faq.answer}
-                    </div>
-                  )}
-                </div>
-              ))}
+                    <button
+                      onClick={() => toggleFAQ(index)}
+                      className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+                      aria-expanded={openIndex === index}
+                    >
+                      <span className="text-lg font-semibold text-gray-900 pr-4">
+                        {faq.question}
+                      </span>
+                      <HiChevronDown
+                        className={`shrink-0 w-5 h-5 text-gray-500 transition-transform ${
+                          openIndex === index ? 'transform rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    {openIndex === index && (
+                      <div className="px-6 py-6 text-gray-600 leading-relaxed text-left border-t border-gray-200/50">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </Hero>
       </section>
     </>
   )

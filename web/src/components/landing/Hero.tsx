@@ -4,18 +4,20 @@ import { Badge } from '../Badge'
 interface HeroProps {
   badge?: string
   headline?: React.ReactNode
-  paragraph?: string
+  paragraph?: React.ReactNode
   children?: React.ReactNode
+  backgroundColor?: string
 }
 
 export const Hero: React.FC<HeroProps> = ({ 
   badge,
   headline,
   paragraph,
-  children 
+  children,
+  backgroundColor = 'bg-white'
 }) => {
   return (
-    <header className="relative overflow-hidden bg-white">
+    <header className={`relative overflow-hidden ${backgroundColor}`}>
       <div className="relative mx-auto px-12 py-10 lg:py-16">
         <div className="text-center">
           {badge && <Badge>{badge}</Badge>}
@@ -25,9 +27,9 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
           )}
           {paragraph && (
-            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+            <div className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
               {paragraph}
-            </p>
+            </div>
           )}
           {children}
         </div>
