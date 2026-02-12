@@ -37,8 +37,28 @@ export const FAQ: React.FC<FAQProps> = ({ faqs = defaultFAQs }) => {
     setOpenIndex(openIndex === index ? null : index)
   }
 
+  // Generate FAQ structured data for SEO
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  }
+
   return (
     <>
+      {/* FAQ Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
+      
       {/* FAQ Section */}
       <section id="faq" className="bg-gray-200/50 py-24">
         <Hero

@@ -1,9 +1,16 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { SEOHead } from '../components/SEOHead'
 
 export const Roadmap: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title="Roadmap - Upcoming Features | Pretty Scoreboard"
+        description="See what we're building next for Pretty Scoreboard. View our roadmap of upcoming features including advanced statistics, mobile apps, and more."
+        keywords="pretty scoreboard roadmap, upcoming features, future updates, scoreboard development, feature requests"
+        canonical="https://prettyscoreboard.com/roadmap"
+      />
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Header */}

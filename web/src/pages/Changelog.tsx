@@ -1,9 +1,16 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { SEOHead } from '../components/SEOHead'
 
 export const Changelog: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title="Changelog - Latest Updates & Features | Pretty Scoreboard"
+        description="Stay up to date with the latest features and improvements to Pretty Scoreboard. See what's new, recent updates, and upcoming enhancements."
+        keywords="pretty scoreboard changelog, scoreboard updates, new features, what's new, basketball scoreboard updates"
+        canonical="https://prettyscoreboard.com/changelog"
+      />
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Header */}

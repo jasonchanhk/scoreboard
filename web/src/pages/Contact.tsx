@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Button } from '../components/button'
+import { SEOHead } from '../components/SEOHead'
 
 export const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -39,6 +40,12 @@ export const Contact: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title="Contact Us - Get in Touch | Pretty Scoreboard"
+        description="Have questions or feedback about Pretty Scoreboard? Contact us! We'd love to hear from you. Get support, share feature requests, or report issues."
+        keywords="contact pretty scoreboard, scoreboard support, get help, feature request, customer support"
+        canonical="https://prettyscoreboard.com/contact"
+      />
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Header */}

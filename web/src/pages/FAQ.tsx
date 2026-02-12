@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Question } from '../components/landing/Question'
+import { SEOHead } from '../components/SEOHead'
 
 interface FAQItem {
   question: string
@@ -32,8 +33,34 @@ export const FAQ: React.FC = () => {
     setOpenIndex(openIndex === index ? null : index)
   }
 
+  // Generate FAQ structured data for SEO
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": defaultFAQs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  }
+
   return (
     <div className="min-h-screen bg-white">
+      <SEOHead
+        title="FAQ - Frequently Asked Questions | Pretty Scoreboard"
+        description="Find answers to common questions about Pretty Scoreboard. Learn how to create scoreboards, share games, manage teams, and more."
+        keywords="pretty scoreboard FAQ, scoreboard help, basketball scoreboard questions, how to use scoreboard"
+        canonical="https://prettyscoreboard.com/faq"
+      />
+      {/* FAQ Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
+      
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Header */}

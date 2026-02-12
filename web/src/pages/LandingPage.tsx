@@ -2,11 +2,17 @@ import React from 'react'
 import { HiLink, HiClock, HiShare } from 'react-icons/hi'
 import { Hero, QuickStart, FAQ, Feature, FeatureGrid } from '../components/landing'
 import { Button } from '../components/button'
+import { SEOHead } from '../components/SEOHead'
 
 export const LandingPage: React.FC = () => {
-
   return (
     <>
+      <SEOHead
+        title="Pretty Scoreboard - Free Basketball Scoreboard App | Real-Time Game Tracking"
+        description="Free basketball scoreboard app for real-time game tracking. Manage scores, timers, and team stats. Share live updates with QR codes. No download required. Perfect for coaches, referees, and sports enthusiasts."
+        keywords="basketball scoreboard, live scoreboard, basketball score tracker, game score tracker, basketball timer, team scoreboard, free scoreboard app, real-time scoreboard, basketball game management"
+        canonical="https://prettyscoreboard.com/"
+      />
       <Hero
         badge="Now Available"
         headline={
@@ -44,9 +50,9 @@ export const LandingPage: React.FC = () => {
         <Hero
           badge="Features"
           headline={
-            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
+            <h2 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
               Sync Score to Multiple Devices
-            </h1>
+            </h2>
           }
           paragraph="Sync your score to multiple devices in real-time. View updates in real-time on any device—phones, tablets, or large displays. Anywhere around the court.">
           <div className="mb-8">
@@ -101,9 +107,9 @@ export const LandingPage: React.FC = () => {
       {/* Feature Grid: Full Screen, Quarter History, Team Colors */}
       <Hero
         headline={
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
+          <h2 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
             Other features ready to use
-          </h1>
+          </h2>
         }
         paragraph="Discover additional powerful features that enhance your scoreboard experience. From full-screen displays to detailed game history, we've got everything you need."
       >
