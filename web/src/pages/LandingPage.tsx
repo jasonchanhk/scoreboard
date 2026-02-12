@@ -13,7 +13,7 @@ export const LandingPage: React.FC = () => {
               Pretty In-sync, Pretty Simple<br/><span className="text-indigo-600 mt-2">Pretty Scoreboard </span>
             </h1>
         }
-        paragraph="The ultimate scoreboard for real-time game management. Track scores, manage teams, and share live updates — all in one beautiful interface."
+        paragraph="The ultimate scoreboard for real-time basketball game management. Track scores, manage teams, and share live updates — all in one beautiful interface."
       >
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 lg:mt-0">
           <Button

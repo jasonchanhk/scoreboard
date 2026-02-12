@@ -22,8 +22,9 @@ export const QuickStart: React.FC = () => {
 
   return (
     <div className="w-full px-12 pb-10 lg:pb-16">
-      <div className="relative bg-gray-200/50 rounded-3xl p-4 lg:px-12 lg:py-16">
-        <div className="flex flex-col lg:flex-row items-center gap-0">
+      <div className="mx-auto max-w-7xl">
+        <div className="relative bg-gray-200/50 rounded-3xl p-4 lg:px-12 lg:py-16">
+          <div className="flex flex-col lg:flex-row items-center gap-0">
           {/* Quick Start Form - Left side */}
           <div className="w-full lg:w-1/3 relative z-10 lg:-mr-6 lg:ml-6">
             <div className="bg-white rounded-3xl shadow-3xl border border-gray-200 p-8 space-y-2">
@@ -128,6 +129,7 @@ export const QuickStart: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>
