@@ -8,8 +8,8 @@ import { LandingPage } from './pages/LandingPage'
 import { AuthPage } from './pages/AuthPage'
 import { PrivacyPolicy } from './pages/PrivacyPolicy'
 import { TermsOfService } from './pages/TermsOfService'
-import { About } from './pages/About'
-import { WhatsNew } from './pages/WhatsNew'
+import { Changelog } from './pages/Changelog'
+import { Roadmap } from './pages/Roadmap'
 import { Settings } from './pages/Settings'
 import { Subscription } from './pages/Subscription'
 import { CheckoutSuccess } from './pages/CheckoutSuccess'
@@ -56,14 +56,14 @@ const AppRoutes: React.FC = () => {
             <Route path="/auth" element={
               <AuthPage />
             } />
-            <Route path="/about" element={
+            <Route path="/changelog" element={
               <PublicPageLayout>
-                <About />
+                <Changelog />
               </PublicPageLayout>
             } />
-            <Route path="/whats-new" element={
+            <Route path="/roadmap" element={
               <PublicPageLayout>
-                <WhatsNew />
+                <Roadmap />
               </PublicPageLayout>
             } />
             <Route path="/privacy" element={

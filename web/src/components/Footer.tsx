@@ -23,11 +23,6 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
               <h2 className="text-xl font-bold text-white">Pretty Scoreboard</h2>
             </div>
-            <p className="text-gray-400 mb-4 leading-relaxed">
-              Scoreboard helps leagues and teams run events with confidence. Track scores, manage
-              rosters, display live stats, and share a polished public view—all from a single
-              dashboard.
-            </p>
             <p className="text-gray-500 text-sm">
               &copy; {new Date().getFullYear()} Scoreboard. All rights reserved.
             </p>
@@ -80,13 +75,13 @@ export const Footer: React.FC<FooterProps> = ({
               </h3>
               <ul className="space-y-3">
                 <li>
-                  <Link to="/about" className="text-gray-400 hover:text-white transition-colors">
-                    About
+                  <Link to="/changelog" className="text-gray-400 hover:text-white transition-colors">
+                    Changelog
                   </Link>
                 </li>
                 <li>
-                  <Link to="/whats-new" className="text-gray-400 hover:text-white transition-colors">
-                    What's New
+                  <Link to="/roadmap" className="text-gray-400 hover:text-white transition-colors">
+                    Roadmap
                   </Link>
                 </li>
                 <li>

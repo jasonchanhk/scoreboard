@@ -16,8 +16,8 @@ export const QuickStart: React.FC = () => {
   const [awayScore] = useState(0)
 
   const handleStartGame = () => {
-    // Navigate to auth page to start the game
-    window.location.href = '/auth'
+    // Navigate to dashboard - will redirect to auth if not logged in
+    window.location.href = '/dashboard'
   }
 
   return (
@@ -27,13 +27,13 @@ export const QuickStart: React.FC = () => {
           <div className="flex flex-col lg:flex-row items-center gap-0">
           {/* Quick Start Form - Left side */}
           <div className="w-full lg:w-1/3 relative z-10 lg:-mr-6 lg:ml-6">
-            <div className="bg-white rounded-3xl shadow-3xl border border-gray-200 p-8 space-y-2">
+            <div className="bg-indigo-600 rounded-3xl shadow-3xl border border-indigo-700 p-8 space-y-2">
               <div className="mb-8">
-                <h2 className="text-4xl font-bold text-gray-900">
-                  Quick start with <br/> <span className="text-indigo-600">Pretty Scoreboard</span>
+                <h2 className="text-4xl font-bold text-white">
+                  Start your own  Scoreboard now
                 </h2>
-                <p className="text-md text-gray-600 mt-4 leading-tight">
-                  Get your own scoreboard up and running in seconds.
+                <p className="text-md text-indigo-100 mt-4 leading-tight">
+                  Set up in seconds with your own teams and timer duration.
                 </p>
               </div>
 
@@ -72,10 +72,10 @@ export const QuickStart: React.FC = () => {
               />
               
               <Button
-                variant="primary"
+                variant="outline"
                 size="lg"
                 onClick={handleStartGame}
-                className="w-full mt-2"
+                className="w-full mt-2 bg-white border-white text-indigo-600 hover:bg-indigo-50"
               >
                 Start
               </Button>
