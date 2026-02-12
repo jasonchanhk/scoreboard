@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Badge } from '../Badge'
 import { HiChevronDown } from 'react-icons/hi'
 
 interface FAQItem {
@@ -39,43 +39,12 @@ export const FAQ: React.FC<FAQProps> = ({ faqs = defaultFAQs }) => {
 
   return (
     <>
-      {/* CTA Section */}
-      <section className="border-t border-gray-200 bg-white py-20">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-10 px-6 lg:flex-row">
-          <div className="space-y-4 text-center lg:text-left">
-            <h2 className="text-3xl font-semibold text-gray-900 sm:text-4xl">
-              Ready to modernize your game day?
-            </h2>
-            <p className="text-lg text-gray-600">
-              Join teams that deliver a professional-grade experience—start your first game in just
-              a few clicks.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              to="/auth"
-              className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-6 py-3 font-semibold text-white transition hover:bg-indigo-600"
-            >
-              Launch the Dashboard
-            </Link>
-            <a
-              href="mailto:hello@scoreboard.app"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-            >
-              Talk to Sales
-            </a>
-          </div>
-        </div>
-      </section>
-
       {/* FAQ Section */}
-      <section id="faq" className="border-t border-gray-200 bg-white py-24">
+      <section id="faq" className="bg-gray-200/50 py-24">
         <div className="mx-auto max-w-6xl px-6">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
-              <span className="inline-flex rounded-full bg-indigo-100 px-4 py-1 text-sm font-medium text-indigo-700 mb-4">
-                FAQ
-              </span>
+              <Badge>FAQ</Badge>
               <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
                 Common questions
               </h2>
