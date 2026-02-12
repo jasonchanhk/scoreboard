@@ -9,14 +9,9 @@ export const LandingPage: React.FC = () => {
       <Hero
         badge="Now Available"
         headline={
-          <>
-            <h1 className="text-5xl sm:text-6xl lg:text-5xl font-bold tracking-tight text-grey-900">
-              Pretty In-sync, Pretty Simple
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
+              Pretty In-sync, Pretty Simple<br/><span className="text-indigo-600 mt-2">Pretty Scoreboard </span>
             </h1>
-            <h1 className="text-5xl sm:text-6xl lg:text-5xl font-bold tracking-tight text-indigo-600">
-              Pretty Scoreboard 
-            </h1>
-          </>
         }
         paragraph="The ultimate scoreboard for real-time game management. Track scores, manage teams, and share live updates — all in one beautiful interface."
       >
@@ -40,12 +35,14 @@ export const LandingPage: React.FC = () => {
           </Button>
          </div>
       </Hero>
+
       <QuickStart />
       
       {/* Hero Section: Sync Score to Multiple Devices */}
       <Hero
+      badge="Features"
         headline={
-            <h1 className="text-5xl sm:text-6xl lg:text-5xl font-bold tracking-tight text-grey-900">
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
               Sync Score to Multiple Devices
             </h1>
         }

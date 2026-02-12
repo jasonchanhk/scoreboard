@@ -20,7 +20,7 @@ export const Hero: React.FC<HeroProps> = ({
         <div className="text-center">
           {badge && <Badge>{badge}</Badge>}
           {headline && (
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mt-2 mb-6">
               {headline}
             </div>
           )}

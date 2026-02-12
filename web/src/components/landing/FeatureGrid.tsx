@@ -21,32 +21,32 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   buttonTo
 }) => {
   return (
-    <div className="bg-white rounded-lg p-6">
-      <div className="mb-4">
-        <img 
-          src={imageSrc} 
-          alt={imageAlt} 
-          className="w-full h-auto rounded-3xl shadow-3xl"
-        />
+    <div className="bg-white rounded-3xl shadow-3xl overflow-hidden flex flex-col ">
+      <img 
+        src={imageSrc} 
+        alt={imageAlt} 
+        className="w-full h-auto border-b border-gray-200"
+      />
+      <div className="p-8">
+        <h3 className="text-3xl font-bold text-gray-900 mb-4 text-left">
+          {title}
+        </h3>
+        <p className="text-gray-600 mb-8 text-left text-sm">
+          {description}
+        </p>
+        {buttonText && (
+          <div className="flex justify-start">
+            <Button
+              variant="primary"
+              size="md"
+              onClick={buttonOnClick}
+              to={buttonTo}
+            >
+              {buttonText}
+            </Button>
+          </div>
+        )}
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2 text-left">
-        {title}
-      </h3>
-      <p className="text-gray-600 mb-4 text-left">
-        {description}
-      </p>
-      {buttonText && (
-        <div className="flex justify-start">
-          <Button
-            variant="primary"
-            size="md"
-            onClick={buttonOnClick}
-            to={buttonTo}
-          >
-            {buttonText}
-          </Button>
-        </div>
-      )}
     </div>
   )
 }
@@ -59,7 +59,7 @@ export const FeatureGrid: React.FC<FeatureGridProps> = ({ features }) => {
   return (
     <section className="bg-white py-12">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {features.map((feature, index) => (
             <FeatureCard
               key={index}

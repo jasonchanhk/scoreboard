@@ -28,7 +28,7 @@ export const Feature: React.FC<FeatureProps> = ({
   const bgColor = backgroundColor === 'gray' ? 'bg-gray-200/50' : 'bg-white'
 
   return (
-    <section className={`${bgColor} py-16`}>
+    <section className={`${bgColor} py-24`}>
       <div className="mx-auto max-w-7xl px-6">
         <div className={`flex flex-col ${isImageLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-12`}>
           {/* Image */}
