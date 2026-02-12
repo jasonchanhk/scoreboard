@@ -1,4 +1,5 @@
 import React from 'react'
+import { HiLink, HiClock, HiShare } from 'react-icons/hi'
 import { Hero, QuickStart, FAQ, Feature, FeatureGrid } from '../components/landing'
 import { Button } from '../components/button'
 
@@ -20,7 +21,7 @@ export const LandingPage: React.FC = () => {
             variant="outline"
             size="md"
             onClick={() => {
-              const element = document.getElementById('features')
+              const element = document.getElementById('sync-devices')
               element?.scrollIntoView({ behavior: 'smooth' })
             }}
           >
@@ -29,7 +30,7 @@ export const LandingPage: React.FC = () => {
           <Button
             variant="primary"
             size="md"
-            to="/auth"
+            to="/dashboard"
           >
             Get Started
           </Button>
@@ -39,30 +40,34 @@ export const LandingPage: React.FC = () => {
       <QuickStart />
       
       {/* Hero Section: Sync Score to Multiple Devices */}
-      <Hero
-      badge="Features"
-        headline={
+      <section id="sync-devices">
+        <Hero
+          badge="Features"
+          headline={
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
               Sync Score to Multiple Devices
             </h1>
-        }
-        paragraph="Sync your score to multiple devices in real-time. View updates in real-time on any device—phones, tablets, or large displays. Anywhere around the court.">
-        <div className="mb-8">
-          <img 
-            src="/sync-score-to-multiple-devices.png" 
-            alt="Sync score to multiple devices" 
-            className="w-full max-w-7xl mx-auto"
-          />
-        </div>
-      </Hero>
+          }
+          paragraph="Sync your score to multiple devices in real-time. View updates in real-time on any device—phones, tablets, or large displays. Anywhere around the court.">
+          <div className="mb-8">
+            <img 
+              src="/sync-score-to-multiple-devices.png" 
+              alt="Sync score to multiple devices" 
+              className="w-full max-w-7xl mx-auto"
+            />
+          </div>
+        </Hero>
+      </section>
 
       {/* Feature Section 1: Choose Team Color */}
       <Feature
         imageSrc="features/connect-to-scoreboard.png"
-        imageAlt="Choose Team Color Feature"
+        imageAlt="Connect to Scoreboard"
         title="Connect to Scoreboard"
-        description="Use share code, QR code, or public link to connect to your scoreboard. No need to install any software."
+        description="Use share code, QR code, or public link to connect to your scoreboard. No need to install any software. Anywhere around the court."
+        icon={HiLink}
         buttonText="Get Started"
+        buttonTo="/dashboard"
         imagePosition="left"
         backgroundColor="gray"
       />
@@ -72,8 +77,10 @@ export const LandingPage: React.FC = () => {
         imageSrc="features/manage-quarter-timer.png"
         imageAlt="Manage Quarter Timer Feature"
         title="Manage quarter timer"
-        description="Control game time with precision. Start, pause, and reset the timer for each quarter. Track game progress and keep everyone synchronized with real-time updates."
+        description="Control game time with precision. Start, pause, and reset the timer for each quarter. Keep everyone synchronized with real time."
+        icon={HiClock}
         buttonText="Get Started"
+        buttonTo="/dashboard"
         imagePosition="right"
         backgroundColor="white"
       />
@@ -84,7 +91,9 @@ export const LandingPage: React.FC = () => {
         imageAlt="Share your game summary"
         title="Share your Game Summary"
         description="Download your game summary as a PNG image. Share your wins on social media."
+        icon={HiShare}
         buttonText="Get Started"
+        buttonTo="/dashboard"
         imagePosition="left"
         backgroundColor="gray"
       />
@@ -92,8 +101,8 @@ export const LandingPage: React.FC = () => {
       {/* Feature Grid: Full Screen, Quarter History, Team Colors */}
       <Hero
         headline={
-          <h1 className="text-5xl sm:text-6xl lg:text-5xl font-bold tracking-tight text-grey-900">
-            More features ready to use
+          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
+            Other features ready to use
           </h1>
         }
         paragraph="Discover additional powerful features that enhance your scoreboard experience. From full-screen displays to detailed game history, we've got everything you need."
@@ -105,21 +114,24 @@ export const LandingPage: React.FC = () => {
               imageAlt: "Full screen option",
               title: "Full Screen Option",
               description: "Display your scoreboard in full screen mode for a distraction-free viewing experience. Perfect for large displays and presentations.",
-              buttonText: "Get Started"
+              buttonText: "Get Started",
+              buttonTo: "/dashboard"
             },
             {
               imageSrc: "/features/view-quarter-history.png",
               imageAlt: "View quarter history",
               title: "View Quarter History",
               description: "Track and review the history of each quarter. See detailed statistics and scores for every period of the game.",
-              buttonText: "Get Started"
+              buttonText: "Get Started",
+              buttonTo: "/dashboard"
             },
             {
               imageSrc: "/features/choose-team-color.png",
               imageAlt: "Choose team color",
               title: "Choose Team Colors",
               description: "Customize team colors to match your team's branding. Make your scoreboard visually distinct and easy to follow.",
-              buttonText: "Get Started"
+              buttonText: "Get Started",
+              buttonTo: "/dashboard"
             }
           ]}
         />
