@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { FaBasketballBall } from 'react-icons/fa'
+import { BrandingLogo } from './BrandingLogo'
 import { TwoColumnLayout } from './layout'
 
 interface FooterProps {
@@ -17,11 +17,8 @@ export const Footer: React.FC<FooterProps> = ({
       <TwoColumnLayout backgroundColor={backgroundColor} gap={gap}>
           {/* Left Section - Branding */}
           <div className="flex-1 max-w-md">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="flex items-center justify-center w-10 h-10 bg-indigo-600 rounded-full">
-                <FaBasketballBall className="text-white text-lg" />
-              </div>
-              <h2 className="text-xl font-bold text-white">Pretty Scoreboard</h2>
+            <div className="mb-4">
+              <BrandingLogo variant="footer" />
             </div>
             <p className="text-gray-500 text-sm">
               &copy; {new Date().getFullYear()} Scoreboard. All rights reserved.
@@ -56,14 +53,14 @@ export const Footer: React.FC<FooterProps> = ({
               </h3>
               <ul className="space-y-3">
                 <li>
-                  <a href="mailto:support@scoreboard.app" className="text-gray-400 hover:text-white transition-colors">
-                    support@scoreboard.app
-                  </a>
+                  <Link to="/faq" className="text-gray-400 hover:text-white transition-colors">
+                    FAQ
+                  </Link>
                 </li>
                 <li>
-                  <a href="/#faq" className="text-gray-400 hover:text-white transition-colors">
-                    FAQ
-                  </a>
+                  <Link to="/contact" className="text-gray-400 hover:text-white transition-colors">
+                    Contact
+                  </Link>
                 </li>
               </ul>
             </div>

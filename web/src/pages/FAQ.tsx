@@ -1,14 +1,9 @@
 import React, { useState } from 'react'
-import { Hero } from './Hero'
-import { Question } from './Question'
+import { Question } from '../components/landing/Question'
 
 interface FAQItem {
   question: string
   answer: string
-}
-
-interface FAQProps {
-  faqs?: FAQItem[]
 }
 
 const defaultFAQs: FAQItem[] = [
@@ -30,7 +25,7 @@ const defaultFAQs: FAQItem[] = [
   }
 ]
 
-export const FAQ: React.FC<FAQProps> = ({ faqs = defaultFAQs }) => {
+export const FAQ: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   const toggleFAQ = (index: number) => {
@@ -38,35 +33,33 @@ export const FAQ: React.FC<FAQProps> = ({ faqs = defaultFAQs }) => {
   }
 
   return (
-    <>
-      {/* FAQ Section */}
-      <section id="faq" className="bg-gray-200/50 py-24">
-        <Hero
-          badge="FAQ"
-          headline={
-            <h2 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900 pb-8">
-              Common questions
-            </h2>
-          }
-          backgroundColor="bg-gray-100"
-        >
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="max-w-3xl mx-auto">
-              <div className="space-y-4">
-                {faqs.map((faq, index) => (
-                  <Question
-                    key={index}
-                    question={faq.question}
-                    answer={faq.answer}
-                    isOpen={openIndex === index}
-                    onToggle={() => toggleFAQ(index)}
-                  />
-                ))}
-              </div>
-            </div>
+    <div className="min-h-screen bg-white">
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-5xl font-bold text-gray-900 mb-2">Frequently Asked Questions</h1>
+          <p className="text-gray-600">Find answers to common questions about Pretty Scoreboard</p>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-200 mb-8"></div>
+
+        {/* Content */}
+        <div className="prose prose-lg max-w-none">
+          <div className="space-y-4">
+            {defaultFAQs.map((faq, index) => (
+              <Question
+                key={index}
+                question={faq.question}
+                answer={faq.answer}
+                isOpen={openIndex === index}
+                onToggle={() => toggleFAQ(index)}
+              />
+            ))}
           </div>
-        </Hero>
-      </section>
-    </>
+        </div>
+      </div>
+    </div>
   )
 }

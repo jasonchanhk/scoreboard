@@ -1,26 +1,22 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { FaBasketballBall } from 'react-icons/fa'
 
 export const Roadmap: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-indigo-700 rounded-full">
-              <FaBasketballBall className="text-white text-xl" />
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900">Pretty Scoreboard</h1>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mt-8 mb-2">Roadmap</h2>
+          <h1 className="text-5xl font-bold text-gray-900 mb-2">Roadmap</h1>
           <p className="text-gray-600">See what we're building next and share your feedback</p>
         </div>
 
+        {/* Divider */}
+        <div className="border-t border-gray-200 mb-8"></div>
+
         {/* Content */}
-        <div className="prose prose-lg max-w-none bg-white rounded-lg shadow-sm p-8 sm:p-12">
+        <div className="prose prose-lg max-w-none">
           <section className="mb-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">Coming Soon</h3>
             <div className="text-gray-700 leading-relaxed">

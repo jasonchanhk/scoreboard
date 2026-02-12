@@ -10,6 +10,8 @@ import { PrivacyPolicy } from './pages/PrivacyPolicy'
 import { TermsOfService } from './pages/TermsOfService'
 import { Changelog } from './pages/Changelog'
 import { Roadmap } from './pages/Roadmap'
+import { Contact } from './pages/Contact'
+import { FAQ } from './pages/FAQ'
 import { Settings } from './pages/Settings'
 import { Subscription } from './pages/Subscription'
 import { CheckoutSuccess } from './pages/CheckoutSuccess'
@@ -64,6 +66,16 @@ const AppRoutes: React.FC = () => {
             <Route path="/roadmap" element={
               <PublicPageLayout>
                 <Roadmap />
+              </PublicPageLayout>
+            } />
+            <Route path="/contact" element={
+              <PublicPageLayout>
+                <Contact />
+              </PublicPageLayout>
+            } />
+            <Route path="/faq" element={
+              <PublicPageLayout>
+                <FAQ />
               </PublicPageLayout>
             } />
             <Route path="/privacy" element={

@@ -28,7 +28,7 @@ export const Feature: React.FC<FeatureProps> = ({
   backgroundColor = 'white',
 }) => {
   const isImageLeft = imagePosition === 'left'
-  const bgColor = backgroundColor === 'gray' ? 'bg-gray-200/50' : 'bg-white'
+  const bgColor = backgroundColor === 'gray' ? 'bg-gray-100' : 'bg-white'
 
   return (
     <section className={`${bgColor} py-24`}>

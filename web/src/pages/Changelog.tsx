@@ -1,26 +1,22 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { FaBasketballBall } from 'react-icons/fa'
 
 export const Changelog: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-indigo-700 rounded-full">
-              <FaBasketballBall className="text-white text-xl" />
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900">Pretty Scoreboard</h1>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mt-8 mb-2">Changelog</h2>
+          <h1 className="text-5xl font-bold text-gray-900 mb-2">Changelog</h1>
           <p className="text-gray-600">Stay up to date with the latest features and improvements</p>
         </div>
 
+        {/* Divider */}
+        <div className="border-t border-gray-200 mb-8"></div>
+
         {/* Content */}
-        <div className="prose prose-lg max-w-none bg-white rounded-lg shadow-sm p-8 sm:p-12">
+        <div className="prose prose-lg max-w-none">
           <section className="mb-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">Latest Updates</h3>
             <div className="space-y-6">

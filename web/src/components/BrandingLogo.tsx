@@ -2,7 +2,7 @@ import React from 'react'
 import { FaBasketballBall } from 'react-icons/fa'
 
 interface BrandingLogoProps {
-  variant?: 'default' | 'compact' | 'navbar' | 'summary'
+  variant?: 'default' | 'compact' | 'navbar' | 'summary' | 'footer'
   onClick?: () => void
   className?: string
   borderColor?: 'gray' | 'black'
@@ -31,10 +31,24 @@ export const BrandingLogo: React.FC<BrandingLogoProps> = ({
         className={`flex items-center space-x-3 ${cursorClass} ${className}`}
         onClick={onClick}
       >
-        <div className={`flex items-center justify-center ${iconSize} bg-indigo-600 rounded-full flex-shrink-0`}>
+        <div className={`flex items-center justify-center ${iconSize} bg-indigo-600 rounded-full shrink-0`}>
           <FaBasketballBall className={`text-white ${iconTextSize}`} />
         </div>
         <h1 className="text-xl font-bold text-gray-900">Pretty Scoreboard</h1>
+      </div>
+    )
+  }
+
+  if (variant === 'footer') {
+    return (
+      <div 
+        className={`flex items-center space-x-3 ${cursorClass} ${className}`}
+        onClick={onClick}
+      >
+        <div className={`flex items-center justify-center ${iconSize} bg-indigo-600 rounded-full shrink-0`}>
+          <FaBasketballBall className={`text-white ${iconTextSize}`} />
+        </div>
+        <h2 className="text-xl font-bold text-white">Pretty Scoreboard</h2>
       </div>
     )
   }
@@ -44,7 +58,7 @@ export const BrandingLogo: React.FC<BrandingLogoProps> = ({
       className={`${baseClasses} ${borderClass} ${cursorClass} ${className}`}
       onClick={onClick}
     >
-      <div className={`flex items-center justify-center ${iconSize} bg-indigo-600 rounded-full flex-shrink-0`}>
+      <div className={`flex items-center justify-center ${iconSize} bg-indigo-600 rounded-full shrink-0`}>
         <FaBasketballBall className={`text-white ${iconTextSize}`} />
       </div>
       <div className="flex flex-col">

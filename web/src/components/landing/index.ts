@@ -1,5 +1,6 @@
 export { Hero } from './Hero'
 export { QuickStart } from './QuickStart'
 export { FAQ } from './FAQ'
+export { Question } from './Question'
 export { Feature } from './Feature'
 export { FeatureGrid } from './FeatureGrid'
