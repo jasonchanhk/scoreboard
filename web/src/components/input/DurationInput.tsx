@@ -106,7 +106,7 @@ export const DurationInput: React.FC<DurationInputProps> = ({
             max={max}
             required={required}
             disabled={disabled}
-            className={`block w-full rounded-2xl border border-gray-400 bg-white px-4 pt-8 pb-3 pr-24 text-transparent focus:border-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 focus:outline-none sm:text-lg transition-all ${
+            className={`block w-full rounded-lg border border-gray-400 bg-white px-4 pt-8 pb-3 pr-24 text-transparent focus:border-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 focus:outline-none sm:text-lg transition-all ${
               disabled 
                 ? 'bg-gray-100 cursor-not-allowed' 
                 : ''

@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { AuthPageLayout, AppLogo, AuthDivider } from './auth'
+import { AuthPageLayout, AppLogo } from './auth'
 import { GoogleSignInButton } from './button'
+import { TextInput } from './input/TextInput'
 import { Toast } from './Toast'
 import { useToast } from '../hooks/useToast'
 import { useGoogleSignIn } from '../hooks/useGoogleSignIn'
@@ -122,59 +123,71 @@ export const LoginForm: React.FC = () => {
         isVisible={toast.isVisible}
         onClose={hideToast}
       />
-      <div>
-        <AppLogo />
-        <h2 className="mt-6 text-center text-2xl font-semibold text-gray-900">
-          Sign in or create an account
-        </h2>
-      </div>
-      <div className="mt-8 space-y-6">
-        <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
-        <AuthDivider />
-      </div>
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-md shadow-sm">
-          <div>
-            <label htmlFor="email" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className={`appearance-none relative block w-full px-3 py-2 border ${
-                emailError ? 'border-red-300' : 'border-gray-300'
-              } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value)
-                // Clear error state when user starts typing
-                if (emailError) {
-                  const trimmed = e.target.value.trim()
-                  if (trimmed && isValidEmailFormat(trimmed) && !hasPlusAddressing(trimmed)) {
-                    setEmailError(false)
-                  }
-                }
-              }}
-              onBlur={handleEmailBlur}
-              disabled={loading}
-            />
-          </div>
+      <div className="bg-white rounded-3xl shadow-3xl w-full max-w-md border border-gray-200">
+      <p className="text-sm font-semibold text-gray-900 text-center border-b border-gray-200 py-4">
+            Log in or sign up
+          </p>
+        <div className="p-8">
+        <div className="mb-8 -mx-8 px-8">
+          
+          <h2 className="text-3xl font-bold tracking-tight text-grey-900">
+            Welcome to
+            <br />
+            <span className="text-indigo-600">Pretty Scoreboard</span>
+          </h2>
         </div>
 
-        <div>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <TextInput
+            label="Email address"
+            type="email"
+            value={email}
+            onChange={(value) => {
+              setEmail(value)
+              // Clear error state when user starts typing
+              if (emailError) {
+                const trimmed = value.trim()
+                if (trimmed && isValidEmailFormat(trimmed) && !hasPlusAddressing(trimmed)) {
+                  setEmailError(false)
+                }
+              }
+            }}
+            onBlur={handleEmailBlur}
+            placeholder="Email address"
+            required
+            id="email"
+            autoComplete="email"
+            disabled={loading}
+          />
+
+          <div className="text-xs text-gray-600">
+            We'll send you a magic link to confirm your email. Standard message and data rates apply.{' '}
+            <a href="/privacy" className="underline hover:text-gray-900">
+              Privacy Policy
+            </a>
+          </div>
+
           <button
             type="submit"
             disabled={loading}
-            className="group relative w-full flex justify-center py-2 px-4 cursor-pointer border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-base cursor-pointer"
           >
-            {loading ? 'Sending magic link...' : 'Send magic link'}
+            {loading ? 'Sending magic link...' : 'Continue'}
           </button>
+        </form>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">or</span>
+          </div>
         </div>
-      </form>
+
+        <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
+      </div>
+      </div>
     </AuthPageLayout>
   )
 }

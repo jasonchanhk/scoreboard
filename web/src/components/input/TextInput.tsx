@@ -10,6 +10,9 @@ interface TextInputProps {
   className?: string
   type?: 'text' | 'email' | 'password' | 'tel' | 'url'
   rightComponent?: React.ReactNode
+  onBlur?: () => void
+  disabled?: boolean
+  autoComplete?: string
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -21,7 +24,10 @@ export const TextInput: React.FC<TextInputProps> = ({
   required = false,
   className = '',
   type = 'text',
-  rightComponent
+  rightComponent,
+  onBlur,
+  disabled = false,
+  autoComplete
 }) => {
   const inputId = id || `text-input-${label.toLowerCase().replace(/\s+/g, '-')}`
 
@@ -41,11 +47,14 @@ export const TextInput: React.FC<TextInputProps> = ({
             id={inputId}
             value={value}
             onChange={(e) => onChange(e.target.value)}
+            onBlur={onBlur}
             placeholder={placeholder}
             required={required}
-            className={`block w-full rounded-2xl border border-gray-400 bg-white px-4 pt-8 pb-3 text-gray-900 focus:border-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 focus:outline-none sm:text-lg transition-all ${
+            disabled={disabled}
+            autoComplete={autoComplete}
+            className={`block w-full rounded-lg border border-gray-400 bg-white px-4 pt-8 pb-3 text-gray-900 focus:border-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 focus:outline-none sm:text-lg transition-all ${
               rightComponent ? 'pr-12' : ''
-            }`}
+            } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
           />
           {rightComponent && (
             <>
