@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+@utility shadow-3xl {
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.35);
+}
+
+@utility shadow-4xl {
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+}

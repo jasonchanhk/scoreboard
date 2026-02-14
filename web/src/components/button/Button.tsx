@@ -22,7 +22,7 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   to
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center rounded-lg font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer'
+  const baseClasses = 'inline-flex items-center justify-center rounded-2xl font-semibold shadow-sm transition focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer'
   
   const variantClasses = {
     primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',

@@ -287,7 +287,6 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
           max={60}
           required
           disabled={mode === 'edit'}
-          quickOptions={mode === 'create' ? [12, 10, 5] : []}
         />
         
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

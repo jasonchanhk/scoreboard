@@ -18,7 +18,7 @@ export const useScoreboardData = ({ scoreboardId, shareCode, userId }: UseScoreb
   const [error, setError] = useState<string | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   const subscriptionRef = useRef<any>(null)
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pollIntervalRef = useRef<number | null>(null)
   const scoreboardRef = useRef<ScoreboardData | null>(null)
 
   // Helper function to fetch quarters for teams

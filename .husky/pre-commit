@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+cd web
+
+# Run TypeScript type checking first
+echo "🔍 Running TypeScript type check..."
+npm run type-check || {
+  echo "❌ TypeScript errors found. Please fix them before committing."
+  exit 1
+}
+
+# Run lint-staged for formatting
+npx lint-staged
