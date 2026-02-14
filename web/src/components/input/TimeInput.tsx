@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from 'react'
-
-const HOURS = Array.from({ length: 24 }, (_, index) => index.toString().padStart(2, '0'))
-const MINUTES = ['00', '15', '30', '45']
+import React from 'react'
 
 interface TimeInputProps {
   label: string
@@ -20,85 +17,28 @@ export const TimeInput: React.FC<TimeInputProps> = ({
   required = false,
   className = ''
 }) => {
-  // Parse the time value into hour and minute
-  const parseValue = (val: string) => {
-    if (!val) return ['', '']
-    const parts = val.split(':')
-    return [parts[0] || '', parts[1] || '']
-  }
-
-  const [hour, setHour] = useState(() => parseValue(value)[0])
-  const [minute, setMinute] = useState(() => parseValue(value)[1])
-
-  // Sync local state with prop value when it changes externally
-  useEffect(() => {
-    const [parsedHour, parsedMinute] = parseValue(value)
-    setHour(parsedHour)
-    setMinute(parsedMinute)
-  }, [value])
-  
-  const handleHourChange = (newHour: string) => {
-    setHour(newHour)
-    if (newHour && minute) {
-      onChange(`${newHour}:${minute}`)
-    } else if (!newHour && !minute) {
-      onChange('')
-    } else {
-      // Don't call onChange yet if only one part is set
-      // This allows user to set hour first, then minute
-    }
-  }
-  
-  const handleMinuteChange = (newMinute: string) => {
-    setMinute(newMinute)
-    if (hour && newMinute) {
-      onChange(`${hour}:${newMinute}`)
-    } else if (!hour && !newMinute) {
-      onChange('')
-    } else {
-      // Don't call onChange yet if only one part is set
-      // This allows user to set minute first, then hour
-    }
-  }
-
   const inputId = id || `time-input-${label.toLowerCase().replace(/\s+/g, '-')}`
 
   return (
     <div className={className}>
-      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700">
-        {label}
-        {!required && <span className="text-gray-400 font-normal ml-1">- Optional</span>}
-      </label>
-      <div className="mt-2 flex items-center gap-3">
-        <select
-          id={`${inputId}-hour`}
-          value={hour}
-          onChange={(e) => handleHourChange(e.target.value)}
-          className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+      <div className="relative">
+        <label 
+          htmlFor={inputId} 
+          className="absolute left-4 top-3 text-sm text-gray-900 pointer-events-none font-semibold z-10"
         >
-          <option value="">HH</option>
-          {!HOURS.includes(hour) && hour && <option value={hour}>{hour}</option>}
-          {HOURS.map(h => (
-            <option key={h} value={h}>
-              {h}
-            </option>
-          ))}
-        </select>
-        <span className="text-lg text-gray-500">:</span>
-        <select
-          id={`${inputId}-minute`}
-          value={minute}
-          onChange={(e) => handleMinuteChange(e.target.value)}
-          className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        >
-          <option value="">MM</option>
-          {!MINUTES.includes(minute) && minute && <option value={minute}>{minute}</option>}
-          {MINUTES.map(m => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
+          {label}
+          {required && <span className="text-gray-400 ml-1">*</span>}
+        </label>
+        <div className="relative">
+          <input
+            type="time"
+            id={inputId}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            required={required}
+            className="block w-full rounded-lg border border-gray-400 bg-white px-4 pt-8 pb-3 text-gray-900 focus:border-gray-900 focus:ring-2 focus:ring-gray-900 focus:ring-offset-0 focus:outline-none sm:text-lg transition-all"
+          />
+        </div>
       </div>
     </div>
   )

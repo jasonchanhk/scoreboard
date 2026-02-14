@@ -42,6 +42,7 @@ export const QuickStart: React.FC = () => {
                 value={homeTeamName}
                 onChange={setHomeTeamName}
                 placeholder="Enter name"
+                required
                 rightComponent={
                   <ColorPicker
                     value={homeTeamColor}
@@ -55,6 +56,7 @@ export const QuickStart: React.FC = () => {
                 value={awayTeamName}
                 onChange={setAwayTeamName}
                 placeholder="Enter name"
+                required
                 rightComponent={
                   <ColorPicker
                     value={awayTeamColor}
@@ -69,6 +71,7 @@ export const QuickStart: React.FC = () => {
                 onChange={setDuration}
                 min={1}
                 max={60}
+                required
               />
               
               <Button

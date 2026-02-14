@@ -236,45 +236,45 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
         variant: 'primary',
         disabled: loading,
       }}
-      contentClassName="w-11/12 md:w-4/5 lg:w-3/4 xl:w-2/3"
+      contentClassName="w-11/12 md:w-2/3 lg:w-1/2 xl:w-3/5"
       buttonAlignment="right"
     >
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-medium text-gray-900">
+        <h3 className="text-2xl font-bold text-gray-900">
           {mode === 'create' ? 'Create Scoreboard' : 'Edit Scoreboard'}
         </h3>
         <CloseButton onClick={onCancel} />
       </div>
-      <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <TextInput
-              label="Home"
-              value={formData.teamAName}
-              onChange={(value) => updateField('teamAName', value)}
-              id="teamA"
-              placeholder="Enter home team name"
-              required
-            />
-            <ColorPicker
-              value={formData.teamAColor}
-              onChange={(value) => updateField('teamAColor', value)}
-            />
-          </div>
-          <div>
-            <TextInput
-              label="Away"
-              value={formData.teamBName}
-              onChange={(value) => updateField('teamBName', value)}
-              id="teamB"
-              placeholder="Enter away team name"
-              required
-            />
-            <ColorPicker
-              value={formData.teamBColor}
-              onChange={(value) => updateField('teamBColor', value)}
-            />
-          </div>
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <TextInput
+            label="Home"
+            value={formData.teamAName}
+            onChange={(value) => updateField('teamAName', value)}
+            id="teamA"
+            placeholder="Enter name"
+            required
+            rightComponent={
+              <ColorPicker
+                value={formData.teamAColor}
+                onChange={(value) => updateField('teamAColor', value)}
+              />
+            }
+          />
+          <TextInput
+            label="Away"
+            value={formData.teamBName}
+            onChange={(value) => updateField('teamBName', value)}
+            id="teamB"
+            placeholder="Enter name"
+            required
+            rightComponent={
+              <ColorPicker
+                value={formData.teamBColor}
+                onChange={(value) => updateField('teamBColor', value)}
+              />
+            }
+          />
         </div>
         
         {/* Show timer duration - editable in create mode, read-only in edit mode */}
@@ -289,13 +289,13 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
           disabled={mode === 'edit'}
         />
         
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <TextInput
             label="Venue"
             value={formData.venue}
             onChange={(value) => updateField('venue', value)}
               id="venue"
-              placeholder="Enter venue name"
+              placeholder="Enter venue"
             />
           <DateInput
             label="Game Date"
@@ -304,7 +304,7 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
               id="gameDate"
             />
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mb-6">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 mb-6">
           <TimeInput
             label="Start Time"
             value={formData.gameStartTime}

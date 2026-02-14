@@ -39,7 +39,7 @@ export const TextInput: React.FC<TextInputProps> = ({
           className="absolute left-4 top-3 text-sm text-gray-900 pointer-events-none font-semibold z-10"
         >
           {label}
-          {!required && <span className="text-gray-400 ml-1">*</span>}
+          {required && <span className="text-gray-400 ml-1">*</span>}
         </label>
         <div className="relative">
           <input
