@@ -2,6 +2,41 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { SEOHead } from '../components/SEOHead'
 
+interface ChangelogEntry {
+  version: string
+  date: string
+  items: string[]
+}
+
+interface ChangelogData {
+  updates: ChangelogEntry[]
+}
+
+const changelogData: ChangelogData = {
+  updates: [
+    {
+      version: 'v.1.0.1',
+      date: 'February 16, 2026',
+      items: [
+        'Improved real-time synchronization across all devices',
+        'Enhanced mobile experience for scoreboard controllers',
+        'Export game summary as PNG image',
+        'Updated landing, changelog, and roadmap pages styling'
+      ]
+    },
+    {
+      version: 'v.1.0.0',
+      date: 'Novemeber 20, 2025',
+      items: [
+        'Basic Scoreboard Creation',
+        'Share code functionality for easy scoreboard sharing',
+        'Quarter history tracking and display',
+        'Fullscreen mode for public displays',
+      ]
+    }
+  ]
+}
+
 export const Changelog: React.FC = () => {
   return (
     <div className="min-h-screen bg-white">
@@ -16,7 +51,14 @@ export const Changelog: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-5xl font-bold text-gray-900 mb-2">Changelog</h1>
-          <p className="text-gray-600">Stay up to date with the latest features and improvements</p>
+          <p className="text-gray-600">
+            Latest features and improvements.{' '}
+            See what's coming next on our {' '}
+            <Link to="/roadmap" className="text-indigo-600 hover:text-indigo-700 underline">
+              roadmap
+            </Link>
+            .
+          </p>
         </div>
 
         {/* Divider */}
@@ -27,52 +69,32 @@ export const Changelog: React.FC = () => {
           <section className="mb-8">
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">Latest Updates</h3>
             <div className="space-y-6">
-              <div className="border-l-4 border-indigo-500 pl-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-semibold text-indigo-600">Latest Updates</span>
-                  <span className="text-sm text-gray-500">• {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              {changelogData.updates.map((update, index) => (
+                <div
+                  key={update.version}
+                  className={`border-l-4 pl-4 ${
+                    index === 0 ? 'border-indigo-500' : 'border-gray-300'
+                  }`}
+                >
+                  <div className="mb-3">
+                    <div className="flex items-center gap-3 mb-1">
+                      <span
+                        className={`text-xl font-bold ${
+                          index === 0 ? 'text-indigo-600' : 'text-gray-900'
+                        }`}
+                      >
+                        {update.version}
+                      </span>
+                      <span className="text-sm text-gray-500">• {update.date}</span>
+                    </div>
+                  </div>
+                  <ul className="text-gray-700 leading-relaxed space-y-2 list-disc list-inside">
+                    {update.items.map((item, itemIndex) => (
+                      <li key={itemIndex}>{item}</li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="text-gray-700 leading-relaxed space-y-2 list-disc list-inside">
-                  <li>Improved real-time synchronization across all devices</li>
-                  <li>Enhanced mobile experience for scoreboard controllers</li>
-                  <li>Better performance and faster load times</li>
-                  <li>Updated UI with light mode for better visibility</li>
-                </ul>
-              </div>
-
-              <div className="border-l-4 border-gray-300 pl-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-semibold text-gray-600">Recent Features</span>
-                  <span className="text-sm text-gray-500">• Previous Updates</span>
-                </div>
-                <ul className="text-gray-700 leading-relaxed space-y-2 list-disc list-inside">
-                  <li>Share code functionality for easy scoreboard sharing</li>
-                  <li>Quarter history tracking and display</li>
-                  <li>Fullscreen mode for public displays</li>
-                  <li>Subscription plans with different scoreboard limits</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section className="mb-8">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-4">Get Started</h3>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              Ready to try out the latest features? Creating your first scoreboard takes just minutes.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/auth"
-                className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-6 py-3 font-semibold text-white transition hover:bg-indigo-600"
-              >
-                Create Your First Scoreboard
-              </Link>
-              <Link
-                to="/roadmap"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-              >
-                View Roadmap
-              </Link>
+              ))}
             </div>
           </section>
         </div>

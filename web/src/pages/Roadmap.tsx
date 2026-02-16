@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { SEOHead } from '../components/SEOHead'
+import { Button } from '../components/button'
 
 export const Roadmap: React.FC = () => {
   return (
@@ -16,7 +17,14 @@ export const Roadmap: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-5xl font-bold text-gray-900 mb-2">Roadmap</h1>
-          <p className="text-gray-600">See what we're building next and share your feedback</p>
+          <p className="text-gray-600">
+            What we're building next.{' '}
+            See what we've already released in our {' '}
+            <Link to="/changelog" className="text-indigo-600 hover:text-indigo-700 underline">
+              changelog
+            </Link>
+            .
+          </p>
         </div>
 
         {/* Divider */}
@@ -34,32 +42,24 @@ export const Roadmap: React.FC = () => {
                 <li>Custom branding options for leagues</li>
                 <li>Mobile app for iOS and Android</li>
                 <li>Integration with streaming platforms</li>
-                <li>Export game data and statistics</li>
+                <li>Export detailed game data and statistics</li>
               </ul>
-              <p>
-                Have a feature request? We'd love to hear from you! Contact us at <a href="mailto:support@prettyscoreboard.com" className="text-indigo-600 hover:text-indigo-700 underline">support@prettyscoreboard.com</a>
-              </p>
             </div>
           </section>
 
           <section className="mb-8">
-            <h3 className="text-2xl font-semibold text-gray-900 mb-4">Get Started</h3>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              Ready to try out Pretty Scoreboard? Creating your first scoreboard takes just minutes.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/auth"
-                className="inline-flex items-center justify-center rounded-lg bg-indigo-500 px-6 py-3 font-semibold text-white transition hover:bg-indigo-600"
+            <h3 className="text-2xl font-semibold text-gray-900 mb-4">Have a Feature Request?</h3>
+            <div className="text-gray-700 leading-relaxed">
+              <p className="mb-4">
+                We'd love to hear from you! Remember to select 'Feature Request' as the subject when contacting us.
+              </p>
+              <Button
+                to="/contact"
+                variant="primary"
+                size="md"
               >
-                Create Your First Scoreboard
-              </Link>
-              <Link
-                to="/changelog"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50"
-              >
-                View Changelog
-              </Link>
+                Contact Us
+              </Button>
             </div>
           </section>
         </div>
