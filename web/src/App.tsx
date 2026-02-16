@@ -12,6 +12,7 @@ import { Changelog } from './pages/Changelog'
 import { Roadmap } from './pages/Roadmap'
 import { Contact } from './pages/Contact'
 import { FAQ } from './pages/FAQ'
+import { DataDeletion } from './pages/DataDeletion'
 import { Settings } from './pages/Settings'
 import { Subscription } from './pages/Subscription'
 import { CheckoutSuccess } from './pages/CheckoutSuccess'
@@ -86,6 +87,11 @@ const AppRoutes: React.FC = () => {
             <Route path="/terms" element={
               <PublicPageLayout>
                 <TermsOfService />
+              </PublicPageLayout>
+            } />
+            <Route path="/data-deletion" element={
+              <PublicPageLayout>
+                <DataDeletion />
               </PublicPageLayout>
             } />
             <Route

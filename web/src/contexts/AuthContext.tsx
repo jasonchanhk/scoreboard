@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean
   signInWithMagicLink: (email: string) => Promise<{ error: any }>
   signInWithGoogle: () => Promise<{ error: any }>
+  signInWithFacebook: () => Promise<{ error: any }>
   signOut: () => Promise<void>
   deleteAccount: () => Promise<{ error: any }>
 }
@@ -140,6 +141,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error }
   }
 
+  const signInWithFacebook = async () => {
+    const redirectUrl = `${window.location.origin}/dashboard`
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: redirectUrl,
+      },
+    })
+    return { error }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
   }
@@ -188,6 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     signInWithMagicLink,
     signInWithGoogle,
+    signInWithFacebook,
     signOut,
     deleteAccount,
   }

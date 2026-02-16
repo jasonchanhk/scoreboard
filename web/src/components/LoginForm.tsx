@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { AuthPageLayout, AppLogo } from './auth'
-import { GoogleSignInButton } from './button'
+import { GoogleSignInButton, FacebookSignInButton } from './button'
 import { TextInput } from './input/TextInput'
 import { Toast } from './Toast'
 import { useToast } from '../hooks/useToast'
 import { useGoogleSignIn } from '../hooks/useGoogleSignIn'
+import { useFacebookSignIn } from '../hooks/useFacebookSignIn'
 import { isValidEmailFormat, hasPlusAddressing } from '../utils/emailValidation'
 import { useAlertDialog } from '../hooks/dialog'
 import { AlertDialog } from './dialog'
@@ -19,6 +20,7 @@ export const LoginForm: React.FC = () => {
   const { toast, showError, hideToast } = useToast()
   const { alert, showError: showAlertError, hideAlert } = useAlertDialog()
   const { handleGoogleSignIn } = useGoogleSignIn()
+  const { handleFacebookSignIn } = useFacebookSignIn()
 
   const handleEmailBlur = useCallback(() => {
     const trimmedEmail = email.trim()
@@ -130,11 +132,32 @@ export const LoginForm: React.FC = () => {
         <div className="p-8">
         <div className="mb-8 -mx-8 px-8">
           
-          <h2 className="text-3xl font-bold tracking-tight text-grey-900">
+          <h2 className="text-xl font-semibold tracking-tight text-grey-900">
             Welcome to
             <br />
-            <span className="text-indigo-600">Pretty Scoreboard</span>
+            <span className="flex items-center gap-2 text-3xl font-bold pt-1">
+              <img 
+                src="/logo.png" 
+                alt="Pretty Scoreboard" 
+                className="w-10 h-10 shrink-0"
+              />
+              Pretty Scoreboard
+            </span>
           </h2>
+        </div>
+
+        <div className="space-y-3">
+          <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
+          <FacebookSignInButton onClick={handleFacebookSignIn} disabled={true} />
+        </div>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">or</span>
+          </div>
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
@@ -175,17 +198,6 @@ export const LoginForm: React.FC = () => {
             {loading ? 'Sending magic link...' : 'Continue'}
           </button>
         </form>
-
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">or</span>
-          </div>
-        </div>
-
-        <GoogleSignInButton onClick={handleGoogleSignIn} disabled={loading} />
       </div>
       </div>
     </AuthPageLayout>
