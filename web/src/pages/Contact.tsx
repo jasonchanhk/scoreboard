@@ -134,7 +134,7 @@ export const Contact: React.FC = () => {
 
             {submitStatus === 'error' && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-800">Something went wrong. Please try again or email us directly at support@scoreboard.app</p>
+                <p className="text-red-800">Something went wrong. Please try again or email us directly at support@prettyscoreboard.com</p>
               </div>
             )}
 
@@ -154,8 +154,8 @@ export const Contact: React.FC = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Other Ways to Reach Us</h3>
             <p className="text-gray-600">
               You can also reach us directly at{' '}
-              <a href="mailto:support@scoreboard.app" className="text-indigo-600 hover:text-indigo-700 underline">
-                support@scoreboard.app
+              <a href="mailto:support@prettyscoreboard.com" className="text-indigo-600 hover:text-indigo-700 underline">
+                support@prettyscoreboard.com
               </a>
             </p>
           </div>

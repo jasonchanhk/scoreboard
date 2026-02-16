@@ -65,7 +65,7 @@ export const WhatsNew: React.FC = () => {
                 <li>Export game data and statistics</li>
               </ul>
               <p>
-                Have a feature request? We'd love to hear from you! Contact us at <a href="mailto:support@scoreboard.app" className="text-indigo-600 hover:text-indigo-700 underline">support@scoreboard.app</a>
+                Have a feature request? We'd love to hear from you! Contact us at <a href="mailto:support@prettyscoreboard.com" className="text-indigo-600 hover:text-indigo-700 underline">support@prettyscoreboard.com</a>
               </p>
             </div>
           </section>

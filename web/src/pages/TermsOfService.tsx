@@ -157,7 +157,7 @@ export const TermsOfService: React.FC = () => {
               If you have any questions about these Terms of Service, please contact us at:
             </p>
             <div className="text-gray-700">
-              <p><strong>Email:</strong> <a href="mailto:support@scoreboard.app" className="text-indigo-600 hover:text-indigo-700 underline">support@scoreboard.app</a></p>
+              <p><strong>Email:</strong> <a href="mailto:support@prettyscoreboard.com" className="text-indigo-600 hover:text-indigo-700 underline">support@prettyscoreboard.com</a></p>
             </div>
           </section>
         </div>

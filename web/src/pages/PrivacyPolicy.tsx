@@ -97,7 +97,7 @@ export const PrivacyPolicy: React.FC = () => {
                 <li>Export your scoreboard data</li>
               </ul>
               <p>
-                To exercise these rights, please contact us at <a href="mailto:support@scoreboard.app" className="text-indigo-600 hover:text-indigo-700 underline">support@scoreboard.app</a>
+                To exercise these rights, please contact us at <a href="mailto:support@prettyscoreboard.com" className="text-indigo-600 hover:text-indigo-700 underline">support@prettyscoreboard.com</a>
               </p>
             </div>
           </section>
@@ -122,7 +122,7 @@ export const PrivacyPolicy: React.FC = () => {
               If you have any questions about this Privacy Policy, please contact us at:
             </p>
             <div className="mt-4 text-gray-700">
-              <p><strong>Email:</strong> <a href="mailto:support@scoreboard.app" className="text-indigo-600 hover:text-indigo-700 underline">support@scoreboard.app</a></p>
+              <p><strong>Email:</strong> <a href="mailto:support@prettyscoreboard.com" className="text-indigo-600 hover:text-indigo-700 underline">support@prettyscoreboard.com</a></p>
             </div>
           </section>
         </div>
