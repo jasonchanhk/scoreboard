@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Button } from '../components/button'
 import { SEOHead } from '../components/SEOHead'
+import { TextInput, SelectInput, TextAreaInput } from '../components/input'
 
 export const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -12,22 +13,33 @@ export const Contact: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
+  const updateField = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [field]: value
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus('idle')
 
-    // Simulate form submission (replace with actual API call)
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      const response = await fetch('/.netlify/functions/send-contact-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message')
+      }
+
       setSubmitStatus('success')
       setFormData({ name: '', email: '', subject: '', message: '' })
       
@@ -35,7 +47,17 @@ export const Contact: React.FC = () => {
       setTimeout(() => {
         setSubmitStatus('idle')
       }, 5000)
-    }, 1000)
+    } catch (error) {
+      console.error('Error submitting contact form:', error)
+      setSubmitStatus('error')
+      
+      // Reset error message after 5 seconds
+      setTimeout(() => {
+        setSubmitStatus('idle')
+      }, 5000)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -60,71 +82,47 @@ export const Contact: React.FC = () => {
         {/* Content */}
         <div>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+            <TextInput
+              label="Name"
+              value={formData.name}
+              onChange={(value) => updateField('name', value)}
+              id="name"
+              required
+            />
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+            <TextInput
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(value) => updateField('email', value)}
+              id="email"
+              required
+            />
 
-            <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                Subject
-              </label>
-              <select
-                id="subject"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Select a subject</option>
-                <option value="support">Support Request</option>
-                <option value="feature">Feature Request</option>
-                <option value="bug">Bug Report</option>
-                <option value="feedback">General Feedback</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+            <SelectInput
+              label="Subject"
+              value={formData.subject}
+              onChange={(value) => updateField('subject', value)}
+              id="subject"
+              placeholder="Select a subject"
+              required
+              options={[
+                { value: 'support', label: 'Support Request' },
+                { value: 'feature', label: 'Feature Request' },
+                { value: 'bug', label: 'Bug Report' },
+                { value: 'feedback', label: 'General Feedback' },
+                { value: 'other', label: 'Other' }
+              ]}
+            />
 
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                Message
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                required
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
+            <TextAreaInput
+              label="Message"
+              value={formData.message}
+              onChange={(value) => updateField('message', value)}
+              id="message"
+              required
+              rows={6}
+            />
 
             {submitStatus === 'success' && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
