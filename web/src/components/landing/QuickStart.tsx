@@ -23,16 +23,22 @@ export const QuickStart: React.FC = () => {
   return (
     <div className="w-full px-12 pb-10 lg:pb-16">
       <div className="mx-auto max-w-7xl">
-        <div className="relative bg-gray-200/50 rounded-3xl p-4 lg:px-12 lg:py-16">
-          <div className="flex flex-col lg:flex-row items-center gap-0">
+        <div className="relative bg-gray-50 rounded-3xl p-4 lg:px-12 lg:py-16 overflow-hidden">
+          {/* Bottom-left gradient */}
+          <div
+            className="pointer-events-none absolute bottom-0 left-0 w-[600px] h-[600px] z-0 blur-2xl"
+            style={{ background: 'radial-gradient(circle at bottom left, rgba(79, 70, 229, 0.3), transparent 80%)' }}
+          />
+          
+          <div className="relative z-10 flex flex-col lg:flex-row items-center gap-0">
           {/* Quick Start Form - Left side */}
           <div className="w-full lg:w-1/3 relative z-10 lg:-mr-6 lg:ml-6">
-            <div className="bg-indigo-600 rounded-3xl shadow-3xl border border-indigo-700 p-8 space-y-2">
+            <div className="bg-white rounded-3xl shadow-3xl border border-gray-200 p-8 space-y-2">
               <div className="mb-8">
-                <h2 className="text-4xl font-bold text-white">
-                  Start your own  Scoreboard now
+                <h2 className="text-4xl font-bold text-gray-900">
+                  Start your own <br/><span className="text-indigo-600">Scoreboard now</span> 
                 </h2>
-                <p className="text-md text-indigo-100 mt-4 leading-tight">
+                <p className="text-md text-gray-600 mt-4 leading-tight">
                   Set up in seconds with your own teams and timer duration.
                 </p>
               </div>
@@ -75,10 +81,10 @@ export const QuickStart: React.FC = () => {
               />
               
               <Button
-                variant="outline"
+                variant="primary"
                 size="lg"
                 onClick={handleStartGame}
-                className="w-full mt-2 bg-white border-white text-indigo-600 hover:bg-indigo-50"
+                className="w-full mt-2"
               >
                 Start
               </Button>
@@ -132,7 +138,7 @@ export const QuickStart: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+          </div>
         </div>
       </div>
     </div>

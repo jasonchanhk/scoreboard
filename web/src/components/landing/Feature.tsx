@@ -12,7 +12,7 @@ interface FeatureProps {
   buttonOnClick?: () => void
   buttonTo?: string
   imagePosition?: 'left' | 'right'
-  backgroundColor?: 'white' | 'gray'
+  backgroundColor?: 'white' | 'indigo'
 }
 
 export const Feature: React.FC<FeatureProps> = ({
@@ -28,7 +28,7 @@ export const Feature: React.FC<FeatureProps> = ({
   backgroundColor = 'white',
 }) => {
   const isImageLeft = imagePosition === 'left'
-  const bgColor = backgroundColor === 'gray' ? 'bg-gray-100' : 'bg-white'
+  const bgColor = backgroundColor === 'indigo' ? 'bg-indigo-50' : 'bg-white'
 
   return (
     <section className={`${bgColor} py-24`}>
@@ -39,7 +39,8 @@ export const Feature: React.FC<FeatureProps> = ({
             <img 
               src={imageSrc} 
               alt={imageAlt} 
-              className="w-full h-auto rounded-3xl shadow-3xl"
+              className="w-full h-auto rounded-3xl"
+              style={{ boxShadow: '0 25px 50px -12px rgba(79, 70, 229, 0.3)' }}
             />
           </div>
           {/* Content */}

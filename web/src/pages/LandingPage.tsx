@@ -13,37 +13,54 @@ export const LandingPage: React.FC = () => {
         keywords="basketball scoreboard, live scoreboard, basketball score tracker, game score tracker, basketball timer, team scoreboard, free scoreboard app, real-time scoreboard, basketball game management"
         canonical="https://prettyscoreboard.com/"
       />
-      <Hero
-        badge="Now Available"
-        headline={
-            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
-              Pretty In-sync, Pretty Simple<br/><span className="text-indigo-600 mt-2">Pretty Scoreboard </span>
-            </h1>
-        }
-        paragraph="The ultimate scoreboard for real-time basketball game management. Track scores, manage teams, and share live updates — all in one beautiful interface."
-      >
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 lg:mt-0">
-          <Button
-            variant="outline"
-            size="md"
-            onClick={() => {
-              const element = document.getElementById('sync-devices')
-              element?.scrollIntoView({ behavior: 'smooth' })
-            }}
+      <section className="relative overflow-hidden bg-white">
+        {/* Left glow */}
+        <div
+          className="pointer-events-none absolute -left-20 top-10 h-[300px] w-[300px] rounded-full blur-2xl opacity-60 z-0"
+          style={{ background: 'radial-gradient(circle at center, rgba(79, 70, 229, 0.3))' }}
+        />
+        
+        {/* Right glow */}
+        <div
+          className="pointer-events-none absolute -right-60 top-10 h-[520px] w-[520px] rounded-full blur-2xl opacity-60 z-0"
+          style={{ background: 'radial-gradient(circle at center, rgba(79, 70, 229, 0.3))' }}
+        />
+        
+        <div className="relative z-10">
+          <Hero
+            badge="Now Available"
+            headline={
+                <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-grey-900">
+                  Pretty In-sync, Pretty Simple<br/><span className="text-indigo-600 mt-2">Pretty Scoreboard </span>
+                </h1>
+            }
+            paragraph="The ultimate scoreboard for real-time basketball game management. Track scores, manage teams, and share live updates — all in one beautiful interface."
+            backgroundColor="bg-transparent"
           >
-            Explore Features
-          </Button>
-          <Button
-            variant="primary"
-            size="md"
-            to="/dashboard"
-          >
-            Get Started
-          </Button>
-         </div>
-      </Hero>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 lg:mt-0">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => {
+                  const element = document.getElementById('sync-devices')
+                  element?.scrollIntoView({ behavior: 'smooth' })
+                }}
+              >
+                Explore Features
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                to="/dashboard"
+              >
+                Get Started
+              </Button>
+             </div>
+          </Hero>
 
-      <QuickStart />
+          <QuickStart />
+        </div>
+      </section>
       
       {/* Hero Section: Sync Score to Multiple Devices */}
       <section id="sync-devices">
@@ -75,7 +92,7 @@ export const LandingPage: React.FC = () => {
         buttonText="Get Started"
         buttonTo="/dashboard"
         imagePosition="left"
-        backgroundColor="gray"
+        backgroundColor="indigo"
       />
 
       {/* Feature Section 2: Manage Quarter Timer */}
@@ -101,7 +118,7 @@ export const LandingPage: React.FC = () => {
         buttonText="Get Started"
         buttonTo="/dashboard"
         imagePosition="left"
-        backgroundColor="gray"
+        backgroundColor="indigo"
       />
 
       {/* Feature Grid: Full Screen, Quarter History, Team Colors */}

@@ -88,23 +88,49 @@ export const LoginForm: React.FC = () => {
   if (success) {
     return (
       <AuthPageLayout>
-        <div className="text-center">
-          <AppLogo />
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Check your email
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            We've sent you a magic link. Please check your email and click the link to sign in or create your account.
+        <div 
+        className="bg-white rounded-3xl w-full max-w-md border border-gray-200"
+        style={{ boxShadow: '0 25px 50px -12px rgba(79, 70, 229, 0.3)' }}
+      >
+        <p className="text-sm font-semibold text-gray-900 text-center border-b border-gray-200 py-4">
+            Log in or sign up
           </p>
-          <button
-            onClick={() => {
-              setSuccess(false)
-              setEmail('')
-            }}
-            className="mt-4 font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer"
-          >
-            Back to sign in
-          </button>
+        <div className="p-8">
+          <div className="mb-8 -mx-8 px-8">
+            <h2 className="text-xl font-semibold tracking-tight text-grey-900">
+              Welcome to
+              <br />
+              <span className="flex items-center gap-2 text-3xl font-bold pt-1">
+                <img 
+                  src="/logo.png" 
+                  alt="Pretty Scoreboard" 
+                  className="w-10 h-10 shrink-0"
+                />
+                Pretty Scoreboard
+              </span>
+            </h2>
+          </div>
+          
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight text-grey-900">
+                Check your email
+              </h2>
+              <p className="mt-2 text-sm text-gray-600">
+                We've sent you a magic link. Please check your email and click the link to sign in or create your account.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setSuccess(false)
+                setEmail('')
+              }}
+              className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer"
+            >
+              Back to sign in
+            </button>
+          </div>
+        </div>  
         </div>
       </AuthPageLayout>
     )
@@ -125,8 +151,11 @@ export const LoginForm: React.FC = () => {
         isVisible={toast.isVisible}
         onClose={hideToast}
       />
-      <div className="bg-white rounded-3xl shadow-3xl w-full max-w-md border border-gray-200">
-      <p className="text-sm font-semibold text-gray-900 text-center border-b border-gray-200 py-4">
+      <div 
+        className="bg-white rounded-3xl w-full max-w-md border border-gray-200"
+        style={{ boxShadow: '0 25px 50px -12px rgba(79, 70, 229, 0.3)' }}
+      >
+        <p className="text-sm font-semibold text-gray-900 text-center border-b border-gray-200 py-4">
             Log in or sign up
           </p>
         <div className="p-8">

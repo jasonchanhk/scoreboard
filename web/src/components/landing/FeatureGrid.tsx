@@ -21,7 +21,10 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   buttonTo
 }) => {
   return (
-    <div className="bg-white rounded-3xl shadow-3xl overflow-hidden flex flex-col ">
+    <div 
+      className="bg-white rounded-3xl overflow-hidden flex flex-col "
+      style={{ boxShadow: '0 25px 50px -12px rgba(79, 70, 229, 0.3)' }}
+    >
       <img 
         src={imageSrc} 
         alt={imageAlt} 
@@ -59,7 +62,7 @@ export const FeatureGrid: React.FC<FeatureGridProps> = ({ features }) => {
   return (
     <section className="bg-white py-12">
       <div className="mx-auto max-w-7xl px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
             <FeatureCard
               key={index}
