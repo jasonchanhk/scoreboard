@@ -12,6 +12,19 @@
 #     - Returns HTML with meta tags when requested normally
 #     - Returns PNG image when ?image=true query parameter is present
 
+# Redirect www to non-www (must come first)
+[[redirects]]
+  from = "https://www.prettyscoreboard.com/*"
+  to = "https://prettyscoreboard.com/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.prettyscoreboard.com/*"
+  to = "https://prettyscoreboard.com/:splat"
+  status = 301
+  force = true
+
 # Route scoreboard URLs to the function for crawler detection
 # Function serves HTML with meta tags for crawlers, redirects browsers to SPA
 # This must come BEFORE the catch-all redirect
