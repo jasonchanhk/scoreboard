@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { AuthPageLayout, AppLogo } from './auth'
+import { AuthPageLayout } from './auth'
 import { GoogleSignInButton, FacebookSignInButton } from './button'
 import { TextInput } from './input/TextInput'
 import { Toast } from './Toast'
