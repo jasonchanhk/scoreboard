@@ -18,7 +18,7 @@ const defaultFAQs: FAQItem[] = [
   },
   {
     question: "How many scoreboards can I create?",
-    answer: "Free accounts can create up to 3 scoreboards. Upgrade to Plus or Premium plans for unlimited scoreboards and additional features."
+    answer: "Basic accounts can create up to 2 scoreboards. Upgrade to Plus or Premium plans for unlimited scoreboards and additional features."
   },
   {
     question: "Do I need to download any software?",
