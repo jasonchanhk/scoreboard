@@ -46,20 +46,20 @@ export const Feature: React.FC<FeatureProps> = ({
           {/* Content */}
           <div className="flex-1 space-y-4 lg:space-y-8">
             {Icon && (
-              <div className="hidden lg:flex justify-center">
+              <div className="hidden lg:flex justify-center lg:justify-start">
                 <div className="flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-full">
                   <Icon className="text-2xl text-indigo-600" />
                 </div>
               </div>
             )}
-            <h2 className="text-5xl font-bold text-gray-900 text-center">
+            <h2 className="text-5xl font-bold text-gray-900 text-center lg:text-left">
               {title}
             </h2>
-            <p className="text-lg text-gray-600 text-center pb-2">
+            <p className="text-lg text-gray-600 text-center pb-2 lg:text-left">
               {description}
             </p>
             {buttonText && (
-              <div className="flex justify-center">
+              <div className="flex justify-center lg:justify-start">
                 <Button
                   variant="primary"
                   size="md"
