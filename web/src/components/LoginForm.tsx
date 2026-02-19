@@ -93,7 +93,7 @@ export const LoginForm: React.FC = () => {
         style={{ boxShadow: '0 25px 50px -12px rgba(79, 70, 229, 0.3)' }}
       >
         <p className="text-sm font-semibold text-gray-900 text-center border-b border-gray-200 py-4">
-            Log in or sign up
+            Log in or Sign up
           </p>
         <div className="p-8">
           <div className="mb-8 -mx-8 px-8">
@@ -156,7 +156,7 @@ export const LoginForm: React.FC = () => {
         style={{ boxShadow: '0 25px 50px -12px rgba(79, 70, 229, 0.3)' }}
       >
         <p className="text-sm font-semibold text-gray-900 text-center border-b border-gray-200 py-4">
-            Log in or sign up
+            Log in or Sign up
           </p>
         <div className="p-8">
         <div className="mb-8 -mx-8 px-8">

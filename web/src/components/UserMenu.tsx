@@ -121,7 +121,7 @@ export const UserMenu: React.FC = () => {
                 onClick={() => handleMenuItemClick(signOut)}
                 className="w-full text-left block px-4 py-2 cursor-pointer text-sm text-red-600 hover:bg-red-50"
               >
-                Sign out
+                Log out
               </button>
             </div>
           </div>
