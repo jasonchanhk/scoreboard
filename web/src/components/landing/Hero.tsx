@@ -18,7 +18,7 @@ export const Hero: React.FC<HeroProps> = ({
 }) => {
   return (
     <header className={`relative overflow-hidden ${backgroundColor}`}>
-      <div className="relative mx-auto px-12 py-10 lg:py-16">
+      <div className="relative mx-auto px-6 py-10 lg:py-16">
         <div className="text-center">
           {badge && <Badge>{badge}</Badge>}
           {headline && (

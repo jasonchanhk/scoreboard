@@ -16,13 +16,13 @@ export const LandingPage: React.FC = () => {
       <section className="relative overflow-hidden bg-white">
         {/* Left glow */}
         <div
-          className="pointer-events-none absolute -left-20 top-10 h-[300px] w-[300px] rounded-full blur-2xl opacity-60 z-0"
+          className="pointer-events-none absolute -left-20 top-10 h-[200px] w-[200px] sm:h-[300px] sm:w-[300px] rounded-full blur-2xl opacity-60 z-0"
           style={{ background: 'radial-gradient(circle at center, rgba(79, 70, 229, 0.3))' }}
         />
         
         {/* Right glow */}
         <div
-          className="pointer-events-none absolute -right-60 top-10 h-[520px] w-[520px] rounded-full blur-2xl opacity-60 z-0"
+          className="pointer-events-none absolute -right-60 top-10 h-[300px] w-[300px] sm:h-[520px] sm:w-[520px] rounded-full blur-2xl opacity-60 z-0"
           style={{ background: 'radial-gradient(circle at center, rgba(79, 70, 229, 0.3))' }}
         />
         
@@ -37,7 +37,7 @@ export const LandingPage: React.FC = () => {
             paragraph="The ultimate scoreboard for real-time basketball game management. Track scores, manage teams, and share live updates — all in one beautiful interface."
             backgroundColor="bg-transparent"
           >
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 lg:mt-0">
+            <div className="flex flex-row items-center justify-center gap-4 mt-8 lg:mt-0">
               <Button
                 variant="outline"
                 size="md"

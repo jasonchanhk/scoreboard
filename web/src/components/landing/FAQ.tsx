@@ -60,7 +60,7 @@ export const FAQ: React.FC<FAQProps> = ({ faqs = defaultFAQs }) => {
       />
       
       {/* FAQ Section */}
-      <section id="faq" className="bg-indigo-50 py-24">
+      <section id="faq" className="bg-indigo-50 py-12">
         <Hero
           badge="FAQ"
           headline={
@@ -70,7 +70,7 @@ export const FAQ: React.FC<FAQProps> = ({ faqs = defaultFAQs }) => {
           }
           backgroundColor="bg-transparent"
         >
-          <div className="mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-6xl">
             <div className="max-w-3xl mx-auto">
               <div className="space-y-4">
                 {faqs.map((faq, index) => (

@@ -21,7 +21,7 @@ export const QuickStart: React.FC = () => {
   }
 
   return (
-    <div className="w-full px-12 pb-10 lg:pb-16">
+    <div className="w-full px-6 pb-10 lg:pb-16">
       <div className="mx-auto max-w-7xl">
         <div className="relative bg-gray-50 rounded-3xl p-4 lg:px-12 lg:py-16 overflow-hidden">
           {/* Bottom-left gradient */}
@@ -93,12 +93,12 @@ export const QuickStart: React.FC = () => {
 
           {/* Mock Scoreboard Controller - Right side with overlap */}
           <div className="w-full lg:w-2/3 relative z-0 lg:-ml-6 mt-8 lg:mt-0">
-            <div className="bg-white rounded-3xl shadow-3xl p-8 h-[600px] flex flex-col pointer-events-none border border-gray-200">
+            <div className="bg-white rounded-3xl shadow-3xl lg:p-8 h-[600px] flex flex-col pointer-events-none border border-gray-200">
               {/* Main Scoreboard */}
               <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Top Section: Score Container */}
                 <div className="flex-1 min-h-0 pb-4 md:pb-8 flex items-center justify-center">
-                  <div className="flex items-center justify-center h-full w-full px-4 md:px-6 lg:px-8">
+                  <div className="flex items-center justify-center h-full w-full px-4 pt-4 md:px-6 lg:px-8">
                     {/* Team Containers - Stack on mobile portrait, side-by-side on landscape/desktop */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 h-full w-full max-w-[95vw] md:max-w-[70vw]">
                       <TeamScore
