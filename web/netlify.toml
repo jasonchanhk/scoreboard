@@ -25,6 +25,15 @@
   status = 301
   force = true
 
+# Route homepage to prerender function for better SEO
+# Function serves pre-rendered HTML for crawlers, normal SPA for browsers
+# This must come BEFORE the catch-all redirect
+[[redirects]]
+  from = "/"
+  to = "/.netlify/functions/homepage-prerender"
+  status = 200
+  force = false
+
 # Route scoreboard URLs to the function for crawler detection
 # Function serves HTML with meta tags for crawlers, redirects browsers to SPA
 # This must come BEFORE the catch-all redirect
