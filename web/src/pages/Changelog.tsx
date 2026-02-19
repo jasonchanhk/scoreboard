@@ -15,6 +15,14 @@ interface ChangelogData {
 const changelogData: ChangelogData = {
   updates: [
     {
+      version: 'v.1.0.2',
+      date: 'February 19, 2026',
+      items: [
+        'Improved mobile responsiveness and viewport optimization',
+        'Enhanced SEO with static HTML generation and crawler support'
+      ]
+    },
+    {
       version: 'v.1.0.1',
       date: 'February 16, 2026',
       items: [
