@@ -231,7 +231,7 @@ export const ScoreboardFormDialog: React.FC<ScoreboardFormDialogProps> = ({
       onCancel={onCancel}
       cancelText="Cancel"
       actionButton={{
-        text: loading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create Scoreboard' : 'Update Scoreboard'),
+        text: loading ? (mode === 'create' ? 'Creating...' : 'Updating...') : (mode === 'create' ? 'Create' : 'Update'),
         onClick: handleFormSubmit,
         variant: 'primary',
         disabled: loading,
